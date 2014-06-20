@@ -7,9 +7,9 @@
         <corner x="-5.25" y="5.25" z="0.0" />
     </marker>
     <marker index="1" status="1">
-        <corner x="-2.2" y="11.8" z="0.0" />
-        <corner x="2.2" y="11.8" z="0.0" />
-        <corner x="2.2" y="16.2" z="0.0" />
-        <corner x="-2.2" y="16.2" z="0.0" />
+        <corner x="-116.75" y="35.25" z="0.0" />
+        <corner x="-106.25" y="35.25" z="0.0" />
+        <corner x="-106.25" y="45.75" z="0.0" />
+        <corner x="-116.75" y="45.75" z="0.0" />
     </marker>
 </multimarker>
