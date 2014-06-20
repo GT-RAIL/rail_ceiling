@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>rail_ceiling</name>
+  <version>0.0.0</version>
+  <description>Controls the overhead cameras for the ceiling of the RAIL lab.</description>
+  
+  <maintainer email="spkordell@wpi.edu">Steven Kordell</maintainer>
+  <author email="spkordell@wpi.edu">Steven Kordell</author>
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/rail_ceiling</url>
+  <url type="bugtracker">https://github.com/WPI-RAIL/rail_ceiling/issues</url>
+  <url type="repository">https://github.com/WPI-RAIL/rail_ceiling</url>
+ 
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>roscpp</build_depend>
+  <run_depend>roscpp</run_depend>    
+</package>
