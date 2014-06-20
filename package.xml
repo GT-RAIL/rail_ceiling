@@ -17,4 +17,5 @@
   <build_depend>roscpp</build_depend>
   <run_depend>roscpp</run_depend>    
   <run_depend>ar_track_alvar</run_depend>
+  <run_depend>usb_cam</run_depend>
 </package>
