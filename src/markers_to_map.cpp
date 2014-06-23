@@ -172,30 +172,34 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       int DestBitmapWidth=(int)ceil(fabs(maxx)-minx);
       int DestBitmapHeight=(int)ceil(fabs(maxy)-miny);
 
+      //ROS_INFO("%f", -(float)obstacle.info.height*sine);
+
       //int heightDiff = DestBitmapHeight-obstacle.info.height;
       //int widthDiff = DestBitmapWidth-obstacle.info.width;
 
-      vector<signed char> rotateObsData(DestBitmapWidth * DestBitmapHeight);
+      //vector<signed char> rotateObsData(DestBitmapWidth * DestBitmapHeight);
 
       for(int x=0;x<DestBitmapWidth;x++)
       {
-        for(int y=0;y<DestBitmapHeight;y++)
+        for(int y=0; y<DestBitmapHeight; y++)
         {
           int SrcBitmapx=(int)((x+minx)*cosine+(y+miny)*sine);
           int SrcBitmapy=(int)((y+miny)*cosine-(x+minx)*sine);
           if(SrcBitmapx >= 0 && SrcBitmapx < obstacle.info.width && SrcBitmapy >= 0 && SrcBitmapy < obstacle.info.height)
           {
-            rotateObsData[x+y*DestBitmapWidth] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
+            //rotateObsData[x+y*DestBitmapWidth] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
+            mapData[(xGrid+x)+(yGrid-y)*map.info.width] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
           }
         }
       }
 
+      /*
       //need to merge rotateObsData into mapData
       for (int j = 0; j < DestBitmapWidth; j++) {
         for (int k = 0; k < DestBitmapHeight; k++) {
-          mapData[(xGrid+j)+(yGrid-k)*map.info.width] = rotateObsData[j+k*DestBitmapWidth];
+          //mapData[(xGrid+j)+(yGrid-k)*map.info.width] = rotateObsData[j+k*DestBitmapWidth];
         }
-      }
+      }*/
 
 
       //map.info.width = DestBitmapWidth;
