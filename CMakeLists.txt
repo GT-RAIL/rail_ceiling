@@ -4,7 +4,7 @@ project(rail_ceiling)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED roscpp)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -88,15 +88,23 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+## Specify additional locations of header files
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
 # add_library(rail_ceiling
 #   src/${PROJECT_NAME}/rail_ceiling.cpp
 # )
 
+
 ## Declare a cpp executable
-# add_executable(rail_ceiling_node src/rail_ceiling_node.cpp)
+add_executable(markers_to_map src/markers_to_map.cpp)
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(markers_to_map ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -120,6 +128,11 @@ catkin_package(
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+
+## Copy launch files
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+)
 
 ## Mark executables and/or libraries for installation
 # install(TARGETS rail_ceiling rail_ceiling_node

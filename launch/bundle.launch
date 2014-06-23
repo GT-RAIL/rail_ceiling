@@ -16,4 +16,12 @@
 		<param name="io_method" value="mmap"/>
 	</node>
 
+	<!-- TODO: MAKE URDF FOR 'ENVIRONMENT' -->
+	<node pkg="tf" type="static_transform_publisher" name="map_to_camera" args="0 0 2.5 0 3.14159265 0 map head_camera 5" />
+	<node pkg="tf" type="static_transform_publisher" name="map_to_ar_map" args="0 0 0 0 0 0 map ar_map 5" />
+
+	<node pkg="rail_ceiling" type="markers_to_map" name="markers_to_map" output="screen">
+		<remap from="/markers_to_map/ar_pose_marker" to="/ar_pose_marker" />
+	</node>
+
 </launch>
