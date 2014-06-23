@@ -81,18 +81,18 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     mapData[i] = -1;
   }
 
-
   float res = map.info.resolution;
 
   tf::StampedTransform transform;
-  //fill map with items
   float xAbs;
   float yAbs;
+  //TODO: get widths from bundle xml file (convert to m)
+  float xAbsWidth = 111.5/100;
+  float yAbsWidth = 39.5/100;
   int xGrid;
   int yGrid;
-
-  int xGridWidth = 100;
-  int yGridWidth = 100;
+  int xGridWidth;
+  int yGridWidth;
 
   for(int i = 0; i != markers->markers.size(); i++) {
     try{
@@ -101,15 +101,20 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       yAbs = round(transform.getOrigin().y()-map.info.origin.position.y, map.info.resolution);
       xGrid = xAbs/res;
       yGrid = yAbs/res;
-      //ROS_INFO("%d  %f   %f",markers->markers[i].id,transform.getOrigin().x(),xTemp);
+      xGridWidth = round(xAbsWidth, res)/res;
+      yGridWidth = round(yAbsWidth, res)/res;
 
-      ROS_INFO("%d  %d", xGrid, yGrid);
+      //ROS_INFO("%d  %f   %f",markers->markers[i].id,transform.getOrigin().x(),xTemp);
+      //ROS_INFO("%d  %d", xGrid, yGrid);
+      ROS_INFO(" %d  %d",xGridWidth, yGridWidth);
 
       for (int j = 0; j < xGridWidth; j++) {
         for (int k = 0; k < yGridWidth; k++) {
-          mapData[(xGrid+j)+(yGrid+k)*map.info.width] = 127;
+          mapData[(xGrid+j)+(yGrid-k)*map.info.width] = 127;
         }
       }
+
+
     }
     catch (tf::TransformException ex){
       ROS_ERROR("%s",ex.what());
