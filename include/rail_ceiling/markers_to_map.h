@@ -19,6 +19,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_listener.h>
 #include <vector>
+#include <tf/transform_datatypes.h> //TODO: can do without this?
 
 class markers_to_map
 {
