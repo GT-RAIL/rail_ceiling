@@ -59,6 +59,16 @@ float round(float f,float pres) {
     return (float) (floor(f*(1.0f/pres) + 0.5)/(1.0f/pres));
 }
 
+float min(float a, float b) {
+  if (a <= b) return a;
+  return b;
+}
+
+float max(float a, float b) {
+  if (a >= b) return a;
+  return b;
+}
+
 void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers)
 {
   //Initialize map object
@@ -77,12 +87,14 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
   map.info.origin.orientation.z = 0.0;
   map.info.origin.orientation.w = 1.0;
   vector<signed char> mapData(map.info.width * map.info.height);
+  fill(mapData.begin(), mapData.end(), -1);
+  /*
   for(int i=0; i<(map.info.width * map.info.height); i++){
     mapData[i] = -1;
   }
+  */
 
   float res = map.info.resolution;
-
   tf::StampedTransform transform;
   float xAbs;
   float yAbs;
@@ -114,6 +126,50 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         }
       }
 
+      //attempting to rotate it
+      int angle=45;        //45° for example
+      //Convert degrees to radians
+      float radians=(2*3.1416*angle)/360;
+
+      float cosine=(float)cos(radians);
+      float sine=(float)sin(radians);
+
+      float Point1x=(-(float)map.info.height*sine);
+      float Point1y=((float)map.info.height*cosine);
+      float Point2x=((float)map.info.width*cosine-(float)map.info.height*sine);
+      float Point2y=((float)map.info.height*cosine+(float)map.info.width*sine);
+      float Point3x=((float)map.info.width*cosine);
+      float Point3y=((float)map.info.width*sine);
+
+      float minx=min(0,min(Point1x,min(Point2x,Point3x)));
+      float miny=min(0,min(Point1y,min(Point2y,Point3y)));
+      float maxx=max(Point1x,max(Point2x,Point3x));
+      float maxy=max(Point1y,max(Point2y,Point3y));
+
+      int DestBitmapWidth=(int)ceil(fabs(maxx)-minx);
+      int DestBitmapHeight=(int)ceil(fabs(maxy)-miny);
+
+
+      vector<signed char> rotateMapData(DestBitmapWidth * DestBitmapHeight);
+
+      for(int x=0;x<DestBitmapWidth;x++)
+      {
+        for(int y=0;y<DestBitmapHeight;y++)
+        {
+          int SrcBitmapx=(int)((x+minx)*cosine+(y+miny)*sine);
+          int SrcBitmapy=(int)((y+miny)*cosine-(x+minx)*sine);
+          if(SrcBitmapx >= 0 && SrcBitmapx < map.info.width && SrcBitmapy >= 0 && SrcBitmapy < map.info.height)
+          {
+            rotateMapData[x+y*DestBitmapWidth] = mapData[SrcBitmapx+SrcBitmapy*map.info.width];
+          }
+        }
+      }
+
+      map.info.width = DestBitmapWidth;
+      map.info.height = DestBitmapHeight;
+      map.data = rotateMapData;
+      //map.data = mapData;
+      map_out.publish(map);
 
     }
     catch (tf::TransformException ex){
@@ -123,8 +179,9 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
 
 
-  map.data = mapData;
-  map_out.publish(map);
+  //cite: http://www.leunen.com/cbuilder/rotbmp.html
+
+
 
 }
 
