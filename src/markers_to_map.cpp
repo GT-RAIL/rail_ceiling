@@ -115,6 +115,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
   for(int i = 0; i != markers->markers.size(); i++) {
     try{
       listener.lookupTransform("/ar_marker_0", "/ar_map",ros::Time(0), transform); //TODO,  generalize ar_marker_0
+
       xAbs = round(transform.getOrigin().x()-map.info.origin.position.x, map.info.resolution);
       yAbs = round(transform.getOrigin().y()-map.info.origin.position.y, map.info.resolution);
       xGrid = xAbs/res;
@@ -146,23 +147,27 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
       //attempting to rotate it
 
-      float angle = yaw;
-      //Convert degrees to radians
-      float radians = angle;
-      //int angle=45;
-      //float radians=(2*3.1416*angle)/360;
 
-      ROS_INFO(" %d  %d  %f",xGrid, yGrid, angle);
+      float angle = yaw;
+      float radians = angle;
+      /*
+      int angle=0;
+      float radians=(2*3.1416*angle)/360;
+*/
+      //ROS_INFO(" %d  %d  %f",xGrid, yGrid, angle);
 
       float cosine=(float)cos(radians);
       float sine=(float)sin(radians);
 
-      float Point1x=(-(float)obstacle.info.height*sine);
-      float Point1y=((float)obstacle.info.height*cosine);
-      float Point2x=((float)obstacle.info.width*cosine-(float)obstacle.info.height*sine);
-      float Point2y=((float)obstacle.info.height*cosine+(float)obstacle.info.width*sine);
-      float Point3x=((float)obstacle.info.width*cosine);
-      float Point3y=((float)obstacle.info.width*sine);
+      float height = (float)obstacle.info.height;
+      float width = (float)obstacle.info.width;
+
+      float Point1x=(-height*sine);
+      float Point1y=(height*cosine);
+      float Point2x=(width*cosine-height*sine);
+      float Point2y=(height*cosine+width*sine);
+      float Point3x=(width*cosine);
+      float Point3y=(width*sine);
 
       float minx=min(0,min(Point1x,min(Point2x,Point3x)));
       float miny=min(0,min(Point1y,min(Point2y,Point3y)));
@@ -174,10 +179,18 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
       //ROS_INFO("%f", -(float)obstacle.info.height*sine);
 
-      //int heightDiff = DestBitmapHeight-obstacle.info.height;
-      //int widthDiff = DestBitmapWidth-obstacle.info.width;
+      //int xOffset = -20; round(height*cos(radians),0.025);
+      /*
+      int yOffset = -(height+round(height*sin(radians),0.025));
+      int xOffset = -(height-yOffset);
+      */
 
-      //vector<signed char> rotateObsData(DestBitmapWidth * DestBitmapHeight);
+
+      int xOffset = round(Point3x-Point2x,0.025);
+      int yOffset = height+round(Point1y,0.025);
+
+
+      vector<signed char> rotateObsData(DestBitmapWidth * DestBitmapHeight);
 
       for(int x=0;x<DestBitmapWidth;x++)
       {
@@ -188,16 +201,22 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           if(SrcBitmapx >= 0 && SrcBitmapx < obstacle.info.width && SrcBitmapy >= 0 && SrcBitmapy < obstacle.info.height)
           {
             //rotateObsData[x+y*DestBitmapWidth] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
-            mapData[(xGrid+x)+(yGrid-y)*map.info.width] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
+            mapData[(xGrid+x+xOffset)+(yGrid-y+yOffset)*map.info.width] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
           }
         }
       }
 
-      /*
+      //ROS_INFO("%d, %d    %f, %f    %f, %f    %f, %f    %f",xGrid, yGrid, Point1x, Point1y, Point2x, Point2y, Point3x, Point3y, radians);
+      ROS_INFO("%d, %d, %f, %f",xOffset, yOffset, radians, height);
+      //ROS_INFO(" %d  %d",xGrid, yGrid;
+
+
+/*
       //need to merge rotateObsData into mapData
       for (int j = 0; j < DestBitmapWidth; j++) {
         for (int k = 0; k < DestBitmapHeight; k++) {
-          //mapData[(xGrid+j)+(yGrid-k)*map.info.width] = rotateObsData[j+k*DestBitmapWidth];
+          mapData[(xGrid+j+xOffset)+(yGrid-k+yOffset)*map.info.width] = rotateObsData[j+k*DestBitmapWidth];
+          //mapData[(xGrid+j-height)+(yGrid-k)*map.info.width] = rotateObsData[j+k*DestBitmapWidth];
         }
       }*/
 
