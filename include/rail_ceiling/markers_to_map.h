@@ -21,6 +21,8 @@
 #include <vector>
 #include <tf/transform_datatypes.h> //TODO: can do without this?
 
+#define PI 3.14159265358979323846  /* pi */
+
 class markers_to_map
 {
 public:
