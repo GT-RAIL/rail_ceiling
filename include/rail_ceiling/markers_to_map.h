@@ -1,25 +1,25 @@
-//TODO FIX comments
-
-
 /*!
- * \odom_covariance_converter.h
- * \brief Adds covariance matrix to odometry message
+ * \markers_to_map.cpp
+ * \brief places obstacles on a map at a location corresponding to an ar marker
  *
- * odom_covariance_converter adds a covariance matrix to odometry messages so they are compatible with robot_pose_efk.
+ * places obstacles on a map at a location corresponding to an ar marker
  *
  * \author Steven Kordell, WPI - spkordell@wpi.edu
- * \date June 16, 2014
+ * \date June 25, 2014
  */
+
+
+//TODO:Fix comments
 
 #ifndef MARKERS_TO_MAP_H_
 #define MARKERS_TO_MAP_H_
 
+#include <vector>
 #include <ros/ros.h>
 #include <ar_track_alvar/AlvarMarkers.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_listener.h>
-#include <vector>
-#include <tf/transform_datatypes.h> //TODO: can do without this?
+#include <tf/transform_datatypes.h>
 
 #define PI 3.14159265358979323846  /* pi */
 
@@ -37,18 +37,46 @@ private:
   //TODO: fix comments
 
   ros::Subscriber markers_in; /*!< markers topic */
-  ros::Publisher map_out; /*!< map topic */
-  tf::TransformListener listener; /* transform listener */
+  ros::Subscriber map_in; /*!< map_in topic */
+  ros::Publisher map_out; /*!< map_out topic */
+  tf::TransformListener listener; /*!< transform listener */
+  nav_msgs::OccupancyGrid globalMap; /*!< map used for determining parameters of output map */
+  bool mapReceived; /*!< true when a map has been received */
 
   /*!
-   * converter callback function.
-   *
-   * \param odom the message for the odom topic
+   * marker callback function: publishes a map with obstacles corresponding to ar markers
+   * \param Markers markers registered by ar_track_alvar
    */
   void markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers);
 
+  /*!
+   * callback for receiving the environment map, used for determining output map parameters
+   * \param map The map
+   */
+  void map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map);
+
+  /*!
+   * Rounds a floating point number to a specified precision, used for discretizing continuous values into grid cells
+   * \param f The number to round
+   * \param prec The precision to round the number to
+   * \returns The input value rounded to the specified precision
+   */
   float round(float f,float prec);
+
+  /*!
+   * Returns the minimum of two input values
+   * \param a The first input value
+   * \param b The second input value
+   * \returns The smallest of the two inputs
+   */
   float min(float a, float b);
+
+  /*!
+   * Returns the maximum of two input values
+   * \param a The first input value
+   * \param b The second input value
+   * \returns The largest of the two inputs
+   */
   float max(float a, float b);
 
 };
