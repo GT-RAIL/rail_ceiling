@@ -15,6 +15,7 @@
 #define MARKERS_TO_MAP_H_
 
 #include <vector>
+#include <boost/lexical_cast.hpp>
 #include <ros/ros.h>
 #include <ar_track_alvar/AlvarMarkers.h>
 #include <nav_msgs/OccupancyGrid.h>

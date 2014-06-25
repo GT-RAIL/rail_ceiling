@@ -60,7 +60,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     vector<signed char> mapData(map.info.width * map.info.height);
     fill(mapData.begin(), mapData.end(), -1);
 
-    float res = map.info.resolution;
     tf::StampedTransform transform;
     float xAbs;
     float yAbs;
@@ -74,48 +73,47 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
     for(int i = 0; i != markers->markers.size(); i++) {
       try{
-        listener.lookupTransform("/ar_map", "/ar_marker_0",ros::Time(0), transform); //TODO,  generalize ar_marker_0
-
+        //Find transform and discretize sizes to grid
+        listener.lookupTransform("/ar_map", "/ar_marker_"+(boost::lexical_cast<string>(markers->markers[i].id)), ros::Time(0), transform);
         xAbs = round(transform.getOrigin().x()-map.info.origin.position.x, map.info.resolution);
         yAbs = round(transform.getOrigin().y()-map.info.origin.position.y, map.info.resolution);
-        xGrid = xAbs/res;
-        yGrid = yAbs/res;
-        xGridWidth = round(xAbsWidth, res)/res;
-        yGridWidth = round(yAbsWidth, res)/res;
+        xGrid = xAbs/map.info.resolution;
+        yGrid = yAbs/map.info.resolution;
+        xGridWidth = round(xAbsWidth, map.info.resolution)/map.info.resolution;
+        yGridWidth = round(yAbsWidth, map.info.resolution)/map.info.resolution;
 
+        //Create the obstacle in its own grid
         nav_msgs::OccupancyGrid obstacle;
         vector<signed char> obstacleData(xGridWidth * yGridWidth);
-        fill(obstacleData.begin(), obstacleData.end(), 127);
+        fill(obstacleData.begin(), obstacleData.end(), 128);
         obstacle.info.width=xGridWidth;
         obstacle.info.height=yGridWidth;
 
+        //Find the needed rotation
         tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(), transform.getRotation().w());
         double roll, pitch, yaw;
         tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-
         float angle = yaw;
-
         float cosine=(float)cos(angle);
         float sine=(float)sin(angle);
 
+        //Calculate dimensions of rotated obstacles bounding box
         float height = (float)obstacle.info.height;
         float width = (float)obstacle.info.width;
-
         float Point1x=(-height*sine);
         float Point1y=(height*cosine);
         float Point2x=(width*cosine-height*sine);
         float Point2y=(height*cosine+width*sine);
         float Point3x=(width*cosine);
         float Point3y=(width*sine);
-
         float minx=min(0,min(Point1x,min(Point2x,Point3x)));
         float miny=min(0,min(Point1y,min(Point2y,Point3y)));
         float maxx=max(Point1x,max(Point2x,Point3x));
         float maxy=max(Point1y,max(Point2y,Point3y));
+        int DestWidth=(int)ceil(fabs(maxx)-minx);
+        int DestHeight=(int)ceil(fabs(maxy)-miny);
 
-        int DestBitmapWidth=(int)ceil(fabs(maxx)-minx);
-        int DestBitmapHeight=(int)ceil(fabs(maxy)-miny);
-
+        //Calculate offset from bounding box for drawing on map based on the quadrant the obstacle was rotated into
         int xOffset;
         int yOffset;
         if ((angle >= 0 && angle <= (PI/2)+0.001) || (angle >= -2*PI-0.001 && angle < -3*PI/2)) {
@@ -131,25 +129,28 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           xOffset = -Point3x;
           yOffset = 0;
         }
-        for(int x=0;x<DestBitmapWidth;x++)
+
+        //Rotate every point on the obstacle and draw it on the map
+        for(int x=0;x<DestWidth;x++)
         {
-          for(int y=0; y<DestBitmapHeight; y++)
+          for(int y=0; y<DestHeight; y++)
           {
-            int SrcBitmapx=(int)((x+minx)*cosine+(y+miny)*sine);
-            int SrcBitmapy=(int)((y+miny)*cosine-(x+minx)*sine);
-            if(SrcBitmapx >= 0 && SrcBitmapx < obstacle.info.width && SrcBitmapy >= 0 && SrcBitmapy < obstacle.info.height)
+            int SrcX=(int)((x+minx)*cosine+(y+miny)*sine);
+            int SrcY=(int)((y+miny)*cosine-(x+minx)*sine);
+            if(SrcX >= 0 && SrcX < obstacle.info.width && SrcY >= 0 && SrcY < obstacle.info.height)
             {
-              mapData[(xGrid+x+xOffset)+(yGrid+y+yOffset)*map.info.width] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
+              mapData[(xGrid+x+xOffset)+(yGrid+y+yOffset)*map.info.width] = obstacleData[SrcX+SrcY*obstacle.info.width];
             }
           }
         }
-        map.data = mapData;
-        map_out.publish(map);
       }
       catch (tf::TransformException ex){
         ROS_ERROR("%s",ex.what());
       }
     }
+    //publish the map
+    map.data = mapData;
+    map_out.publish(map);
   }
 }
 
