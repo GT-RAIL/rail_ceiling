@@ -36,17 +36,20 @@ private:
 
   //TODO: fix comments
 
+  ros::Subscriber markers_in; /*!< markers topic */
+  ros::Publisher map_out; /*!< map topic */
+  tf::TransformListener listener; /* transform listener */
+
   /*!
    * converter callback function.
    *
    * \param odom the message for the odom topic
    */
   void markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers);
-  //void updateMarkerList(const ar_track_alvar::AlvarMarkers::ConstPtr& marker);
 
-  ros::Subscriber markers_in; /*!< markers topic */
-  ros::Publisher map_out; /*!< map topic */
-  tf::TransformListener listener; /* transform listener */
+  float round(float f,float prec);
+  float min(float a, float b);
+  float max(float a, float b);
 
 };
 

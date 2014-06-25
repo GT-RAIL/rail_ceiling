@@ -27,44 +27,16 @@ markers_to_map::markers_to_map()
 }
 
 
-/*
- *
- * TODO: Remove this
- *
- */
-
-/*
-void markers_to_map::updateMarkerList(const ar_track_alvar::AlvarMarkers::ConstPtr& marker)
-{
-  ROS_INFO("%d",marker->);
-
-  //check to see if the marker is already in the list, if so, update that marker
-  /*
-  bool markerFound = false;
-  for(vector<ar_track_alvar::AlvarMarkers::ConstPtr>::iterator it = markerArray.begin(); it != markerArray.end(); it++) {
-      if (marker == *it) {
-        markerFound = true;
-        ROS_INFO("marker found");
-      }
-  }
-  //else, this is a new marker, add it to the list
-  if (!markerFound) {
-    markerArray.push_back(marker);
-    ROS_INFO("marker added");
-  }
-
-}
-*/
-float round(float f,float pres) {
-    return (float) (floor(f*(1.0f/pres) + 0.5)/(1.0f/pres));
+float markers_to_map::round(float f,float prec) {
+    return (float) (floor(f*(1.0f/prec) + 0.5)/(1.0f/prec));
 }
 
-float min(float a, float b) {
+float markers_to_map::min(float a, float b) {
   if (a <= b) return a;
   return b;
 }
 
-float max(float a, float b) {
+float markers_to_map::max(float a, float b) {
   if (a >= b) return a;
   return b;
 }
@@ -88,11 +60,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
   map.info.origin.orientation.w = 1.0;
   vector<signed char> mapData(map.info.width * map.info.height);
   fill(mapData.begin(), mapData.end(), -1);
-  /*
-  for(int i=0; i<(map.info.width * map.info.height); i++){
-    mapData[i] = -1;
-  }
-  */
 
   float res = map.info.resolution;
   tf::StampedTransform transform;
@@ -108,8 +75,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
   for(int i = 0; i != markers->markers.size(); i++) {
     try{
-      //listener.lookupTransform("/ar_marker_0", "/ar_map",ros::Time(0), transform); //TODO,  generalize ar_marker_0
-
       listener.lookupTransform("/ar_map", "/ar_marker_0",ros::Time(0), transform); //TODO,  generalize ar_marker_0
 
       xAbs = round(transform.getOrigin().x()-map.info.origin.position.x, map.info.resolution);
@@ -119,38 +84,19 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       xGridWidth = round(xAbsWidth, res)/res;
       yGridWidth = round(yAbsWidth, res)/res;
 
-      //ROS_INFO("%d  %f   %f",markers->markers[i].id,transform.getOrigin().x(),xTemp);
-      //ROS_INFO("%d  %d", xGrid, yGrid);
-
       nav_msgs::OccupancyGrid obstacle;
       vector<signed char> obstacleData(xGridWidth * yGridWidth);
       fill(obstacleData.begin(), obstacleData.end(), 127);
       obstacle.info.width=xGridWidth;
       obstacle.info.height=yGridWidth;
-/*
-      for (int j = 0; j < xGridWidth; j++) {
-        for (int k = 0; k < yGridWidth; k++) {
-          mapData[(xGrid+j)+(yGrid-k)*map.info.width] = 127;
-        }
-      }
-*/
 
       //TODO: better way to do this? Probably don't even have to convert it since we're using a bunch of sines cosines anyhow
       tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(), transform.getRotation().w());
       double roll, pitch, yaw;
       tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
-
-      //attempting to rotate it
-
-
       float angle = yaw;
       float radians = angle;
-
-      //int angle=-90;
-      //float radians=(2*3.1416*angle)/360;
-
-      //ROS_INFO(" %d  %d  %f",xGrid, yGrid, angle);
 
       float cosine=(float)cos(radians);
       float sine=(float)sin(radians);
@@ -173,83 +119,21 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       int DestBitmapWidth=(int)ceil(fabs(maxx)-minx);
       int DestBitmapHeight=(int)ceil(fabs(maxy)-miny);
 
-      //ROS_INFO("%f", -(float)obstacle.info.height*sine);
-
-      //TODO remove cases
-
       int xOffset;
       int yOffset;
-
-/*
       if ((radians >= 0 && radians <= (PI/2)+0.001) || (radians >= -2*PI-0.001 && radians < -3*PI/2)) {
-        ROS_INFO("Case 1");
-        xOffset = Point1x;
-        yOffset = 0;
-      } else if ((radians > PI/2 && radians <= PI+0.001) || (radians >= -3*PI/2-0.001 && radians < -PI)) {
-        ROS_INFO("Case 2");
-        xOffset = Point2x;
-        yOffset = -Point1y;
-      } else if ((radians > PI && radians <= (3*PI/2)+0.001) || (radians >= -PI-0.001 && radians < -PI/2)) {
-        ROS_INFO("Case 3");
-        xOffset = Point3x;
-        yOffset = -Point2y;
-      } else if ((radians > (3*PI/2) && radians <= (2*PI)+0.001) || (radians >= -PI/2-0.001 && radians < 0)) {
-        ROS_INFO("Case 4");
-        xOffset = 0;
-        yOffset = -Point3y;
-      } else {
-        ROS_ERROR("MARKERS_TO_MAP.CPP -- MISSING CASE");
-      }
-      */
-
-
-      /*
-      if ((radians >= 0 && radians <= (PI/2)+0.001) || (radians >= -2*PI-0.001 && radians < -3*PI/2)) {
-        ROS_INFO("Case 1");
-        xOffset = -Point3x;
-        yOffset = Point2y;
-      } else if ((radians > PI/2 && radians <= PI+0.001) || (radians >= -3*PI/2-0.001 && radians < -PI)) {
-        ROS_INFO("Case 2");
-        xOffset = 0;
-        yOffset = Point3y;
-      } else if ((radians > PI && radians <= (3*PI/2)+0.001) || (radians >= -PI-0.001 && radians < -PI/2)) {
-        ROS_INFO("Case 3");
-        xOffset = -Point1x;
-        yOffset = 0;
-      } else if ((radians > (3*PI/2) && radians <= (2*PI)+0.001) || (radians >= -PI/2-0.001 && radians < 0)) {
-        ROS_INFO("Case 4");
-        xOffset = -Point2x;
-        yOffset = Point1y;
-      } else {
-        ROS_ERROR("MARKERS_TO_MAP.CPP -- MISSING CASE");
-      }
-*/
-
-
-      if ((radians >= 0 && radians <= (PI/2)+0.001) || (radians >= -2*PI-0.001 && radians < -3*PI/2)) {
-        ROS_INFO("Case 1");
         xOffset = -Point3x+Point1x;
         yOffset = -Point3y;
       } else if ((radians > PI/2 && radians <= PI+0.001) || (radians >= -3*PI/2-0.001 && radians < -PI)) {
-        ROS_INFO("Case 2");
         xOffset = Point1x;
         yOffset = -Point3y+Point1y;
       } else if ((radians > PI && radians <= (3*PI/2)+0.001) || (radians >= -PI-0.001 && radians < -PI/2)) {
-        ROS_INFO("Case 3");
         xOffset = 0;
         yOffset = Point1y;
       } else if ((radians > (3*PI/2) && radians <= (2*PI)+0.001) || (radians >= -PI/2-0.001 && radians < 0)) {
-        ROS_INFO("Case 4");
         xOffset = -Point3x;
         yOffset = 0;
-      } else {
-        ROS_ERROR("MARKERS_TO_MAP.CPP -- MISSING CASE");
       }
-
-
-
-      vector<signed char> rotateObsData(DestBitmapWidth * DestBitmapHeight);
-
       for(int x=0;x<DestBitmapWidth;x++)
       {
         for(int y=0; y<DestBitmapHeight; y++)
@@ -258,33 +142,12 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           int SrcBitmapy=(int)((y+miny)*cosine-(x+minx)*sine);
           if(SrcBitmapx >= 0 && SrcBitmapx < obstacle.info.width && SrcBitmapy >= 0 && SrcBitmapy < obstacle.info.height)
           {
-            //rotateObsData[x+y*DestBitmapWidth] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
             mapData[(xGrid+x+xOffset)+(yGrid+y+yOffset)*map.info.width] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
           }
         }
       }
-
-      //ROS_INFO("%d, %d    %f, %f    %f, %f    %f, %f    %f",xGrid, yGrid, Point1x, Point1y, Point2x, Point2y, Point3x, Point3y, radians);
-      ROS_INFO("%d, %d, %f, %f",xOffset, yOffset, radians, height);
-      //ROS_INFO(" %d  %d",xGrid, yGrid;
-
-
-/*
-      //need to merge rotateObsData into mapData
-      for (int j = 0; j < DestBitmapWidth; j++) {
-        for (int k = 0; k < DestBitmapHeight; k++) {
-          mapData[(xGrid+j+xOffset)+(yGrid-k+yOffset)*map.info.width] = rotateObsData[j+k*DestBitmapWidth];
-          //mapData[(xGrid+j-height)+(yGrid-k)*map.info.width] = rotateObsData[j+k*DestBitmapWidth];
-        }
-      }*/
-
-
-      //map.info.width = DestBitmapWidth;
-      //map.info.height = DestBitmapHeight;
-      //map.data = rotateMapData;
       map.data = mapData;
       map_out.publish(map);
-
     }
     catch (tf::TransformException ex){
       ROS_ERROR("%s",ex.what());
