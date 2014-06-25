@@ -145,10 +145,10 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       float angle = yaw;
       float radians = angle;
 
-      /*
-      int angle=-360;
-      float radians=(2*3.1416*angle)/360;
-      */
+
+      //int angle=360;
+      //float radians=(2*3.1416*angle)/360;
+
       //ROS_INFO(" %d  %d  %f",xGrid, yGrid, angle);
 
       float cosine=(float)cos(radians);
@@ -179,6 +179,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       int xOffset;
       int yOffset;
 
+      /*
       if ((radians >= 0 && radians <= (PI/2)+0.001) || (radians >= -2*PI-0.001 && radians < -3*PI/2)) {
         ROS_INFO("Case 1");
         xOffset = Point1x;
@@ -195,6 +196,27 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         ROS_INFO("Case 4");
         xOffset = 0;
         yOffset = -Point3y;
+      } else {
+        ROS_ERROR("MARKERS_TO_MAP.CPP -- MISSING CASE");
+      }
+*/
+
+      if ((radians >= 0 && radians <= (PI/2)+0.001) || (radians >= -2*PI-0.001 && radians < -3*PI/2)) {
+        ROS_INFO("Case 1");
+        xOffset = -Point3x;
+        yOffset = Point2y;
+      } else if ((radians > PI/2 && radians <= PI+0.001) || (radians >= -3*PI/2-0.001 && radians < -PI)) {
+        ROS_INFO("Case 2");
+        xOffset = 0;
+        yOffset = Point3y;
+      } else if ((radians > PI && radians <= (3*PI/2)+0.001) || (radians >= -PI-0.001 && radians < -PI/2)) {
+        ROS_INFO("Case 3");
+        xOffset = -Point1x;
+        yOffset = 0;
+      } else if ((radians > (3*PI/2) && radians <= (2*PI)+0.001) || (radians >= -PI/2-0.001 && radians < 0)) {
+        ROS_INFO("Case 4");
+        xOffset = -Point2x;
+        yOffset = Point1y;
       } else {
         ROS_ERROR("MARKERS_TO_MAP.CPP -- MISSING CASE");
       }
