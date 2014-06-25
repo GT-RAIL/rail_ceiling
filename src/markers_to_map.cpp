@@ -60,15 +60,32 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     vector<signed char> mapData(map.info.width * map.info.height);
     fill(mapData.begin(), mapData.end(), -1);
 
-    //TODO: get widths from bundle xml file (convert to m)
-    float xAbsWidth = 111.5/100;
-    float yAbsWidth = 40.5/100;
+
 
     //TODO: Add border based on marker size;
 
     //Iterate over every marker bundle
-    for(int i = 0; i != markers->markers.size(); i++) {
-      try{
+    for(int i = 0; i < markers->markers.size(); i++) {
+
+      //TODO: better name for these and related variables
+      float xAbsLength = 0;
+      float yAbsLength = 0;
+
+      //find the relevant bundle
+      for (int j = 0; j < bundles.size(); j++) {
+        if (bundles[j]->getId() == markers->markers[i].id) {
+          xAbsLength = bundles[j]->getBundleWidth();
+          yAbsLength = bundles[j]->getBundleHeight();
+        }
+      }
+      if (xAbsLength == 0 && yAbsLength == 0) {
+        ROS_ERROR("AR ID not found in list of bundles");
+        continue;
+      }
+
+      //TODO: get widths from bundle xml file (convert to m)
+
+      try {
         //Find transform and discretize sizes to grid
         tf::StampedTransform transform;
         listener.lookupTransform("/ar_map", "/ar_marker_"+(boost::lexical_cast<string>(markers->markers[i].id)), ros::Time(0), transform);
@@ -76,15 +93,15 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         float yAbs = round(transform.getOrigin().y()-map.info.origin.position.y, map.info.resolution);
         int xGrid = xAbs/map.info.resolution;
         int yGrid = yAbs/map.info.resolution;
-        int xGridWidth = round(xAbsWidth, map.info.resolution)/map.info.resolution;
-        int yGridWidth = round(yAbsWidth, map.info.resolution)/map.info.resolution;
+        int xGridLength = round(xAbsLength, map.info.resolution)/map.info.resolution;
+        int yGridLength = round(yAbsLength, map.info.resolution)/map.info.resolution;
 
         //Create the obstacle in its own grid
         nav_msgs::OccupancyGrid obstacle;
-        vector<signed char> obstacleData(xGridWidth * yGridWidth);
+        vector<signed char> obstacleData(xGridLength * yGridLength);
         fill(obstacleData.begin(), obstacleData.end(), 127);
-        obstacle.info.width=xGridWidth;
-        obstacle.info.height=yGridWidth;
+        obstacle.info.width=xGridLength;
+        obstacle.info.height=yGridLength;
 
         //Find the needed rotation
         tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(), transform.getRotation().w());
@@ -151,8 +168,13 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
   }
 }
 
+
+void markers_to_map::addBundle(Bundle* bundle) {
+  bundles.push_back(bundle);
+}
+
 //-------------------
-//TODO Move bundle class methods into seperate file
+//TODO Move bundle class method definitions into seperate file
 //-------------------
 
 
@@ -245,6 +267,8 @@ int main(int argc, char **argv)
     }
     Bundle aBundle;
     aBundle.parseBundle(doc);
+
+    converter.addBundle(&aBundle);
   }
 
 

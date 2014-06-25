@@ -46,8 +46,6 @@ private:
 };
 
 
-
-
 class markers_to_map
 {
 public:
@@ -57,6 +55,8 @@ public:
    */
   markers_to_map();
 
+  //TODO:comment
+  void addBundle(Bundle* bundle);
 private:
 
   //TODO: fix comments
@@ -67,6 +67,7 @@ private:
   tf::TransformListener listener; /*!< transform listener */
   nav_msgs::OccupancyGrid globalMap; /*!< map used for determining parameters of output map */
   bool mapReceived; /*!< true when a map has been received */
+  std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
 
   /*!
    * marker callback function: publishes a map with obstacles corresponding to ar markers
