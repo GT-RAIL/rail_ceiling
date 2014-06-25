@@ -60,32 +60,29 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     vector<signed char> mapData(map.info.width * map.info.height);
     fill(mapData.begin(), mapData.end(), -1);
 
-    tf::StampedTransform transform;
-    float xAbs;
-    float yAbs;
     //TODO: get widths from bundle xml file (convert to m)
     float xAbsWidth = 111.5/100;
-    float yAbsWidth = 39.5/100;
-    int xGrid;
-    int yGrid;
-    int xGridWidth;
-    int yGridWidth;
+    float yAbsWidth = 40.5/100;
 
+    //TODO: Add border based on marker size;
+
+    //Iterate over every marker bundle
     for(int i = 0; i != markers->markers.size(); i++) {
       try{
         //Find transform and discretize sizes to grid
+        tf::StampedTransform transform;
         listener.lookupTransform("/ar_map", "/ar_marker_"+(boost::lexical_cast<string>(markers->markers[i].id)), ros::Time(0), transform);
-        xAbs = round(transform.getOrigin().x()-map.info.origin.position.x, map.info.resolution);
-        yAbs = round(transform.getOrigin().y()-map.info.origin.position.y, map.info.resolution);
-        xGrid = xAbs/map.info.resolution;
-        yGrid = yAbs/map.info.resolution;
-        xGridWidth = round(xAbsWidth, map.info.resolution)/map.info.resolution;
-        yGridWidth = round(yAbsWidth, map.info.resolution)/map.info.resolution;
+        float xAbs = round(transform.getOrigin().x()-map.info.origin.position.x, map.info.resolution);
+        float yAbs = round(transform.getOrigin().y()-map.info.origin.position.y, map.info.resolution);
+        int xGrid = xAbs/map.info.resolution;
+        int yGrid = yAbs/map.info.resolution;
+        int xGridWidth = round(xAbsWidth, map.info.resolution)/map.info.resolution;
+        int yGridWidth = round(yAbsWidth, map.info.resolution)/map.info.resolution;
 
         //Create the obstacle in its own grid
         nav_msgs::OccupancyGrid obstacle;
         vector<signed char> obstacleData(xGridWidth * yGridWidth);
-        fill(obstacleData.begin(), obstacleData.end(), 128);
+        fill(obstacleData.begin(), obstacleData.end(), 127);
         obstacle.info.width=xGridWidth;
         obstacle.info.height=yGridWidth;
 
@@ -154,7 +151,82 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
   }
 }
 
+//-------------------
+//TODO Move bundle class methods into seperate file
+//-------------------
 
+
+Bundle::Bundle() {}
+
+void Bundle::parseBundle(TiXmlDocument doc)
+{
+
+  //TODO: This is messy. Make it cleaner.
+
+  TiXmlHandle hDoc(&doc);
+  TiXmlElement* pElem;
+  TiXmlHandle hRoot(0);
+
+  pElem=hDoc.FirstChildElement().Element();
+  if (!pElem) return;
+  int markerCount;
+  pElem->QueryIntAttribute("markers",&markerCount);
+  //ROS_INFO("%s %d",pElem->Value(),markerCount);
+
+  // save this for later
+  hRoot=TiXmlHandle(pElem);
+
+  //first marker
+  TiXmlHandle markerRoot =  hRoot.FirstChild("marker");
+  TiXmlElement* pMarkersNode = markerRoot.Element();
+
+  //save marker id
+  pMarkersNode->QueryIntAttribute("index",&id);
+ // ROS_INFO("%s %d",pMarkersNode->Value(), id);
+
+  //save marker size
+  TiXmlElement* pCornersNode = markerRoot.FirstChild().Element();
+  pCornersNode->QueryFloatAttribute("x",&markerSize);
+  markerSize = 2*abs(markerSize);
+  //ROS_INFO("%s %f",pCornersNode->Value(), markerSize);
+
+  //go to second marker to get width and height
+  float temp1;
+  float temp2;
+  pMarkersNode = pMarkersNode->NextSiblingElement();
+  pCornersNode = pMarkersNode->FirstChildElement();
+  pCornersNode->QueryFloatAttribute("x",&temp1);
+  pCornersNode = pCornersNode->NextSiblingElement();
+  pCornersNode->QueryFloatAttribute("x",&temp2);
+  bundleWidth = ((abs(temp1)+abs(temp2))/2)/100;
+  //ROS_INFO("%s %f",pCornersNode->Value(), bundleWidth);
+  pCornersNode->QueryFloatAttribute("y",&temp1);
+  pCornersNode = pCornersNode->NextSiblingElement();
+  pCornersNode->QueryFloatAttribute("y",&temp2);
+  bundleHeight = ((abs(temp1)+abs(temp2))/2)/100;
+  //ROS_INFO("%s %f",pCornersNode->Value(), bundleHeight);
+
+}
+
+int Bundle::getId()
+{
+  return id;
+}
+
+float Bundle::getMarkerSize()
+{
+  return markerSize;
+}
+
+float Bundle::getBundleWidth()
+{
+  return bundleWidth;
+}
+
+float Bundle::getBundleHeight()
+{
+  return bundleHeight;
+}
 
 int main(int argc, char **argv)
 {
@@ -163,6 +235,19 @@ int main(int argc, char **argv)
 
   // initialize the converter
   markers_to_map converter;
+
+  //TODO loaad multiple xml bundle files
+  if (argc > 1) {
+    TiXmlDocument doc(argv[1]);
+    if (!doc.LoadFile()) {
+      ROS_ERROR("Failed to load bundle: %s", argv[1]);
+      return EXIT_FAILURE;
+    }
+    Bundle aBundle;
+    aBundle.parseBundle(doc);
+  }
+
+
 
   ros::spin();
 

@@ -4,7 +4,8 @@ project(rail_ceiling)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED roscpp tf)
+find_package(catkin REQUIRED cmake_modules roscpp tf)
+find_package(TinyXML REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -76,10 +77,10 @@ find_package(catkin REQUIRED roscpp tf)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES rail_ceiling
 #  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+  DEPENDS TinyXML
 )
 
 ###########
@@ -92,6 +93,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${TinyXML_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -104,7 +106,7 @@ include_directories(
 add_executable(markers_to_map src/markers_to_map.cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(markers_to_map ${catkin_LIBRARIES})
+target_link_libraries(markers_to_map ${catkin_LIBRARIES} ${TinyXML_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
