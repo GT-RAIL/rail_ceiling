@@ -108,7 +108,9 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
   for(int i = 0; i != markers->markers.size(); i++) {
     try{
-      listener.lookupTransform("/ar_marker_0", "/ar_map",ros::Time(0), transform); //TODO,  generalize ar_marker_0
+      //listener.lookupTransform("/ar_marker_0", "/ar_map",ros::Time(0), transform); //TODO,  generalize ar_marker_0
+
+      listener.lookupTransform("/ar_map", "/ar_marker_0",ros::Time(0), transform); //TODO,  generalize ar_marker_0
 
       xAbs = round(transform.getOrigin().x()-map.info.origin.position.x, map.info.resolution);
       yAbs = round(transform.getOrigin().y()-map.info.origin.position.y, map.info.resolution);
@@ -145,8 +147,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       float angle = yaw;
       float radians = angle;
 
-
-      //int angle=360;
+      //int angle=-90;
       //float radians=(2*3.1416*angle)/360;
 
       //ROS_INFO(" %d  %d  %f",xGrid, yGrid, angle);
@@ -179,7 +180,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       int xOffset;
       int yOffset;
 
-      /*
+/*
       if ((radians >= 0 && radians <= (PI/2)+0.001) || (radians >= -2*PI-0.001 && radians < -3*PI/2)) {
         ROS_INFO("Case 1");
         xOffset = Point1x;
@@ -199,8 +200,10 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       } else {
         ROS_ERROR("MARKERS_TO_MAP.CPP -- MISSING CASE");
       }
-*/
+      */
 
+
+      /*
       if ((radians >= 0 && radians <= (PI/2)+0.001) || (radians >= -2*PI-0.001 && radians < -3*PI/2)) {
         ROS_INFO("Case 1");
         xOffset = -Point3x;
@@ -220,6 +223,29 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       } else {
         ROS_ERROR("MARKERS_TO_MAP.CPP -- MISSING CASE");
       }
+*/
+
+
+      if ((radians >= 0 && radians <= (PI/2)+0.001) || (radians >= -2*PI-0.001 && radians < -3*PI/2)) {
+        ROS_INFO("Case 1");
+        xOffset = -Point3x+Point1x;
+        yOffset = -Point3y;
+      } else if ((radians > PI/2 && radians <= PI+0.001) || (radians >= -3*PI/2-0.001 && radians < -PI)) {
+        ROS_INFO("Case 2");
+        xOffset = Point1x;
+        yOffset = -Point3y+Point1y;
+      } else if ((radians > PI && radians <= (3*PI/2)+0.001) || (radians >= -PI-0.001 && radians < -PI/2)) {
+        ROS_INFO("Case 3");
+        xOffset = 0;
+        yOffset = Point1y;
+      } else if ((radians > (3*PI/2) && radians <= (2*PI)+0.001) || (radians >= -PI/2-0.001 && radians < 0)) {
+        ROS_INFO("Case 4");
+        xOffset = -Point3x;
+        yOffset = 0;
+      } else {
+        ROS_ERROR("MARKERS_TO_MAP.CPP -- MISSING CASE");
+      }
+
 
 
       vector<signed char> rotateObsData(DestBitmapWidth * DestBitmapHeight);
@@ -233,7 +259,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           if(SrcBitmapx >= 0 && SrcBitmapx < obstacle.info.width && SrcBitmapy >= 0 && SrcBitmapy < obstacle.info.height)
           {
             //rotateObsData[x+y*DestBitmapWidth] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
-            mapData[(xGrid+x+xOffset)+(yGrid-y+yOffset)*map.info.width] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
+            mapData[(xGrid+x+xOffset)+(yGrid+y+yOffset)*map.info.width] = obstacleData[SrcBitmapx+SrcBitmapy*obstacle.info.width];
           }
         }
       }
