@@ -4,7 +4,7 @@ project(rail_ceiling)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED cmake_modules roscpp tf)
+find_package(catkin REQUIRED cmake_modules roscpp tf costmap_2d)
 find_package(TinyXML REQUIRED)
 
 ## System dependencies are found with CMake's conventions
@@ -40,10 +40,10 @@ include_directories(
 )
 
 ## Declare a cpp library
-add_library(rail_ceiling
-  src/bundle.cpp
-)
+add_library(rail_ceiling src/bundle.cpp)
 target_link_libraries(rail_ceiling ${TinyXML_LIBRARIES} ${catkin_LIBRARIES})
+
+add_library(ceiling_layer src/ceiling_layer.cpp)
 
 ## Declare a cpp executable
 add_executable(markers_to_map src/markers_to_map.cpp)

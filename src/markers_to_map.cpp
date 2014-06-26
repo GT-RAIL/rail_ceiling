@@ -65,7 +65,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     map.header.stamp = ros::Time::now();
     map.info = globalMap.info;
     vector<signed char> mapData(map.info.width * map.info.height);
-    fill(mapData.begin(), mapData.end(), -1);
+    //fill(mapData.begin(), mapData.end(), -1);
 
     //Iterate over every marker bundle
     for (int i = 0; i < markers->markers.size(); i++)
@@ -108,7 +108,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         //Create the obstacle in its own grid
         nav_msgs::OccupancyGrid obstacle;
         vector<signed char> obstacleData(xGridLength * yGridLength);
-        fill(obstacleData.begin(), obstacleData.end(), 127);
+        fill(obstacleData.begin(), obstacleData.end(), 100);
         obstacle.info.width = xGridLength;
         obstacle.info.height = yGridLength;
 

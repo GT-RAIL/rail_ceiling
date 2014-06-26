@@ -1,0 +1,5 @@
+<library path="lib/libceiling_layer">
+  <class type="ceiling_layer_namespace::CeilingLayer" base_class_type="costmap_2d::Layer">
+    <description>TODO</description>
+  </class>
+</library>
