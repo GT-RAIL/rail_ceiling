@@ -18,12 +18,14 @@
   <build_depend>tinyxml</build_depend>
   <build_depend>costmap_2d</build_depend>
   <build_depend>cmake_modules</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
 
   <run_depend>roscpp</run_depend>    
   <run_depend>ar_track_alvar</run_depend>
   <run_depend>usb_cam</run_depend>
   <run_depend>tinyxml</run_depend>
   <run_depend>costmap_2d</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
   
   <export>
     <costmap_2d plugin="${prefix}/costmap_plugins.xml" />
