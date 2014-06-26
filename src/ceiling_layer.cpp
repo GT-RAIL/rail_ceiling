@@ -44,8 +44,15 @@ void CeilingLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32
 void CeilingLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y,
                                 double* max_x, double* max_y)
 {
-  if (!enabled_)
+  if (!enabled_ || !mapReceived)
     return;
+
+  //TODO: this algorithm is bad and I should feel bad (probably)
+  *min_x = -std::abs(obstacleMap.info.origin.position.x);
+  *min_y = -std::abs(obstacleMap.info.origin.position.y);                                                             
+  *max_x = -std::abs(obstacleMap.info.origin.position.x)+obstacleMap.info.width;
+  *max_y = -std::abs(obstacleMap.info.origin.position.y)+obstacleMap.info.height;
+  //ROS_ERROR("%f, %f, %f, %f",*min_x, *min_y, *max_x, * max_y);
 
   /*
   double mark_x = origin_x + cos(origin_yaw), mark_y = origin_y + sin(origin_yaw);
@@ -76,7 +83,15 @@ void CeilingLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, in
     {
 
       int index = getIndex(i, j);
-      master_grid.setCost(i, j, obstacleMap.data[index]);
+      if (obstacleMap.data[index] > 1) {
+	master_grid.setCost(i, j, 100);
+	  //	master_grid.setCost(i, j, LETHAL_OBSTACLE);
+	  //	ROS_ERROR("yup");
+      } else {
+	//        master_grid.setCost(i, j, NO_INFORMATION);
+        master_grid.setCost(i, j, 0);
+	//	ROS_ERROR("nope");
+      }
       /*
       if (costmap_[index] == NO_INFORMATION)
         continue;
