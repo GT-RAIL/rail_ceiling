@@ -1,41 +1,61 @@
-//TODO: fix header comment
+/*!
+ * \bundle.cpp
+ * \brief method definitions for working with bundles
+ *
+ * A bundle is a group of ar markers attached to an object. Bundles are defined in an xml file and
+ * used by ar_track_avlar for robustness against occlusion. The bundle class defined here is used
+ * for parsing these xml files to obtain information needed for projecting the bundle onto a map to
+ * aid in obstacle avoidance.
+ *
+ * \author Steven Kordell, WPI - spkordell@wpi.edu
+ * \date June 26, 2014
+ */
 
 #include <rail_ceiling/bundle.h>
 
-Bundle::Bundle() {}
-
 using namespace std;
 
-void Bundle::parseBundle(TiXmlDocument doc)
+Bundle::Bundle()
+{
+}
+
+bool Bundle::parseBundle(char* filepath)
 {
 
   //TODO: This is messy. Make it cleaner.
 
+  TiXmlDocument doc(filepath);
+  if (!doc.LoadFile())
+  {
+    ROS_ERROR("Failed to load bundle from %s", filepath);
+    return false;
+  }
   TiXmlHandle hDoc(&doc);
   TiXmlElement* pElem;
   TiXmlHandle hRoot(0);
 
-  pElem=hDoc.FirstChildElement().Element();
-  if (!pElem) return;
+  pElem = hDoc.FirstChildElement().Element();
+  if (!pElem)
+    return false;
   int markerCount;
-  pElem->QueryIntAttribute("markers",&markerCount);
+  pElem->QueryIntAttribute("markers", &markerCount);
   //ROS_INFO("%s %d",pElem->Value(),markerCount);
 
   // save this for later
-  hRoot=TiXmlHandle(pElem);
+  hRoot = TiXmlHandle(pElem);
 
   //first marker
-  TiXmlHandle markerRoot =  hRoot.FirstChild("marker");
+  TiXmlHandle markerRoot = hRoot.FirstChild("marker");
   TiXmlElement* pMarkersNode = markerRoot.Element();
 
   //save marker id
-  pMarkersNode->QueryIntAttribute("index",&id);
+  pMarkersNode->QueryIntAttribute("index", &id);
   //ROS_INFO("first %s id: %d",pMarkersNode->Value(), id);
 
   //save marker size
   TiXmlElement* pCornersNode = markerRoot.FirstChild().Element();
-  pCornersNode->QueryFloatAttribute("x",&markerSize);
-  markerSize = 2*abs(markerSize);
+  pCornersNode->QueryFloatAttribute("x", &markerSize);
+  markerSize = 2 * abs(markerSize);
   //ROS_INFO("first %s, marker size: %f",pCornersNode->Value(), markerSize);
 
   //go to second marker to get width and height
@@ -44,16 +64,18 @@ void Bundle::parseBundle(TiXmlDocument doc)
   pMarkersNode = pMarkersNode->NextSiblingElement();
   //ROS_INFO("second %s id: %d",pMarkersNode->Value(), id);
   pCornersNode = pMarkersNode->FirstChildElement();
-  pCornersNode->QueryFloatAttribute("x",&temp1);
+  pCornersNode->QueryFloatAttribute("x", &temp1);
   pCornersNode = pCornersNode->NextSiblingElement();
-  pCornersNode->QueryFloatAttribute("x",&temp2);
-  bundleWidth = ((abs(temp1)+abs(temp2))/2)/100;
+  pCornersNode->QueryFloatAttribute("x", &temp2);
+  bundleWidth = ((abs(temp1) + abs(temp2)) / 2) / 100;
   //ROS_INFO("%s %f",pCornersNode->Value(), bundleWidth);
-  pCornersNode->QueryFloatAttribute("y",&temp1);
+  pCornersNode->QueryFloatAttribute("y", &temp1);
   pCornersNode = pCornersNode->NextSiblingElement();
-  pCornersNode->QueryFloatAttribute("y",&temp2);
-  bundleHeight = ((abs(temp1)+abs(temp2))/2)/100;
+  pCornersNode->QueryFloatAttribute("y", &temp2);
+  bundleHeight = ((abs(temp1) + abs(temp2)) / 2) / 100;
   //ROS_INFO("%s %f",pCornersNode->Value(), bundleHeight);
+
+  return true;
 }
 
 int Bundle::getId()

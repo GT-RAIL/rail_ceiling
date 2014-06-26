@@ -8,9 +8,6 @@
  * \date June 25, 2014
  */
 
-
-//TODO:Fix comments
-
 #ifndef MARKERS_TO_MAP_H_
 #define MARKERS_TO_MAP_H_
 
@@ -26,7 +23,6 @@
 
 #define PI 3.14159265358979323846  /* pi */
 
-
 class markers_to_map
 {
 public:
@@ -37,11 +33,12 @@ public:
   markers_to_map();
 
   //TODO:comment
+  /*!
+   * Adds a bundle to the list of obstacle bundles
+   *\param bundle The bundle to add
+   */
   void addBundle(Bundle* bundle);
 private:
-
-  //TODO: fix comments
-
   ros::Subscriber markers_in; /*!< markers topic */
   ros::Subscriber map_in; /*!< map_in topic */
   ros::Publisher map_out; /*!< map_out topic */
@@ -52,7 +49,7 @@ private:
 
   /*!
    * marker callback function: publishes a map with obstacles corresponding to ar markers
-   * \param Markers markers registered by ar_track_alvar
+   * \param markers Markers registered by ar_track_alvar
    */
   void markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers);
 
@@ -68,7 +65,7 @@ private:
    * \param prec The precision to round the number to
    * \returns The input value rounded to the specified precision
    */
-  float round(float f,float prec);
+  float round(float f, float prec);
 
   /*!
    * Returns the minimum of two input values
@@ -87,8 +84,6 @@ private:
   float max(float a, float b);
 
 };
-
-//TODO: fix comments
 
 /*!
  * Creates and runs the markers_to_map node.
