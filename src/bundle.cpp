@@ -55,7 +55,7 @@ bool Bundle::parseBundle(char* filepath)
   //save marker size
   TiXmlElement* pCornersNode = markerRoot.FirstChild().Element();
   pCornersNode->QueryFloatAttribute("x", &markerSize);
-  markerSize = 2 * abs(markerSize);
+  markerSize = (2 * abs(markerSize)) / 100;
   //ROS_INFO("first %s, marker size: %f",pCornersNode->Value(), markerSize);
 
   //go to second marker, calculate bundle width and height

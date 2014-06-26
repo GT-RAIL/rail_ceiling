@@ -68,29 +68,31 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     fill(mapData.begin(), mapData.end(), -1);
 
     //TODO: Add border based on marker size;
+    //--add marker size to height and width
+    //--offset by half that
 
     //Iterate over every marker bundle
     for (int i = 0; i < markers->markers.size(); i++)
     {
-
-      //TODO: better name for these and related variables
       float xAbsLength = 0;
       float yAbsLength = 0;
-
+      float markerRadius = 0;
       //find the relevant bundle
       for (int j = 0; j < bundles.size(); j++)
       {
         if (bundles[j]->getId() == markers->markers[i].id)
         {
-          xAbsLength = bundles[j]->getBundleWidth();
-          yAbsLength = bundles[j]->getBundleHeight();
+          markerRadius = sqrt(2*pow(bundles[j]->getMarkerSize()/2,2));
+          xAbsLength = bundles[j]->getBundleWidth() + 2*markerRadius;
+          yAbsLength = bundles[j]->getBundleHeight() + 2*markerRadius;
         }
       }
-      if (xAbsLength == 0 && yAbsLength == 0)
+      if (xAbsLength == 0 || yAbsLength == 0)
       {
         ROS_ERROR("AR ID not found in list of bundles");
         continue;
       }
+
 
       try
       {
@@ -104,6 +106,8 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         int yGrid = yAbs / map.info.resolution;
         int xGridLength = round(xAbsLength, map.info.resolution) / map.info.resolution;
         int yGridLength = round(yAbsLength, map.info.resolution) / map.info.resolution;
+        int markerRadiusGridX = round(markerRadius,map.info.resolution) / map.info.resolution;
+        int markerRadiusGridY = round(markerRadius,map.info.resolution) / map.info.resolution;
 
         //Create the obstacle in its own grid
         nav_msgs::OccupancyGrid obstacle;
@@ -144,21 +148,31 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         {
           xOffset = -Point3x + Point1x;
           yOffset = -Point3y;
+          ROS_INFO("q1");
+          //markerRadiusGridX*=-1;
+          //markerRadiusGridY*=-1;
         }
         else if ((angle > PI / 2 && angle <= PI + 0.001) || (angle >= -3 * PI / 2 - 0.001 && angle < -PI))
         {
           xOffset = Point1x;
           yOffset = -Point3y + Point1y;
+          ROS_INFO("q2");
+          markerRadiusGridX*=-2;
         }
         else if ((angle > PI && angle <= (3 * PI / 2) + 0.001) || (angle >= -PI - 0.001 && angle < -PI / 2))
         {
           xOffset = 0;
           yOffset = Point1y;
+          ROS_INFO("q3");
+          markerRadiusGridX*=-1;
+          markerRadiusGridY*=-1;
         }
         else if ((angle > (3 * PI / 2) && angle <= (2 * PI) + 0.001) || (angle >= -PI / 2 - 0.001 && angle < 0))
         {
           xOffset = -Point3x;
           yOffset = 0;
+          ROS_INFO("q4");
+          markerRadiusGridY*=-1;
         }
 
         //Rotate every point on the obstacle and draw it on the map
@@ -170,8 +184,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
             int SrcY = (int)((y + miny) * cosine - (x + minx) * sine);
             if (SrcX >= 0 && SrcX < obstacle.info.width && SrcY >= 0 && SrcY < obstacle.info.height)
             {
-              mapData[(xGrid + x + xOffset) + (yGrid + y + yOffset) * map.info.width] = obstacleData[SrcX
-                  + SrcY * obstacle.info.width];
+              mapData[(xGrid + x + xOffset + markerRadiusGridX) + (yGrid + y + yOffset + markerRadiusGridY) * map.info.width] = obstacleData[SrcX + SrcY * obstacle.info.width];
             }
           }
         }
