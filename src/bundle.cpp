@@ -22,8 +22,7 @@ Bundle::Bundle()
 bool Bundle::parseBundle(char* filepath)
 {
 
-  //TODO: This is messy. Make it cleaner.
-
+  //load the xml document
   TiXmlDocument doc(filepath);
   if (!doc.LoadFile())
   {
@@ -34,6 +33,7 @@ bool Bundle::parseBundle(char* filepath)
   TiXmlElement* pElem;
   TiXmlHandle hRoot(0);
 
+  //get the first xml element in the document
   pElem = hDoc.FirstChildElement().Element();
   if (!pElem)
     return false;
@@ -41,10 +41,10 @@ bool Bundle::parseBundle(char* filepath)
   pElem->QueryIntAttribute("markers", &markerCount);
   //ROS_INFO("%s %d",pElem->Value(),markerCount);
 
-  // save this for later
+  // save the root for later
   hRoot = TiXmlHandle(pElem);
 
-  //first marker
+  //find first marker
   TiXmlHandle markerRoot = hRoot.FirstChild("marker");
   TiXmlElement* pMarkersNode = markerRoot.Element();
 
@@ -58,7 +58,7 @@ bool Bundle::parseBundle(char* filepath)
   markerSize = 2 * abs(markerSize);
   //ROS_INFO("first %s, marker size: %f",pCornersNode->Value(), markerSize);
 
-  //go to second marker to get width and height
+  //go to second marker, calculate bundle width and height
   float temp1;
   float temp2;
   pMarkersNode = pMarkersNode->NextSiblingElement();
@@ -74,6 +74,9 @@ bool Bundle::parseBundle(char* filepath)
   pCornersNode->QueryFloatAttribute("y", &temp2);
   bundleHeight = ((abs(temp1) + abs(temp2)) / 2) / 100;
   //ROS_INFO("%s %f",pCornersNode->Value(), bundleHeight);
+
+  ROS_INFO("Loaded bundle from %s {ar_id=%d marker_size=%f bundle_width=%f bundle_height=%f}", filepath, id, markerSize,
+           bundleWidth, bundleHeight);
 
   return true;
 }
