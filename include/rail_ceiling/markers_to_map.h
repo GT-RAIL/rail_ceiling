@@ -32,7 +32,6 @@ public:
    */
   markers_to_map();
 
-  //TODO:comment
   /*!
    * Adds a bundle to the list of obstacle bundles
    *\param bundle The bundle to add

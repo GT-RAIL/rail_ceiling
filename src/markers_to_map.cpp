@@ -67,10 +67,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     vector<signed char> mapData(map.info.width * map.info.height);
     fill(mapData.begin(), mapData.end(), -1);
 
-    //TODO: Add border based on marker size;
-    //--add marker size to height and width
-    //--offset by half that
-
     //Iterate over every marker bundle
     for (int i = 0; i < markers->markers.size(); i++)
     {
@@ -148,22 +144,17 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         {
           xOffset = -Point3x + Point1x;
           yOffset = -Point3y;
-          ROS_INFO("q1");
-          //markerRadiusGridX*=-1;
-          //markerRadiusGridY*=-1;
         }
         else if ((angle > PI / 2 && angle <= PI + 0.001) || (angle >= -3 * PI / 2 - 0.001 && angle < -PI))
         {
           xOffset = Point1x;
           yOffset = -Point3y + Point1y;
-          ROS_INFO("q2");
           markerRadiusGridX*=-2;
         }
         else if ((angle > PI && angle <= (3 * PI / 2) + 0.001) || (angle >= -PI - 0.001 && angle < -PI / 2))
         {
           xOffset = 0;
           yOffset = Point1y;
-          ROS_INFO("q3");
           markerRadiusGridX*=-1;
           markerRadiusGridY*=-1;
         }
@@ -171,7 +162,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         {
           xOffset = -Point3x;
           yOffset = 0;
-          ROS_INFO("q4");
           markerRadiusGridY*=-1;
         }
 
