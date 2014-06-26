@@ -180,17 +180,16 @@ int main(int argc, char **argv)
   // initialize the converter
   markers_to_map converter;
 
-  //TODO loaad multiple xml bundle files
-  if (argc > 1) {
-    TiXmlDocument doc(argv[1]);
-    if (!doc.LoadFile()) {
-      ROS_ERROR("Failed to load bundle: %s", argv[1]);
-      return EXIT_FAILURE;
-    }
-    Bundle aBundle;
-    aBundle.parseBundle(doc);
-
-    converter.addBundle(&aBundle);
+  //Parse bundle files provided as input arguments
+  Bundle bundle;
+  for (int arg = 1; arg < argc; arg++) {
+    TiXmlDocument doc(argv[arg]);
+        if (!doc.LoadFile()) {
+          ROS_ERROR("Failed to load bundle from %s", argv[arg]);
+          continue;
+        }
+        bundle.parseBundle(doc);
+        converter.addBundle(&bundle);
   }
 
   ros::spin();
