@@ -22,28 +22,9 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
+#include <rail_ceiling/bundle.h>
 
 #define PI 3.14159265358979323846  /* pi */
-
-//TODO move this into a seperate file and comment it
-
-
-class Bundle
-{
-public:
-  Bundle();
-  void parseBundle(TiXmlDocument doc);
-  int getId();
-  float getMarkerSize();
-  float getBundleWidth();
-  float getBundleHeight();
-
-private:
-  int id;
-  float markerSize;
-  float bundleWidth;
-  float bundleHeight;
-};
 
 
 class markers_to_map
