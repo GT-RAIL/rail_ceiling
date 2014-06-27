@@ -76,14 +76,15 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       float xAbsLength = 0;
       float yAbsLength = 0;
       float markerRadius = 0;
+      ROS_INFO("%d,%d",i,markers->markers[i].id);
       //find the relevant bundle
       for (int j = 0; j < bundles.size(); j++)
       {
         if (bundles[j]->getId() == markers->markers[i].id)
         {
           markerRadius = sqrt(2 * pow(bundles[j]->getMarkerSize() / 2, 2));
-          xAbsLength = bundles[j]->getBundleWidth() + bundles[j]->getMarkerSize(); //(2 * markerRadius);
-          yAbsLength = bundles[j]->getBundleHeight() + bundles[j]->getMarkerSize(); //(2 * markerRadius);
+          xAbsLength = bundles[j]->getBundleWidth() + bundles[j]->getMarkerSize();
+          yAbsLength = bundles[j]->getBundleHeight() + bundles[j]->getMarkerSize();
         }
       }
       if (xAbsLength == 0 || yAbsLength == 0)
@@ -104,8 +105,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
             / map.info.resolution;
         int xGridLength = round(xAbsLength, map.info.resolution) / map.info.resolution;
         int yGridLength = round(yAbsLength, map.info.resolution) / map.info.resolution;
-        //int markerRadiusGridX = round(markerRadius, map.info.resolution) / map.info.resolution;
-        //int markerRadiusGridY = round(markerRadius, map.info.resolution) / map.info.resolution;
 
         //Create the obstacle in its own grid
         nav_msgs::OccupancyGrid obstacle;
@@ -123,11 +122,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         float cosine = (float)cos(angle);
         float sine = (float)sin(angle);
 
-        int markerRadiusGridX = round(markerRadius * sine, map.info.resolution) / map.info.resolution;
-        int markerRadiusGridY = round(markerRadius * cosine, map.info.resolution) / map.info.resolution;
-
-        ROS_INFO("%f %f %f %d",markerRadius, sine, markerRadius*sine, markerRadiusGridX);
-
         //Calculate dimensions of rotated obstacles bounding box
         float height = (float)obstacle.info.height;
         float width = (float)obstacle.info.width;
@@ -143,7 +137,8 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         float maxy = max(Point1y, max(Point2y, Point3y));
         int DestWidth = (int)ceil(fabs(maxx) - minx);
         int DestHeight = (int)ceil(fabs(maxy) - miny);
-
+        int markerRadiusGridX = round(markerRadius * sine, map.info.resolution) / map.info.resolution;
+        int markerRadiusGridY = round(markerRadius * cosine, map.info.resolution) / map.info.resolution;
 
         //Calculate offset from bounding box for drawing on map based on the quadrant the obstacle was rotated into
         int xOffset;
@@ -153,7 +148,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           xOffset = -Point3x + Point1x;
           yOffset = -Point3y;
           ROS_INFO("case 1");
-          //markerRadiusGridX *= -1;
           markerRadiusGridY *= -1;
         }
         else if ((angle > PI / 2 && angle <= PI + 0.001) || (angle >= -3 * PI / 2 - 0.001 && angle < -PI))
@@ -168,7 +162,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         {
           xOffset = 0;
           yOffset = Point1y;
-          //markerRadiusGridY *= -1;
           ROS_INFO("case 3");
         }
         else if ((angle > (3 * PI / 2) && angle <= (2 * PI) + 0.001) || (angle >= -PI / 2 - 0.001 && angle < 0))
@@ -231,9 +224,9 @@ int main(int argc, char **argv)
   //Parse bundle files provided as input arguments
   for (int arg = 1; arg < argc; arg++)
   {
-    Bundle bundle;
-    if (bundle.parseBundle(argv[arg]))
-      converter.addBundle(&bundle);
+    Bundle* bundle = new Bundle();
+    if (bundle->parseBundle(argv[arg]))
+      converter.addBundle(bundle);
   }
 
   while (ros::ok())
