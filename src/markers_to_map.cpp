@@ -211,8 +211,9 @@ int main(int argc, char **argv)
   // initialize the converter
   markers_to_map converter;
 
-  //Parse bundle files provided as input arguments
+  ros::Rate loop_rate(converter.getUpdateRate());
 
+  //Parse bundle files provided as input arguments
   for (int arg = 1; arg < argc; arg++)
   {
     Bundle bundle;
@@ -220,7 +221,6 @@ int main(int argc, char **argv)
       converter.addBundle(&bundle);
   }
 
-  ros::Rate loop_rate(converter.getUpdateRate());
   while (ros::ok()) {
     ros::spinOnce();
     loop_rate.sleep();

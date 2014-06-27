@@ -40,7 +40,7 @@ public:
 
   /*!<
    * Returns the node's update rate
-   *\retunrs The node's update rate
+   *\returns The node's update rate
    */
   double getUpdateRate();
 private:
