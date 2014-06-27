@@ -45,22 +45,22 @@ public:
   float getMarkerSize();
 
   /*
-   * Returns the width of the bundle
-   * \returns The width of the bundle
+   * Returns the distance between the origins of the two markers along the x axis
+   * \returns The distance between the origins of the two markers along the x axis
    */
   float getBundleWidth();
 
   /*
-   * Returns the length of the bundle
-   * \returns The length of the bundle
+   * Returns the distance between the origins of the two markers along the y axis
+   * \returns The distance between the origins of the two markers along the y axis
    */
   float getBundleHeight();
 
 private:
   int id; /*!< associated bundle id */
   float markerSize; /*!< marker size */
-  float bundleWidth; /*!< bundle width */
-  float bundleHeight; /*!< bundle height */
+  float bundleWidth; /*!< distance between the origins of the two markers along the x axis */
+  float bundleHeight; /*!< distance between the origins of the two markers along the y axis */
 };
 
 #endif //BUNDLE_H
