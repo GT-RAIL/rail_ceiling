@@ -20,6 +20,9 @@ markers_to_map::markers_to_map()
   //initialize variables
   mapReceived = false;
 
+  //Read in the update rate
+  node.param<double>("update_rate", updateRate, 0.2);
+
   // create the ROS topics
   markers_in = node.subscribe < ar_track_alvar::AlvarMarkers
       > ("ar_pose_marker", 1, &markers_to_map::markers_cback, this);
@@ -196,6 +199,10 @@ void markers_to_map::addBundle(Bundle* bundle)
   bundles.push_back(bundle);
 }
 
+double markers_to_map::getUpdateRate() {
+  return updateRate;
+}
+
 int main(int argc, char **argv)
 {
   // initialize ROS and the node
@@ -213,7 +220,11 @@ int main(int argc, char **argv)
       converter.addBundle(&bundle);
   }
 
-  ros::spin();
+  ros::Rate loop_rate(converter.getUpdateRate());
+  while (ros::ok()) {
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
 
   return EXIT_SUCCESS;
 }

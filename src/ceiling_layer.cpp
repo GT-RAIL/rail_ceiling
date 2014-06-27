@@ -70,6 +70,8 @@ void CeilingLayer::updateBounds(double origin_x, double origin_y, double origin_
   *max_x = std::max(*max_x, mark_x);
   *max_y = std::max(*max_y, mark_y);
   *max_y */
+
+
 }
 
 void CeilingLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)

@@ -37,13 +37,20 @@ public:
    *\param bundle The bundle to add
    */
   void addBundle(Bundle* bundle);
+
+  /*!<
+   * Returns the node's update rate
+   *\retunrs The node's update rate
+   */
+  double getUpdateRate();
 private:
   ros::Subscriber markers_in; /*!< markers topic */
   ros::Subscriber map_in; /*!< map_in topic */
   ros::Publisher map_out; /*!< map_out topic */
   tf::TransformListener listener; /*!< transform listener */
-  nav_msgs::OccupancyGrid globalMap; /*!< map used for determining parameters of output map */
+  nav_msgs::OccupancyGrid globalMap; /*!< map used for determining parameters of output obstacle map */
   bool mapReceived; /*!< true when a map has been received */
+  double updateRate; /*!< Rate at which to update the obstacle map */
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
 
   /*!
