@@ -75,8 +75,10 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     {
       float xAbsLength = 0;
       float yAbsLength = 0;
+      int xFlipSign;
+      int yFlipSign;
       float markerRadius = 0;
-      ROS_INFO("%d,%d",i,markers->markers[i].id);
+      //ROS_INFO("%d,%d", i, markers->markers[i].id);
       //find the relevant bundle
       for (int j = 0; j < bundles.size(); j++)
       {
@@ -85,6 +87,9 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           markerRadius = sqrt(2 * pow(bundles[j]->getMarkerSize() / 2, 2));
           xAbsLength = bundles[j]->getBundleWidth() + bundles[j]->getMarkerSize();
           yAbsLength = bundles[j]->getBundleHeight() + bundles[j]->getMarkerSize();
+          xFlipSign = bundles[j]->getFlipX() ? -1 : 1;
+          yFlipSign = bundles[j]->getFlipY() ? -1 : 1;
+          //ROS_INFO("%d %d %d",bundles[j]->getId() , bundles[j]->getFlipX(), bundles[j]->getFlipY());
         }
       }
       if (xAbsLength == 0 || yAbsLength == 0)
@@ -147,7 +152,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         {
           xOffset = -Point3x + Point1x;
           yOffset = -Point3y;
-          ROS_INFO("case 1");
+          //ROS_INFO("case 1");
           markerRadiusGridY *= -1;
         }
         else if ((angle > PI / 2 && angle <= PI + 0.001) || (angle >= -3 * PI / 2 - 0.001 && angle < -PI))
@@ -156,23 +161,24 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           yOffset = -Point3y + Point1y;
           markerRadiusGridX *= -1;
           markerRadiusGridY *= -1;
-          ROS_INFO("case 2");
+          //ROS_INFO("case 2");
         }
         else if ((angle > PI && angle <= (3 * PI / 2) + 0.001) || (angle >= -PI - 0.001 && angle < -PI / 2))
         {
           xOffset = 0;
           yOffset = Point1y;
-          ROS_INFO("case 3");
+          markerRadiusGridY *= -1;
+          //ROS_INFO("case 3");
         }
         else if ((angle > (3 * PI / 2) && angle <= (2 * PI) + 0.001) || (angle >= -PI / 2 - 0.001 && angle < 0))
         {
           xOffset = -Point3x;
           yOffset = 0;
           markerRadiusGridY *= -1;
-          ROS_INFO("case 4");
+          //ROS_INFO("case 4");
         }
 
-        ROS_INFO("%f, %d, %d", angle, markerRadiusGridX, markerRadiusGridY);
+       // ROS_INFO("%f, %d, %d", angle, markerRadiusGridX, markerRadiusGridY);
 
         //Rotate every point on the obstacle and draw it on the map
         for (int x = 0; x < DestWidth; x++)

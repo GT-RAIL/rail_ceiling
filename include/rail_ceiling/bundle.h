@@ -56,11 +56,26 @@ public:
    */
   float getBundleHeight();
 
+  /*
+   * Returns true if obstacle needs to be flipped along the x axis, false otherwise
+   * \returns True if obstacle needs to be flipped along the x axis, false otherwise
+   */
+  bool getFlipX();
+
+
+  /*
+   * Returns true if obstacle needs to be flipped along the y axis, false otherwise
+   * \returns True if obstacle needs to be flipped along the y axis, false otherwise
+   */
+  bool getFlipY();
+
 private:
   int id; /*!< associated bundle id */
   float markerSize; /*!< marker size */
   float bundleWidth; /*!< distance between the origins of the two markers along the x axis */
   float bundleHeight; /*!< distance between the origins of the two markers along the y axis */
+  bool flipX; /*< true if obstacle needs to be flipped along the x axis */
+  bool flipY; /*< true if obstacle needs to be flipped along the y axis */
 };
 
 #endif //BUNDLE_H

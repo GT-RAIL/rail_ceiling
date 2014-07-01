@@ -68,11 +68,13 @@ bool Bundle::parseBundle(char* filepath)
   pCornersNode = pCornersNode->NextSiblingElement();
   pCornersNode->QueryFloatAttribute("x", &temp2);
   bundleWidth = ((abs(temp1) + abs(temp2)) / 2) / 100;
+  flipX = (temp1 < 0) ? false: true;
   //ROS_INFO("%s %f",pCornersNode->Value(), bundleWidth);
   pCornersNode->QueryFloatAttribute("y", &temp1);
   pCornersNode = pCornersNode->NextSiblingElement();
   pCornersNode->QueryFloatAttribute("y", &temp2);
   bundleHeight = ((abs(temp1) + abs(temp2)) / 2) / 100;
+  flipY = (temp1 < 0) ? true: false;
   //ROS_INFO("%s %f",pCornersNode->Value(), bundleHeight);
 
   ROS_INFO("Loaded bundle from %s {ar_id=%d marker_size=%f bundle_width=%f bundle_height=%f}", filepath, id, markerSize,
@@ -99,4 +101,16 @@ float Bundle::getBundleWidth()
 float Bundle::getBundleHeight()
 {
   return bundleHeight;
+}
+
+
+bool Bundle::getFlipX()
+{
+  return flipX;
+}
+
+
+bool Bundle::getFlipY()
+{
+  return flipY;
 }
