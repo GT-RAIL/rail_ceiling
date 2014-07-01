@@ -28,6 +28,7 @@ markers_to_map::markers_to_map()
       > ("ar_pose_marker", 1, &markers_to_map::markers_cback, this);
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
   map_out = node.advertise < nav_msgs::OccupancyGrid > ("marker_map", 1);
+  footprint_out = node.advertise < geometry_msgs::PolygonStamped > ("bundle_footprint", 1);
 
   ROS_INFO("Markers To Map Started");
 }
@@ -69,6 +70,10 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     map.info = globalMap.info;
     vector<signed char> mapData(map.info.width * map.info.height);
     //fill(mapData.begin(), mapData.end(), -1);
+
+
+
+     footprint_out.publish(bundles[0]->getFootprint());
 
     //Iterate over every marker bundle
     for (int i = 0; i < markers->markers.size(); i++)
@@ -212,6 +217,12 @@ void markers_to_map::addBundle(Bundle* bundle)
   bundles.push_back(bundle);
 }
 
+Bundle* markers_to_map::getBundle(int index)
+{
+  return bundles[index];
+}
+
+
 double markers_to_map::getUpdateRate()
 {
   return updateRate;
@@ -233,7 +244,18 @@ int main(int argc, char **argv)
     Bundle* bundle = new Bundle();
     if (bundle->parseBundle(argv[arg]))
       converter.addBundle(bundle);
+    bundle->parseBundleFootprint(argv[arg]);
+    converter.footprint_out.publish(bundle->getFootprint());
+
+
   }
+/*
+  converter.footprint_out.publish(converter.getBundle(0)->getFootprint());
+
+  for (int i = 0; i < converter.getBundle(0)->getFootprint().points.size(); i++) {
+    ROS_INFO("%f, %f",converter.getBundle(0)->getFootprint().points[i].x,converter.getBundle(0)->getFootprint().points[i].y);
+  }
+*/
 
   while (ros::ok())
   {

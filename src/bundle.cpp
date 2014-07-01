@@ -83,6 +83,56 @@ bool Bundle::parseBundle(char* filepath)
   return true;
 }
 
+
+bool Bundle::parseBundleFootprint(char* filepath)
+{
+  TiXmlDocument doc(filepath);
+  if (!doc.LoadFile())
+  {
+    ROS_ERROR("Failed to load bundle footprint from %s", filepath);
+    return false;
+  }
+  TiXmlHandle hDoc(&doc);
+  TiXmlElement* pElem;
+  TiXmlHandle hRoot(0);
+
+  //get the first element of the document
+  pElem = hDoc.FirstChildElement().Element();
+  if (!pElem)
+    return false;
+  // save the root
+  hRoot = TiXmlHandle(pElem);
+
+  float temp;
+  bool masterMarkerFound = false;
+  //go to first footprint element
+  TiXmlElement* pFootprintNode=hRoot.FirstChild( "footprint" ).FirstChild().Element();
+  for( pFootprintNode; pFootprintNode; pFootprintNode=pFootprintNode->NextSiblingElement())
+  {
+    ROS_INFO("%s",pFootprintNode->Value());
+    if (boost::iequals(pFootprintNode->Value(),"point")) {
+      geometry_msgs::Point32* point = new geometry_msgs::Point32();
+      pFootprintNode->QueryFloatAttribute("x", &temp);
+      point->x = temp;
+      pFootprintNode->QueryFloatAttribute("y", &temp);
+      point->y = temp;
+      point->z = 0;
+      footprint.polygon.points.push_back(*point);
+      footprint.header.frame_id = "map";
+    }
+    if (!masterMarkerFound && boost::iequals(pFootprintNode->Value(),"marker")) {
+      masterMarkerFound == true;
+    }
+  }
+  for (int i = 0; i < footprint.polygon.points.size(); i++) {
+    ROS_INFO("%f, %f",footprint.polygon.points[i].x,footprint.polygon.points[i].y);
+  }
+}
+
+geometry_msgs::PolygonStamped Bundle::getFootprint() {
+  return footprint;
+}
+
 int Bundle::getId()
 {
   return id;

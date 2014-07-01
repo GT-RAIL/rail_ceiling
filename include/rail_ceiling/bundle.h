@@ -16,6 +16,9 @@
 
 #include <ros/ros.h>
 #include <tinyxml.h>
+#include <geometry_msgs/PolygonStamped.h>
+#include <geometry_msgs/Point.h>
+#include <boost/algorithm/string.hpp>
 
 class Bundle
 {
@@ -31,12 +34,19 @@ public:
    *\returns True is parse is successful. False is parse fails.
    */
   bool parseBundle(char* filepath);
+  //TODO: remove above if below is successfully implemented
+
+  //TODO comment
+  bool parseBundleFootprint(char* filepath);
 
   /*
    * Returns the id of the ar marker associated with this bundle
    * \return The id of the ar marker associated with this bundle
    */
   int getId();
+
+  //TODO: comment
+  geometry_msgs::PolygonStamped getFootprint();
 
   /*
    * Returns the size of the ar markers
@@ -76,6 +86,9 @@ private:
   float bundleHeight; /*!< distance between the origins of the two markers along the y axis */
   bool flipX; /*< true if obstacle needs to be flipped along the x axis */
   bool flipY; /*< true if obstacle needs to be flipped along the y axis */
+
+  //TODO comment
+  geometry_msgs::PolygonStamped footprint;
 };
 
 #endif //BUNDLE_H

@@ -38,15 +38,27 @@ public:
    */
   void addBundle(Bundle* bundle);
 
+  /*!
+     * Gets a bundle from the list of obstacle bundles
+     *\param index Index of the bundle to get
+     *\return A pointer to the bundle at the specified index
+     */
+   Bundle* getBundle(int index);
+
   /*!<
    * Returns the node's update rate
    *\returns The node's update rate
    */
   double getUpdateRate();
+
+
+  //TODO: make private
+  ros::Publisher footprint_out; /*< footprint polygon topic */
 private:
   ros::Subscriber markers_in; /*!< markers topic */
   ros::Subscriber map_in; /*!< map_in topic */
   ros::Publisher map_out; /*!< map_out topic */
+
   tf::TransformListener listener; /*!< transform listener */
   nav_msgs::OccupancyGrid globalMap; /*!< map used for determining parameters of output obstacle map */
   bool mapReceived; /*!< true when a map has been received */
