@@ -119,31 +119,39 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
     //testing rotating image
 
+    cv::Rect brect = cv::RotatedRect(cv::Point2f(width/2,height/2), obsMat.size(), 30).boundingRect(); //center, size, angle
+
     cv::Mat dst;
-    //int len = std::max(obsMat.cols, obsMat.rows);
-    int len = obsMat.cols;
-    cv::Point2f pt(len/2., len/2.);
+
+    cv::Point2f pt(obsMat.cols/2, obsMat.rows/2); //center of rotation
+
     cv::Mat r = cv::getRotationMatrix2D(pt, 30, 1.0); //angles in degrees
 
-    cv::warpAffine(obsMat, dst, r, cv::Size(len, len));
+    int centerX = width/2;
+    int centerY = height/2;
+
+    r.at<double>(0,2) += brect.size().width/2.0 - centerX;
+    r.at<double>(1,2) += brect.size().height/2.0 - centerY;
+
+    cv::warpAffine(obsMat, dst, r, cv::Size(brect.size().width, brect.size().height));
 
 
     //testing converting image to occupancy grid
 
     //Create the obstacle in its own grid
     nav_msgs::OccupancyGrid obstacle;
-    vector<signed char> obstacleData(height * width);
-    obstacle.info.width = width;
-    obstacle.info.height = height;
+    vector<signed char> obstacleData(dst.rows * dst.cols);
+    obstacle.info.width = dst.cols;
+    obstacle.info.height = dst.rows;
     obstacle.info.resolution = map.info.resolution;
 
-    for (int ptX = 0; ptX < obsMat.cols; ptX++) {
-      for (int ptY = 0; ptY < obsMat.rows; ptY++){
-        cv::Vec3b intensity = obsMat.at<cv::Vec3b>(cv::Point(ptX, ptY));
+    for (int ptX = 0; ptX < dst.cols; ptX++) {
+      for (int ptY = 0; ptY < dst.rows; ptY++){
+        cv::Vec3b intensity = dst.at<cv::Vec3b>(cv::Point(ptX, ptY));
         uchar blue = intensity.val[0];
         //uchar green = intensity.val[1];
         //uchar red = intensity.val[2];
-        obstacleData[ptX+ptY*obstacle.info.width] = blue; //TODO: clean
+        obstacleData[ptX+ptY*dst.cols] = blue; //TODO: clean
       }
     }
 
