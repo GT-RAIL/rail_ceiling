@@ -71,95 +71,127 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     vector<signed char> mapData(map.info.width * map.info.height);
     //fill(mapData.begin(), mapData.end(), -1);
 
+    footprint_out.publish(bundles[0]->getFootprint()); //TODO: remove
 
-    footprint_out.publish(bundles[0]->getFootprint());
+    //Iterate over every marker bundle
+    for (int i = 0; i < markers->markers.size(); i++)
+    {
+      //find the relevant bundle
+      int bundleIndex = -1;
+      for (int j = 0; j < bundles.size(); j++)
+      {
+        if (bundles[j]->getId() == markers->markers[i].id)
+        {
+          bundleIndex = j;
+        }
+      }
+      if (bundleIndex == -1)
+      {
+        ROS_WARN("AR ID %d not found in list of bundles", markers->markers[i].id);
+        continue;
+      }
 
-    //begin prototyping
+      try
+      {
+        //Find transform to ar_marker
+        tf::StampedTransform transform;
+        listener.lookupTransform("/ar_map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
+                                 ros::Time(0), transform);
+        int xGrid = round(transform.getOrigin().x() - map.info.origin.position.x, map.info.resolution)
+            / map.info.resolution;
+        int yGrid = round(transform.getOrigin().y() - map.info.origin.position.y, map.info.resolution)
+            / map.info.resolution;
 
-    //TODO: a bitonal image would probably be better to use
+        //Find the needed rotation angle
+        tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(),
+                         transform.getRotation().w());
+        double roll, pitch, yaw;
+        tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+        //float angle = yaw * (180 / PI); //Convert to degrees
+        float angle = 30;
 
-    //TODO: consider caching obstacle images to reduce processing needed
-    //testing converting to image
+        //TODO: a bitonal image would probably be better to use
+        //TODO: consider caching obstacle images to reduce processing needed
+        //find min and max points of the polygon footprint
+        float minX = numeric_limits<float>::max();
+        float maxX = -numeric_limits<float>::max();
+        float minY = numeric_limits<float>::max();
+        float maxY = -numeric_limits<float>::max();
+        for (int pt = 0; pt < bundles[bundleIndex]->getFootprint().polygon.points.size(); pt++){
+          float x = bundles[bundleIndex]->getFootprint().polygon.points[pt].x;
+          float y = bundles[bundleIndex]->getFootprint().polygon.points[pt].y;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+        int width = abs(round(maxX,map.info.resolution)/map.info.resolution) - round(minX,map.info.resolution)/map.info.resolution;
+        int height = abs(round(maxY,map.info.resolution)/map.info.resolution) - round(minY,map.info.resolution)/map.info.resolution;
+        /*
+        int centerX = round(bundles[0]->markerX,map.info.resolution)/map.info.resolution;
+        int centerY = round(bundles[0]->markerX,map.info.resolution)/map.info.resolution;
+        centerX += abs(centerX);
+        centerY += abs(centerY);
+        */
+        int centerX = width/2; //TODO, use location of marker
+        int centerY = height/2;
 
-    //int w = 500;//TODO find min and max points of the polygon
+        //rasterize polygon footprint
+        cv::Mat obsMat = cv::Mat::zeros( height, width, CV_8UC3 );
+        int lineType = 8;
+        cv::Point obsPoints[bundles[bundleIndex]->getFootprint().polygon.points.size()];
+        for (int pt = 0; pt < bundles[bundleIndex]->getFootprint().polygon.points.size(); pt++){
+          int x = round(bundles[bundleIndex]->getFootprint().polygon.points[pt].x,map.info.resolution)/map.info.resolution;
+          x = x+abs(x);
+          int y = round(bundles[bundleIndex]->getFootprint().polygon.points[pt].y,map.info.resolution)/map.info.resolution;
+          y = y+abs(y);
+          obsPoints[pt] = cv::Point(x,y);
+        }
+        const cv::Point* ppt[1] = { obsPoints };
+        int npt[] = { bundles[bundleIndex]->getFootprint().polygon.points.size() };
+        cv::fillPoly(obsMat, ppt, npt, 1, cv::Scalar( 255, 255, 255 ), lineType);
 
-    //find min and max points of the polygon
-    float minX = numeric_limits<float>::max();
-    float maxX = -numeric_limits<float>::max();
-    float minY = numeric_limits<float>::max();
-    float maxY = -numeric_limits<float>::max();
-    for (int pt = 0; pt < bundles[0]->getFootprint().polygon.points.size(); pt++){
-      float x = bundles[0]->getFootprint().polygon.points[pt].x;
-      float y = bundles[0]->getFootprint().polygon.points[pt].y;
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-    }
-    int width = abs(round(maxX,map.info.resolution)/map.info.resolution) - round(minX,map.info.resolution)/map.info.resolution;
-    int height = abs(round(maxY,map.info.resolution)/map.info.resolution) - round(minY,map.info.resolution)/map.info.resolution;
+        //rotate as needed
+        cv::Rect brect = cv::RotatedRect(cv::Point2f(centerX,centerY), obsMat.size(), angle).boundingRect(); //center, size, angle
+        cv::Point2f pt(obsMat.cols/2, obsMat.rows/2); //center of rotation
+        cv::Mat r = cv::getRotationMatrix2D(pt, angle, 1.0); //angles in degrees
+        r.at<double>(0,2) += brect.size().width/2.0 - centerX;
+        r.at<double>(1,2) += brect.size().height/2.0 - centerY;
+        cv::Mat dst;
+        cv::warpAffine(obsMat, dst, r, cv::Size(brect.size().width, brect.size().height));
 
-    cv::Mat obsMat = cv::Mat::zeros( height, width, CV_8UC3 );
-
-    int lineType = 8;
-
-    cv::Point obsPoints[bundles[0]->getFootprint().polygon.points.size()];
-    for (int pt = 0; pt < bundles[0]->getFootprint().polygon.points.size(); pt++){
-      int x = round(bundles[0]->getFootprint().polygon.points[pt].x,map.info.resolution)/map.info.resolution;
-      x = x+abs(x);
-      int y = round(bundles[0]->getFootprint().polygon.points[pt].y,map.info.resolution)/map.info.resolution;
-      y = y+abs(y);
-      obsPoints[pt] = cv::Point(x,y);
-    }
-
-    const cv::Point* ppt[1] = { obsPoints };
-    int npt[] = { bundles[0]->getFootprint().polygon.points.size() };
-
-    cv::fillPoly(obsMat, ppt, npt, 1, cv::Scalar( 255, 255, 255 ), lineType);
-
-    //testing rotating image
-
-    cv::Rect brect = cv::RotatedRect(cv::Point2f(width/2,height/2), obsMat.size(), 30).boundingRect(); //center, size, angle
-
-    cv::Mat dst;
-
-    cv::Point2f pt(obsMat.cols/2, obsMat.rows/2); //center of rotation
-
-    cv::Mat r = cv::getRotationMatrix2D(pt, 30, 1.0); //angles in degrees
-
-    int centerX = width/2;
-    int centerY = height/2;
-
-    r.at<double>(0,2) += brect.size().width/2.0 - centerX;
-    r.at<double>(1,2) += brect.size().height/2.0 - centerY;
-
-    cv::warpAffine(obsMat, dst, r, cv::Size(brect.size().width, brect.size().height));
+        //convert matrix to occupancy grid
+        nav_msgs::OccupancyGrid obstacle;
+        vector<signed char> obstacleData(dst.rows * dst.cols);
+        obstacle.info.width = dst.cols;
+        obstacle.info.height = dst.rows;
+        obstacle.info.resolution = map.info.resolution;
+        for (int ptX = 0; ptX < dst.cols; ptX++) {
+          for (int ptY = 0; ptY < dst.rows; ptY++){
+            cv::Vec3b intensity = dst.at<cv::Vec3b>(cv::Point(ptX, ptY));
+            uchar blue = intensity.val[0];
+            //uchar green = intensity.val[1];
+            //uchar red = intensity.val[2];
+            obstacleData[ptX+ptY*dst.cols] = (blue > 128) ? 100 : 0; //TODO: clean/optimize (only need greyscale images)
+          }
+        }
 
 
-    //testing converting image to occupancy grid
-
-    //Create the obstacle in its own grid
-    nav_msgs::OccupancyGrid obstacle;
-    vector<signed char> obstacleData(dst.rows * dst.cols);
-    obstacle.info.width = dst.cols;
-    obstacle.info.height = dst.rows;
-    obstacle.info.resolution = map.info.resolution;
-
-    for (int ptX = 0; ptX < dst.cols; ptX++) {
-      for (int ptY = 0; ptY < dst.rows; ptY++){
-        cv::Vec3b intensity = dst.at<cv::Vec3b>(cv::Point(ptX, ptY));
-        uchar blue = intensity.val[0];
-        //uchar green = intensity.val[1];
-        //uchar red = intensity.val[2];
-        obstacleData[ptX+ptY*dst.cols] = blue; //TODO: clean
+        //todo remove
+        obstacle.data = obstacleData;
+        map_out.publish(obstacle);
+        //map = obstacle;
+      }
+      catch (tf::TransformException ex)
+      {
+        ROS_ERROR("%s", ex.what());
       }
     }
 
-    obstacle.data = obstacleData;
-    map_out.publish(obstacle);
+    //publish the map
+    map.data = mapData;
+   // map_out.publish(map);
 
-
-    //end prototyping
 
 /*
 

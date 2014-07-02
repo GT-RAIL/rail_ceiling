@@ -79,6 +79,12 @@ public:
    */
   bool getFlipY();
 
+
+  //todo: make private
+  float markerX;
+  float markerY;
+  float markerYaw;
+
 private:
   int id; /*!< associated bundle id */
   float markerSize; /*!< marker size */
@@ -92,9 +98,7 @@ private:
 
   //TODO comment
   geometry_msgs::PolygonStamped footprint;
-  float markerX;
-  float markerY;
-  float markerYaw;
+
 };
 
 #endif //BUNDLE_H
