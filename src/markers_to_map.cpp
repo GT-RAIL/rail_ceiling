@@ -108,7 +108,9 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         double roll, pitch, yaw;
         tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
         //float angle = yaw * (180 / PI); //Convert to degrees
-        float angle = 30;
+        float angle = -30;
+        //float angle = -20;
+        //ROS_INFO("%f",angle);
 
         //TODO: a bitonal image would probably be better to use
         //TODO: consider caching obstacle images to reduce processing needed
@@ -127,14 +129,19 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         }
         int width = abs(round(maxX,map.info.resolution)/map.info.resolution) - round(minX,map.info.resolution)/map.info.resolution;
         int height = abs(round(maxY,map.info.resolution)/map.info.resolution) - round(minY,map.info.resolution)/map.info.resolution;
+
         /*
         int centerX = round(bundles[0]->markerX,map.info.resolution)/map.info.resolution;
         int centerY = round(bundles[0]->markerX,map.info.resolution)/map.info.resolution;
         centerX += abs(centerX);
         centerY += abs(centerY);
-        */
-        int centerX = width/2; //TODO, use location of marker
-        int centerY = height/2;
+         */
+
+        //int centerX = round(bundles[bundleIndex]->markerX,map.info.resolution)/map.info.resolution + width/2;
+        //int centerY = round(bundles[bundleIndex]->markerY,map.info.resolution)/map.info.resolution + height/2;
+
+
+        //ROS_INFO("%d,%d",centerX,centerY);
 
         //rasterize polygon footprint
         cv::Mat obsMat = cv::Mat::zeros( height, width, CV_8UC3 );
@@ -152,13 +159,98 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         cv::fillPoly(obsMat, ppt, npt, 1, cv::Scalar( 255, 255, 255 ), lineType);
 
         //rotate as needed
+
+
+
+
+
+
+/*
+
+        cv::Mat im;
+        cv::Mat drawing_image;
+
+        obsMat.copyTo(im);
+
+        //cv::Matx23d rot = getRotationMatrix2D(cv::Point2f(im.cols/2,im.rows/2),angle,1);
+        cv::Matx23d rot = getRotationMatrix2D(cv::Point2f(im.cols/2,im.rows/2),angle,1);
+
+        cv::Matx31d tl(0,0,1);
+        cv::Matx31d tr(im.cols,0,1);
+        cv::Matx31d bl(0,im.rows,1);
+        cv::Matx31d br(im.cols,im.rows,1);
+
+        std::vector<cv::Point2f> pts;
+        cv::Matx21d tl2 = rot*tl;
+        cv::Matx21d tr2 = rot*tr;
+        cv::Matx21d bl2 = rot*bl;
+        cv::Matx21d br2 = rot*br;
+        pts.push_back(cv::Point2f(tl2(0),tl2(1)));
+        pts.push_back(cv::Point2f(tr2(0),tr2(1)));
+        pts.push_back(cv::Point2f(bl2(0),bl2(1)));
+        pts.push_back(cv::Point2f(br2(0),br2(1)));
+
+        cv::Rect bounds = cv::boundingRect(pts);
+
+        cv::Matx33d tran(1,0,(bounds.width-im.cols)/2,
+                         0,1,(bounds.height-im.rows)/2,
+                         0,0,1);
+        cv::Matx33d rot33;
+        for(int i = 0; i < 6; i++)
+            rot33(i) = rot(i);
+        rot33(2,0) = 0;
+        rot33(2,1) = 0;
+        rot33(2,2) = 1;
+        cv::Matx33d combined = tran*rot33;
+        cv::Matx23d final;
+        for(int i = 0; i < 6; i++)
+            final(i) = combined(i);
+
+        cv::Size im_size(bounds.width,bounds.height);
+        cv::warpAffine(im, drawing_image,final, im_size);
+
+        cv::Mat dst;
+        drawing_image.copyTo(dst);
+        */
+
+
+        /*
+
+        cv::Mat img = cv::imread(filename, 0);
+
+        cv::bitwise_not(img, img);
+
+        std::vector<cv::Point> points;
+        cv::Mat_<uchar>::iterator it = img.begin<uchar>();
+        cv::Mat_<uchar>::iterator end = img.end<uchar>();
+        for (; it != end; ++it)
+          if (*it)
+            points.push_back(it.pos());
+
+        cv::RotatedRect box = cv::minAreaRect(cv::Mat(points));
+        */
+
+
+
+        int centerX = width/2; //TODO, use location of marker
+        int centerY = height/2;
+
+
         cv::Rect brect = cv::RotatedRect(cv::Point2f(centerX,centerY), obsMat.size(), angle).boundingRect(); //center, size, angle
-        cv::Point2f pt(obsMat.cols/2, obsMat.rows/2); //center of rotation
-        cv::Mat r = cv::getRotationMatrix2D(pt, angle, 1.0); //angles in degrees
+        cv::Point2f pt(centerX, centerY);
+        cv::Mat r = cv::getRotationMatrix2D(pt, angle, 1.0);
+
+        double sinv = r.at<double>(0,1);
+        double cosv = r.at<double>(0,0);
+
         r.at<double>(0,2) += brect.size().width/2.0 - centerX;
         r.at<double>(1,2) += brect.size().height/2.0 - centerY;
-        cv::Mat dst;
-        cv::warpAffine(obsMat, dst, r, cv::Size(brect.size().width, brect.size().height));
+
+        cv::Mat dst (brect.size().height, brect.size().width ,obsMat.type());
+        cv::warpAffine(obsMat, dst, r, brect.size());
+
+
+
 
         //convert matrix to occupancy grid
         nav_msgs::OccupancyGrid obstacle;
@@ -176,11 +268,15 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           }
         }
 
-
+        //add the obstacle to the map
+        for (int x = 0; x < obstacle.info.width; x++) {
+          for (int y = 0; y < obstacle.info.height; y++) {
+            mapData[(xGrid+x)+(yGrid+y)*map.info.width] = obstacleData[x+y*obstacle.info.width];
+          }
+        }
         //todo remove
         obstacle.data = obstacleData;
         map_out.publish(obstacle);
-        //map = obstacle;
       }
       catch (tf::TransformException ex)
       {
@@ -188,9 +284,9 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       }
     }
 
-    //publish the map
+    //TODO: publish the map
     map.data = mapData;
-   // map_out.publish(map);
+    //map_out.publish(map);
 
 
 /*
