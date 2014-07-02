@@ -81,8 +81,25 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     //TODO: consider caching obstacle images to reduce processing needed
     //testing converting to image
 
-    int w = 500;//TODO find min and max points of the polygo
-    cv::Mat obsMat = cv::Mat::zeros( w, w, CV_8UC3 );
+    //int w = 500;//TODO find min and max points of the polygon
+
+    //find min and max points of the polygon
+    float minX = numeric_limits<float>::max();
+    float maxX = -numeric_limits<float>::max();
+    float minY = numeric_limits<float>::max();
+    float maxY = -numeric_limits<float>::max();
+    for (int pt = 0; pt < bundles[0]->getFootprint().polygon.points.size(); pt++){
+      float x = bundles[0]->getFootprint().polygon.points[pt].x;
+      float y = bundles[0]->getFootprint().polygon.points[pt].y;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+    int width = abs(round(maxX,map.info.resolution)/map.info.resolution) - round(minX,map.info.resolution)/map.info.resolution;
+    int height = abs(round(maxY,map.info.resolution)/map.info.resolution) - round(minY,map.info.resolution)/map.info.resolution;
+
+    cv::Mat obsMat = cv::Mat::zeros( height, width, CV_8UC3 );
 
     int lineType = 8;
 
@@ -101,24 +118,32 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     cv::fillPoly(obsMat, ppt, npt, 1, cv::Scalar( 255, 255, 255 ), lineType);
 
     //testing rotating image
-    //TODO
+
+    cv::Mat dst;
+    //int len = std::max(obsMat.cols, obsMat.rows);
+    int len = obsMat.cols;
+    cv::Point2f pt(len/2., len/2.);
+    cv::Mat r = cv::getRotationMatrix2D(pt, 30, 1.0); //angles in degrees
+
+    cv::warpAffine(obsMat, dst, r, cv::Size(len, len));
+
 
     //testing converting image to occupancy grid
 
     //Create the obstacle in its own grid
     nav_msgs::OccupancyGrid obstacle;
-    vector<signed char> obstacleData(w * w);
-    obstacle.info.width = w;
-    obstacle.info.height = w;
+    vector<signed char> obstacleData(height * width);
+    obstacle.info.width = width;
+    obstacle.info.height = height;
     obstacle.info.resolution = map.info.resolution;
 
-    for (int ptX = 0; ptX < w; ptX++) {
-      for (int ptY = 0; ptY < w; ptY++){
+    for (int ptX = 0; ptX < obsMat.cols; ptX++) {
+      for (int ptY = 0; ptY < obsMat.rows; ptY++){
         cv::Vec3b intensity = obsMat.at<cv::Vec3b>(cv::Point(ptX, ptY));
         uchar blue = intensity.val[0];
         //uchar green = intensity.val[1];
         //uchar red = intensity.val[2];
-        obstacleData[ptX+ptY*obstacle.info.width] = blue;
+        obstacleData[ptX+ptY*obstacle.info.width] = blue; //TODO: clean
       }
     }
 

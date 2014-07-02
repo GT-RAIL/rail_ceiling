@@ -133,6 +133,8 @@ bool Bundle::parseBundleFootprint(char* filepath)
   for (int i = 0; i < footprint.polygon.points.size(); i++) {
     ROS_INFO("%f, %f",footprint.polygon.points[i].x,footprint.polygon.points[i].y);
   }
+
+  //TODO: remove info messages
 }
 
 geometry_msgs::PolygonStamped Bundle::getFootprint() {
