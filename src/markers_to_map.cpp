@@ -72,8 +72,63 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     //fill(mapData.begin(), mapData.end(), -1);
 
 
+    footprint_out.publish(bundles[0]->getFootprint());
 
-     footprint_out.publish(bundles[0]->getFootprint());
+    //begin prototyping
+
+    //TODO: a bitonal image would probably be better to use
+
+    //TODO: consider caching obstacle images to reduce processing needed
+    //testing converting to image
+
+    int w = 500;//TODO find min and max points of the polygo
+    cv::Mat obsMat = cv::Mat::zeros( w, w, CV_8UC3 );
+
+    int lineType = 8;
+
+    cv::Point obsPoints[bundles[0]->getFootprint().polygon.points.size()];
+    for (int pt = 0; pt < bundles[0]->getFootprint().polygon.points.size(); pt++){
+      int x = round(bundles[0]->getFootprint().polygon.points[pt].x,map.info.resolution)/map.info.resolution;
+      x = x+abs(x);
+      int y = round(bundles[0]->getFootprint().polygon.points[pt].y,map.info.resolution)/map.info.resolution;
+      y = y+abs(y);
+      obsPoints[pt] = cv::Point(x,y);
+    }
+
+    const cv::Point* ppt[1] = { obsPoints };
+    int npt[] = { bundles[0]->getFootprint().polygon.points.size() };
+
+    cv::fillPoly(obsMat, ppt, npt, 1, cv::Scalar( 255, 255, 255 ), lineType);
+
+    //testing rotating image
+    //TODO
+
+    //testing converting image to occupancy grid
+
+    //Create the obstacle in its own grid
+    nav_msgs::OccupancyGrid obstacle;
+    vector<signed char> obstacleData(w * w);
+    obstacle.info.width = w;
+    obstacle.info.height = w;
+    obstacle.info.resolution = map.info.resolution;
+
+    for (int ptX = 0; ptX < w; ptX++) {
+      for (int ptY = 0; ptY < w; ptY++){
+        cv::Vec3b intensity = obsMat.at<cv::Vec3b>(cv::Point(ptX, ptY));
+        uchar blue = intensity.val[0];
+        //uchar green = intensity.val[1];
+        //uchar red = intensity.val[2];
+        obstacleData[ptX+ptY*obstacle.info.width] = blue;
+      }
+    }
+
+    obstacle.data = obstacleData;
+    map_out.publish(obstacle);
+
+
+    //end prototyping
+
+/*
 
     //Iterate over every marker bundle
     for (int i = 0; i < markers->markers.size(); i++)
@@ -209,6 +264,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     //publish the map
     map.data = mapData;
     map_out.publish(map);
+    */
   }
 }
 

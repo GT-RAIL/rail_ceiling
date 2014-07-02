@@ -21,6 +21,8 @@
 #include <tf/transform_datatypes.h>
 #include <rail_ceiling/bundle.h>
 
+#include "opencv2/core/core.hpp"
+
 #define PI 3.14159265358979323846  /* pi */
 
 class markers_to_map

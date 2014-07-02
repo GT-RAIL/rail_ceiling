@@ -6,6 +6,7 @@ project(rail_ceiling)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED cmake_modules roscpp tf costmap_2d)
 find_package(TinyXML REQUIRED)
+find_package(OpenCV REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -49,7 +50,7 @@ add_library(ceiling_layer src/ceiling_layer.cpp)
 add_executable(markers_to_map src/markers_to_map.cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(markers_to_map rail_ceiling ${catkin_LIBRARIES} ${TinyXML_LIBRARIES})
+target_link_libraries(markers_to_map rail_ceiling ${catkin_LIBRARIES} ${TinyXML_LIBRARIES} ${OpenCV_LIBS})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

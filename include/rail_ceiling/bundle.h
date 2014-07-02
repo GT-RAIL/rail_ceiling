@@ -82,13 +82,19 @@ public:
 private:
   int id; /*!< associated bundle id */
   float markerSize; /*!< marker size */
+
+  //TODO: probably remove the below four
   float bundleWidth; /*!< distance between the origins of the two markers along the x axis */
   float bundleHeight; /*!< distance between the origins of the two markers along the y axis */
   bool flipX; /*< true if obstacle needs to be flipped along the x axis */
   bool flipY; /*< true if obstacle needs to be flipped along the y axis */
 
+
   //TODO comment
   geometry_msgs::PolygonStamped footprint;
+  float markerX;
+  float markerY;
+  float markerYaw;
 };
 
 #endif //BUNDLE_H

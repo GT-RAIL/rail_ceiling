@@ -122,6 +122,12 @@ bool Bundle::parseBundleFootprint(char* filepath)
     }
     if (!masterMarkerFound && boost::iequals(pFootprintNode->Value(),"marker")) {
       masterMarkerFound == true;
+      pFootprintNode->QueryIntAttribute("index",&id);
+      pFootprintNode->QueryFloatAttribute("size", &markerSize);
+      markerSize /= 100; //convert to meters
+      pFootprintNode->QueryFloatAttribute("x",&markerX);
+      pFootprintNode->QueryFloatAttribute("y",&markerY);
+      pFootprintNode->QueryFloatAttribute("yaw",&markerYaw);
     }
   }
   for (int i = 0; i < footprint.polygon.points.size(); i++) {
