@@ -105,7 +105,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         double roll, pitch, yaw;
         tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
         float angle = yaw;
-        ROS_INFO("%f", angle);
 
         //transform the polygon footprint
         float rotCenterX = bundles[bundleIndex]->getMarkerX();

@@ -44,7 +44,6 @@ bool Bundle::parseBundleFootprint(char* filepath)
   TiXmlElement* pFootprintNode = hRoot.FirstChild("footprint").FirstChild().Element();
   for (pFootprintNode; pFootprintNode; pFootprintNode = pFootprintNode->NextSiblingElement())
   {
-    ROS_INFO("%s", pFootprintNode->Value());
     footprint.header.frame_id = "map";
     if (boost::iequals(pFootprintNode->Value(), "point"))
     {

@@ -5,7 +5,7 @@
 	<arg name="cam_image_topic" default="/cameraNode/image_raw" />
 	<arg name="cam_info_topic" default="/cameraNode/camera_info" />	
 	<arg name="output_frame" value="/head_camera" />
-	<arg name="bundle_files" default="$(find rail_ceiling)/bundles/table.xml $(find rail_ceiling)/bundles/sofa_chair.xml" />
+	<arg name="bundle_files" default="$(find rail_ceiling)/bundles/table.xml $(find rail_ceiling)/bundles/sofa_chair_1.xml $(find rail_ceiling)/bundles/sofa_chair_2.xml $(find rail_ceiling)/bundles/stool.xml $(find rail_ceiling)/bundles/couch.xml" />
 
 	<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame) $(arg bundle_files)" />
 
@@ -21,7 +21,7 @@
 	<node pkg="tf" type="static_transform_publisher" name="map_to_ar_map" args="0 0 0 0 0 0 map ar_map 5" />
 
 	<node pkg="rail_ceiling" type="markers_to_map" name="markers_to_map" output="screen" respawn="true" args=" $(arg bundle_files)">
-	  	<param name="update_rate" type="double" value="1" />
+	  	<param name="update_rate" type="double" value=".25" />
 		<remap from="/markers_to_map/map" to="/map" />
 		<remap from="/markers_to_map/ar_pose_marker" to="/ar_pose_marker" />
 	</node>
