@@ -250,12 +250,16 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         int centerX = width/2; //TODO, use location of marker
         int centerY = height/2;
 
+
+        xOff = 0;
+        yOff = centerY;
+
         cv::Mat dst;
         cv::Point2f pt(centerX, centerY);
         //translate
         cv::Mat r = cv::getRotationMatrix2D(pt, 0, 1.0);
-        r.at<double>(0,2) = 5; //xTranslation
-        r.at<double>(1,2) = 10; //yTranslation
+        r.at<double>(0,2) = xOff; //xTranslation
+        r.at<double>(1,2) = yOff; //yTranslation
         cv::warpAffine(obsMat, dst, r, cv::Size(width+r.at<double>(0,2),height+r.at<double>(1,2)));
         dst.copyTo(obsMat);
 
@@ -264,8 +268,8 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         r = cv::getRotationMatrix2D(pt, angle, 1.0);
         //double sinv = r.at<double>(0,1);
         //double cosv = r.at<double>(0,0);
-        r.at<double>(0,2) += brect.size().width/2.0 - centerX - 5;
-        r.at<double>(1,2) += brect.size().height/2.0 - centerY - 10;
+        r.at<double>(0,2) += brect.size().width/2.0 - centerX - xOff;
+        r.at<double>(1,2) += brect.size().height/2.0 - centerY - yOff;
         //cv::Mat dst (brect.size().height, brect.size().width ,obsMat.type());
         cv::warpAffine(obsMat, dst, r, brect.size());
 
