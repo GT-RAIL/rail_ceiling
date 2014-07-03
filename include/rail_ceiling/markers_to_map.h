@@ -22,7 +22,6 @@
 #include <rail_ceiling/bundle.h>
 
 #include "opencv2/core/core.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
 
 #define PI 3.14159265358979323846  /* pi */
 

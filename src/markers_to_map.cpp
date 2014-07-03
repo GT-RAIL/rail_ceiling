@@ -70,7 +70,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     map.info = globalMap.info;
     vector<signed char> mapData(map.info.width * map.info.height);
 
-    //Iterate over every marker bundle
+    //Iterate over the detected marker bundles
     for (int i = 0; i < markers->markers.size(); i++)
     {
       //find the relevant bundle
@@ -99,7 +99,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         int yGrid = round(transform.getOrigin().y() - map.info.origin.position.y, map.info.resolution)
             / map.info.resolution;
 
-        //Find the needed rotation angle
+        //extract the rotation angle
         tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(),
                          transform.getRotation().w());
         double roll, pitch, yaw;
@@ -108,9 +108,10 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         ROS_INFO("%f",angle);
 
         //todo, need to account for marker yaw
+
+        //transform the polygon footprint
         float rotCenterX = bundles[bundleIndex]->markerX;
         float rotCenterY = bundles[bundleIndex]->markerY;
-        //transform the polygonal footprint
         geometry_msgs::PolygonStamped transformedFootprint;
         transformedFootprint.header.frame_id = bundles[bundleIndex]->getFootprint().header.frame_id;
         for (int pt = 0; pt < bundles[bundleIndex]->getFootprint().polygon.points.size(); pt++){
@@ -130,8 +131,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         }
         //footprint_out.publish(transformedFootprint);
 
-        //TODO: a bitonal image would probably be better to use
-        //find min and max points of the polygon footprint
+        //find bounding box of polygon footprint
         float minX = numeric_limits<float>::max();
         float maxX = -numeric_limits<float>::max();
         float minY = numeric_limits<float>::max();
@@ -152,8 +152,8 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         int height = abs(maxY) - minY;
 
         //rasterize polygon footprint
-        cv::Mat obsMat = cv::Mat::zeros(height, width, CV_8UC3 );
-        int lineType = 8; //TODO: reconsider line type
+        cv::Mat obsMat = cv::Mat::zeros(height, width, CV_8U);
+        int lineType = 8; // 8-connected line
         cv::Point obsPoints[transformedFootprint.polygon.points.size()];
         for (int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++){
           int x = round(transformedFootprint.polygon.points[pt].x,map.info.resolution)/map.info.resolution;
@@ -164,30 +164,14 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         }
         const cv::Point* ppt[1] = { obsPoints };
         int npt[] = { transformedFootprint.polygon.points.size() };
-        cv::fillPoly(obsMat, ppt, npt, 1, cv::Scalar( 255, 255, 255 ), lineType);
+        cv::fillPoly(obsMat, ppt, npt, 1, 255, lineType);
 
-        //convert matrix to occupancy grid //TODO: instead, add directly to map
-        nav_msgs::OccupancyGrid obstacle;
-        vector<signed char> obstacleData(obsMat.rows * obsMat.cols);
-        obstacle.info.width = obsMat.cols;
-        obstacle.info.height = obsMat.rows;
-        obstacle.info.resolution = map.info.resolution;
-        for (int ptX = 0; ptX < obsMat.cols; ptX++) {
-          for (int ptY = 0; ptY < obsMat.rows; ptY++){
-            cv::Vec3b intensity = obsMat.at<cv::Vec3b>(cv::Point(ptX, ptY));
-            uchar blue = intensity.val[0];
-            //uchar green = intensity.val[1];
-            //uchar red = intensity.val[2];
-            obstacleData[ptX+ptY*obsMat.cols] = (blue > 128) ? 100 : 0; //TODO: clean/optimize (only need greyscale images)
-          }
-        }
-
+        //draw obstacle on map
         int xOffset = minX + round(rotCenterX,map.info.resolution)/map.info.resolution;
         int yOffset = minY + round(rotCenterY,map.info.resolution)/map.info.resolution;
-        //add the obstacle to the map
-        for (int x = 0; x < obstacle.info.width; x++) {
-          for (int y = 0; y < obstacle.info.height; y++) {
-            mapData[(xGrid+x+xOffset)+(yGrid+y+yOffset)*map.info.width] = obstacleData[x+y*obstacle.info.width];
+        for (int x = 0; x < obsMat.cols; x++) {
+          for (int y = 0; y < obsMat.rows; y++){
+            mapData[(xGrid+x+xOffset)+(yGrid+y+yOffset)*map.info.width] = (obsMat.at<uchar>(y,x) > 128) ? 100 : 0;
           }
         }
       }
