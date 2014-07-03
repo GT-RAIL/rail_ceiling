@@ -179,8 +179,9 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         {
           for (int y = 0; y < obsMat.rows; y++)
           {
-            mapData[(xGrid + x + xOffset) + (yGrid + y + yOffset) * map.info.width] =
-                (obsMat.at < uchar > (y, x) > 128) ? 100 : 0;
+            if (obsMat.at < uchar > (y, x) > 128) {
+              mapData[(xGrid + x + xOffset) + (yGrid + y + yOffset) * map.info.width] = 100;
+            }
           }
         }
       }
