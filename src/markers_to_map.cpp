@@ -144,17 +144,14 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         //ROS_INFO("%d,%d",centerX,centerY);
 
         //rasterize polygon footprint
-
-        int box = std::max(height,width);
-
-        cv::Mat obsMat = cv::Mat::zeros(2*box+height, 2*box+width, CV_8UC3 );
+        cv::Mat obsMat = cv::Mat::zeros(height, width, CV_8UC3 );
         int lineType = 8;
         cv::Point obsPoints[bundles[bundleIndex]->getFootprint().polygon.points.size()];
         for (int pt = 0; pt < bundles[bundleIndex]->getFootprint().polygon.points.size(); pt++){
           int x = round(bundles[bundleIndex]->getFootprint().polygon.points[pt].x,map.info.resolution)/map.info.resolution;
-          x = x+abs(x)+box;
+          x = x+abs(x);
           int y = round(bundles[bundleIndex]->getFootprint().polygon.points[pt].y,map.info.resolution)/map.info.resolution;
-          y = y+abs(y)+box;
+          y = y+abs(y);
           obsPoints[pt] = cv::Point(x,y);
         }
         const cv::Point* ppt[1] = { obsPoints };
@@ -250,8 +247,8 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
        cv::warpAffine(obsMat, dst, r, brect.size());
 
            */
-        int centerX = width/2; //TODO, use location of marker
-        int centerY = height/2;
+//        int centerX = width/2; //TODO, use location of marker
+        //int centerY = height/2;
 
 /*
         int xOff = 0;20;
@@ -282,8 +279,9 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         cv::warpAffine(obsMat, dst, r, brect.size());
 
 */
-        cv::Mat dst;
 
+        cv::Mat dst;
+/*
         angle = 0;
         cv::Point2f pt(obsMat.rows/2, obsMat.cols/2);
         cv::Rect brect = cv::RotatedRect(pt, obsMat.size(), 0).boundingRect(); //center, size, angle
@@ -295,7 +293,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         //r.at<double>(1,2) += brect.size().height/2.0 - pt.y;
 
         cv::warpAffine(obsMat, dst, r, brect.size());
-
+*/
 
         //obsMat.copyTo(dst);
 
