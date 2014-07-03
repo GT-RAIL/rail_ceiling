@@ -29,15 +29,17 @@ public:
   Bundle();
 
   /*!
-   * Attempts to parse an xml bundle file at the given file location
+   * Attempts to parse an xml bundle file containing the bundle footprint at the given file location
    *\param filepath The location of the xml file
    *\returns True is parse is successful. False is parse fails.
    */
-  bool parseBundle(char* filepath);
-  //TODO: remove above if below is successfully implemented
-
-  //TODO comment
   bool parseBundleFootprint(char* filepath);
+
+  /*!
+   * Returns the the bundle footprint
+   *\returns the bundle footprint
+   */
+  geometry_msgs::PolygonStamped getFootprint();
 
   /*
    * Returns the id of the ar marker associated with this bundle
@@ -45,60 +47,30 @@ public:
    */
   int getId();
 
-  //TODO: comment
-  geometry_msgs::PolygonStamped getFootprint();
-
-  /*
-   * Returns the size of the ar markers
-   * \returns The size of the ar markers
+  /*!
+   * Returns the x position of the marker origin with respect to the footprint origin
+   * \returns The x position of the marker origin with respect to the footprint origin
    */
-  float getMarkerSize();
+  float getMarkerX();
 
-  /*
-   * Returns the distance between the origins of the two markers along the x axis
-   * \returns The distance between the origins of the two markers along the x axis
+  /*!
+   * Returns the y position of the marker origin with respect to the footprint origin
+   * \returns The y position of the marker origin with respect to the footprint origin
    */
-  float getBundleWidth();
+  float getMarkerY();
 
-  /*
-   * Returns the distance between the origins of the two markers along the y axis
-   * \returns The distance between the origins of the two markers along the y axis
+  /*!
+   * Returns the rotation of the marker with respect to it's own origin
+   * \returns The rotation of the marker with respect to it's own origin
    */
-  float getBundleHeight();
-
-  /*
-   * Returns true if obstacle needs to be flipped along the x axis, false otherwise
-   * \returns True if obstacle needs to be flipped along the x axis, false otherwise
-   */
-  bool getFlipX();
-
-
-  /*
-   * Returns true if obstacle needs to be flipped along the y axis, false otherwise
-   * \returns True if obstacle needs to be flipped along the y axis, false otherwise
-   */
-  bool getFlipY();
-
-
-  //todo: make private
-  float markerX;
-  float markerY;
-  float markerYaw;
+  float getMarkerYaw();
 
 private:
   int id; /*!< associated bundle id */
-  float markerSize; /*!< marker size */
-
-  //TODO: probably remove the below four
-  float bundleWidth; /*!< distance between the origins of the two markers along the x axis */
-  float bundleHeight; /*!< distance between the origins of the two markers along the y axis */
-  bool flipX; /*< true if obstacle needs to be flipped along the x axis */
-  bool flipY; /*< true if obstacle needs to be flipped along the y axis */
-
-
-  //TODO comment
-  geometry_msgs::PolygonStamped footprint;
-
+  geometry_msgs::PolygonStamped footprint; /*! <The footprint of the obstacle bundle to be drawn on the map */
+  float markerX; /*! <The x position of the marker origin with respect to the footprint origin */
+  float markerY; /*! <The y position of the marker origin with respect to the footprint origin  */
+  float markerYaw; /*! <The rotation of the marker with respect to it's own origin in radians*/
 };
 
 #endif //BUNDLE_H

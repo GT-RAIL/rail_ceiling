@@ -108,9 +108,9 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         ROS_INFO("%f",angle);
 
         //transform the polygon footprint
-        float rotCenterX = bundles[bundleIndex]->markerX;
-        float rotCenterY = bundles[bundleIndex]->markerY;
-        angle = angle + bundles[bundleIndex]->markerYaw;
+        float rotCenterX = bundles[bundleIndex]->getMarkerX();
+        float rotCenterY = bundles[bundleIndex]->getMarkerY();
+        angle = angle + bundles[bundleIndex]->getMarkerYaw();
         geometry_msgs::PolygonStamped transformedFootprint;
         transformedFootprint.header.frame_id = bundles[bundleIndex]->getFootprint().header.frame_id;
         for (int pt = 0; pt < bundles[bundleIndex]->getFootprint().polygon.points.size(); pt++){
@@ -214,20 +214,9 @@ int main(int argc, char **argv)
   for (int arg = 1; arg < argc; arg++)
   {
     Bundle* bundle = new Bundle();
-    if (bundle->parseBundle(argv[arg]))
+    if (bundle->parseBundleFootprint(argv[arg]))
       converter.addBundle(bundle);
-    bundle->parseBundleFootprint(argv[arg]);
-    converter.footprint_out.publish(bundle->getFootprint());
-
-
   }
-/*
-  converter.footprint_out.publish(converter.getBundle(0)->getFootprint());
-
-  for (int i = 0; i < converter.getBundle(0)->getFootprint().points.size(); i++) {
-    ROS_INFO("%f, %f",converter.getBundle(0)->getFootprint().points[i].x,converter.getBundle(0)->getFootprint().points[i].y);
-  }
-*/
 
   while (ros::ok())
   {

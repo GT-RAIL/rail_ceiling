@@ -19,71 +19,6 @@ Bundle::Bundle()
 {
 }
 
-bool Bundle::parseBundle(char* filepath)
-{
-
-  //load the xml document
-  TiXmlDocument doc(filepath);
-  if (!doc.LoadFile())
-  {
-    ROS_ERROR("Failed to load bundle from %s", filepath);
-    return false;
-  }
-  TiXmlHandle hDoc(&doc);
-  TiXmlElement* pElem;
-  TiXmlHandle hRoot(0);
-
-  //get the first xml element in the document
-  pElem = hDoc.FirstChildElement().Element();
-  if (!pElem)
-    return false;
-  int markerCount;
-  pElem->QueryIntAttribute("markers", &markerCount);
-  //ROS_INFO("%s %d",pElem->Value(),markerCount);
-
-  // save the root for later
-  hRoot = TiXmlHandle(pElem);
-
-  //find first marker
-  TiXmlHandle markerRoot = hRoot.FirstChild("marker");
-  TiXmlElement* pMarkersNode = markerRoot.Element();
-
-  //save marker id
-  pMarkersNode->QueryIntAttribute("index", &id);
-  //ROS_INFO("first %s id: %d",pMarkersNode->Value(), id);
-
-  //save marker size
-  TiXmlElement* pCornersNode = markerRoot.FirstChild().Element();
-  pCornersNode->QueryFloatAttribute("x", &markerSize);
-  markerSize = (2 * abs(markerSize)) / 100;
-  //ROS_INFO("first %s, marker size: %f",pCornersNode->Value(), markerSize);
-
-  //go to second marker, calculate bundle width and height
-  float temp1;
-  float temp2;
-  pMarkersNode = pMarkersNode->NextSiblingElement();
-  //ROS_INFO("second %s id: %d",pMarkersNode->Value(), id);
-  pCornersNode = pMarkersNode->FirstChildElement();
-  pCornersNode->QueryFloatAttribute("x", &temp1);
-  pCornersNode = pCornersNode->NextSiblingElement();
-  pCornersNode->QueryFloatAttribute("x", &temp2);
-  bundleWidth = ((abs(temp1) + abs(temp2)) / 2) / 100;
-  flipX = (temp1 < 0) ? false: true;
-  //ROS_INFO("%s %f",pCornersNode->Value(), bundleWidth);
-  pCornersNode->QueryFloatAttribute("y", &temp1);
-  pCornersNode = pCornersNode->NextSiblingElement();
-  pCornersNode->QueryFloatAttribute("y", &temp2);
-  bundleHeight = ((abs(temp1) + abs(temp2)) / 2) / 100;
-  flipY = (temp1 < 0) ? true: false;
-  //ROS_INFO("%s %f",pCornersNode->Value(), bundleHeight);
-
-  ROS_INFO("Loaded bundle from %s {ar_id=%d marker_size=%f bundle_width=%f bundle_height=%f}", filepath, id, markerSize,
-           bundleWidth, bundleHeight);
-
-  return true;
-}
-
-
 bool Bundle::parseBundleFootprint(char* filepath)
 {
   TiXmlDocument doc(filepath);
@@ -123,18 +58,20 @@ bool Bundle::parseBundleFootprint(char* filepath)
     if (!masterMarkerFound && boost::iequals(pFootprintNode->Value(),"marker")) {
       masterMarkerFound == true;
       pFootprintNode->QueryIntAttribute("index",&id);
-      pFootprintNode->QueryFloatAttribute("size", &markerSize);
-      markerSize /= 100; //convert to meters
       pFootprintNode->QueryFloatAttribute("x",&markerX);
       pFootprintNode->QueryFloatAttribute("y",&markerY);
       pFootprintNode->QueryFloatAttribute("yaw",&markerYaw);
     }
   }
+  /* Prints list of points for debugging
   for (int i = 0; i < footprint.polygon.points.size(); i++) {
     ROS_INFO("%f, %f",footprint.polygon.points[i].x,footprint.polygon.points[i].y);
   }
+  */
 
-  //TODO: remove info messages
+  ROS_INFO("Loaded bundle from %s with ar_id=%d", filepath, id);
+
+  return true;
 }
 
 geometry_msgs::PolygonStamped Bundle::getFootprint() {
@@ -146,29 +83,17 @@ int Bundle::getId()
   return id;
 }
 
-float Bundle::getMarkerSize()
+float Bundle::getMarkerX()
 {
-  return markerSize;
+  return markerX;
 }
 
-float Bundle::getBundleWidth()
+float Bundle::getMarkerY()
 {
-  return bundleWidth;
+  return markerY;
 }
 
-float Bundle::getBundleHeight()
+float Bundle::getMarkerYaw()
 {
-  return bundleHeight;
-}
-
-
-bool Bundle::getFlipX()
-{
-  return flipX;
-}
-
-
-bool Bundle::getFlipY()
-{
-  return flipY;
+  return markerYaw;
 }
