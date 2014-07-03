@@ -20,7 +20,6 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 #include <rail_ceiling/bundle.h>
-
 #include "opencv2/core/core.hpp"
 
 #define PI 3.14159265358979323846  /* pi */
@@ -41,18 +40,17 @@ public:
   void addBundle(Bundle* bundle);
 
   /*!
-     * Gets a bundle from the list of obstacle bundles
-     *\param index Index of the bundle to get
-     *\return A pointer to the bundle at the specified index
-     */
-   Bundle* getBundle(int index);
+   * Gets a bundle from the list of obstacle bundles
+   *\param index Index of the bundle to get
+   *\return A pointer to the bundle at the specified index
+   */
+  Bundle* getBundle(int index);
 
   /*!<
    * Returns the node's update rate
    *\returns The node's update rate
    */
   double getUpdateRate();
-
 
   //TODO: make private
   ros::Publisher footprint_out; /*< footprint polygon topic */

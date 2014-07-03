@@ -41,12 +41,13 @@ bool Bundle::parseBundleFootprint(char* filepath)
   float temp;
   bool masterMarkerFound = false;
   //go to first footprint element
-  TiXmlElement* pFootprintNode=hRoot.FirstChild( "footprint" ).FirstChild().Element();
-  for( pFootprintNode; pFootprintNode; pFootprintNode=pFootprintNode->NextSiblingElement())
+  TiXmlElement* pFootprintNode = hRoot.FirstChild("footprint").FirstChild().Element();
+  for (pFootprintNode; pFootprintNode; pFootprintNode = pFootprintNode->NextSiblingElement())
   {
-    ROS_INFO("%s",pFootprintNode->Value());
+    ROS_INFO("%s", pFootprintNode->Value());
     footprint.header.frame_id = "map";
-    if (boost::iequals(pFootprintNode->Value(),"point")) {
+    if (boost::iequals(pFootprintNode->Value(), "point"))
+    {
       geometry_msgs::Point32* point = new geometry_msgs::Point32();
       pFootprintNode->QueryFloatAttribute("x", &temp);
       point->x = temp;
@@ -55,26 +56,22 @@ bool Bundle::parseBundleFootprint(char* filepath)
       point->z = 0;
       footprint.polygon.points.push_back(*point);
     }
-    if (!masterMarkerFound && boost::iequals(pFootprintNode->Value(),"marker")) {
+    if (!masterMarkerFound && boost::iequals(pFootprintNode->Value(), "marker"))
+    {
       masterMarkerFound == true;
-      pFootprintNode->QueryIntAttribute("index",&id);
-      pFootprintNode->QueryFloatAttribute("x",&markerX);
-      pFootprintNode->QueryFloatAttribute("y",&markerY);
-      pFootprintNode->QueryFloatAttribute("yaw",&markerYaw);
+      pFootprintNode->QueryIntAttribute("index", &id);
+      pFootprintNode->QueryFloatAttribute("x", &markerX);
+      pFootprintNode->QueryFloatAttribute("y", &markerY);
+      pFootprintNode->QueryFloatAttribute("yaw", &markerYaw);
     }
   }
-  /* Prints list of points for debugging
-  for (int i = 0; i < footprint.polygon.points.size(); i++) {
-    ROS_INFO("%f, %f",footprint.polygon.points[i].x,footprint.polygon.points[i].y);
-  }
-  */
-
   ROS_INFO("Loaded bundle from %s with ar_id=%d", filepath, id);
 
   return true;
 }
 
-geometry_msgs::PolygonStamped Bundle::getFootprint() {
+geometry_msgs::PolygonStamped Bundle::getFootprint()
+{
   return footprint;
 }
 
