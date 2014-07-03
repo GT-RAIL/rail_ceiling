@@ -107,11 +107,10 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         float angle = yaw;
         ROS_INFO("%f",angle);
 
-        //todo, need to account for marker yaw
-
         //transform the polygon footprint
         float rotCenterX = bundles[bundleIndex]->markerX;
         float rotCenterY = bundles[bundleIndex]->markerY;
+        angle = angle + bundles[bundleIndex]->markerYaw;
         geometry_msgs::PolygonStamped transformedFootprint;
         transformedFootprint.header.frame_id = bundles[bundleIndex]->getFootprint().header.frame_id;
         for (int pt = 0; pt < bundles[bundleIndex]->getFootprint().polygon.points.size(); pt++){
