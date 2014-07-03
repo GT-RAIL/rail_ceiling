@@ -71,7 +71,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     vector<signed char> mapData(map.info.width * map.info.height);
     //fill(mapData.begin(), mapData.end(), -1);
 
-    footprint_out.publish(bundles[0]->getFootprint()); //TODO: remove
+    //footprint_out.publish(bundles[0]->getFootprint()); //TODO: remove
 
     //Iterate over every marker bundle
     for (int i = 0; i < markers->markers.size(); i++)
@@ -107,10 +107,37 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
                          transform.getRotation().w());
         double roll, pitch, yaw;
         tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+        float angle = yaw;
+        //float angle = PI/4;
         //float angle = yaw * (180 / PI); //Convert to degrees
-        float angle = -30;
+        //float angle = PI/4;
         //float angle = -20;
-        //ROS_INFO("%f",angle);
+        ROS_INFO("%f",angle);
+
+
+
+        //todo, need to account for marker yaw
+        float rotCenterX = bundles[bundleIndex]->markerX;
+        float rotCenterY = bundles[bundleIndex]->markerY;
+        //transform the polygonal footprint
+        geometry_msgs::PolygonStamped transformedFootprint;
+        transformedFootprint.header.frame_id = bundles[bundleIndex]->getFootprint().header.frame_id;
+        for (int pt = 0; pt < bundles[bundleIndex]->getFootprint().polygon.points.size(); pt++){
+          geometry_msgs::Point32 point = bundles[bundleIndex]->getFootprint().polygon.points[pt];
+          //translate by center of rotation
+          point.x += rotCenterX;
+          point.y += rotCenterY;
+          //rotate by desired angle
+          float x = point.x*cos(angle)-point.y*sin(angle);
+          float y = point.x*sin(angle)+point.y*cos(angle);
+          point.x = x;
+          point.y = y;
+          //translate back to origin
+          point.x -= rotCenterX;
+          point.y -= rotCenterY;
+          transformedFootprint.polygon.points.push_back(point);
+        }
+        footprint_out.publish(transformedFootprint); //TODO: remove
 
         //TODO: a bitonal image would probably be better to use
         //TODO: consider caching obstacle images to reduce processing needed
@@ -119,16 +146,20 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         float maxX = -numeric_limits<float>::max();
         float minY = numeric_limits<float>::max();
         float maxY = -numeric_limits<float>::max();
-        for (int pt = 0; pt < bundles[bundleIndex]->getFootprint().polygon.points.size(); pt++){
-          float x = bundles[bundleIndex]->getFootprint().polygon.points[pt].x;
-          float y = bundles[bundleIndex]->getFootprint().polygon.points[pt].y;
+        for (int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++){
+          float x = transformedFootprint.polygon.points[pt].x;
+          float y = transformedFootprint.polygon.points[pt].y;
           if (x < minX) minX = x;
           if (x > maxX) maxX = x;
           if (y < minY) minY = y;
           if (y > maxY) maxY = y;
         }
-        int width = abs(round(maxX,map.info.resolution)/map.info.resolution) - round(minX,map.info.resolution)/map.info.resolution;
-        int height = abs(round(maxY,map.info.resolution)/map.info.resolution) - round(minY,map.info.resolution)/map.info.resolution;
+        maxX = round(maxX,map.info.resolution)/map.info.resolution;
+        minX = round(minX,map.info.resolution)/map.info.resolution;
+        maxY = round(maxY,map.info.resolution)/map.info.resolution;
+        minY = round(minY,map.info.resolution)/map.info.resolution;
+        int width = abs(maxX) - minX;
+        int height = abs(maxY) - minY;
 
         /*
         int centerX = round(bundles[0]->markerX,map.info.resolution)/map.info.resolution;
@@ -144,71 +175,23 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         //ROS_INFO("%d,%d",centerX,centerY);
 
         //rasterize polygon footprint
+        //ROS_INFO("---");
         cv::Mat obsMat = cv::Mat::zeros(height, width, CV_8UC3 );
-        int lineType = 8;
-        cv::Point obsPoints[bundles[bundleIndex]->getFootprint().polygon.points.size()];
-        for (int pt = 0; pt < bundles[bundleIndex]->getFootprint().polygon.points.size(); pt++){
-          int x = round(bundles[bundleIndex]->getFootprint().polygon.points[pt].x,map.info.resolution)/map.info.resolution;
-          x = x+abs(x);
-          int y = round(bundles[bundleIndex]->getFootprint().polygon.points[pt].y,map.info.resolution)/map.info.resolution;
-          y = y+abs(y);
+        int lineType = 8; //TODO: reconsider line type
+        cv::Point obsPoints[transformedFootprint.polygon.points.size()];
+        for (int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++){
+          int x = round(transformedFootprint.polygon.points[pt].x,map.info.resolution)/map.info.resolution;
+          x -= minX;
+          int y = round(transformedFootprint.polygon.points[pt].y,map.info.resolution)/map.info.resolution;
+          y -= minY;
           obsPoints[pt] = cv::Point(x,y);
+         // ROS_INFO("%d,%d",x,y);
         }
         const cv::Point* ppt[1] = { obsPoints };
-        int npt[] = { bundles[bundleIndex]->getFootprint().polygon.points.size() };
+        int npt[] = { transformedFootprint.polygon.points.size() };
         cv::fillPoly(obsMat, ppt, npt, 1, cv::Scalar( 255, 255, 255 ), lineType);
 
         //rotate as needed
-
-
-
-/*
-
-        cv::Mat im;
-        cv::Mat drawing_image;
-
-        obsMat.copyTo(im);
-
-        //cv::Matx23d rot = getRotationMatrix2D(cv::Point2f(im.cols/2,im.rows/2),angle,1);
-        cv::Matx23d rot = getRotationMatrix2D(cv::Point2f(im.cols/2,im.rows/2),angle,1);
-
-        cv::Matx31d tl(0,0,1);
-        cv::Matx31d tr(im.cols,0,1);
-        cv::Matx31d bl(0,im.rows,1);
-        cv::Matx31d br(im.cols,im.rows,1);
-
-        std::vector<cv::Point2f> pts;
-        cv::Matx21d tl2 = rot*tl;
-        cv::Matx21d tr2 = rot*tr;
-        cv::Matx21d bl2 = rot*bl;
-        cv::Matx21d br2 = rot*br;
-        pts.push_back(cv::Point2f(tl2(0),tl2(1)));
-        pts.push_back(cv::Point2f(tr2(0),tr2(1)));
-        pts.push_back(cv::Point2f(bl2(0),bl2(1)));
-        pts.push_back(cv::Point2f(br2(0),br2(1)));
-
-        cv::Rect bounds = cv::boundingRect(pts);
-
-        cv::Matx33d tran(1,0,(bounds.width-im.cols)/2,
-                         0,1,(bounds.height-im.rows)/2,
-                         0,0,1);
-        cv::Matx33d rot33;
-        for(int i = 0; i < 6; i++)
-            rot33(i) = rot(i);
-        rot33(2,0) = 0;
-        rot33(2,1) = 0;
-        rot33(2,2) = 1;
-        cv::Matx33d combined = tran*rot33;
-        cv::Matx23d final;
-        for(int i = 0; i < 6; i++)
-            final(i) = combined(i);
-
-        cv::Size im_size(bounds.width,bounds.height);
-        cv::warpAffine(im, drawing_image,final, im_size);
-
-        cv::Mat dst;
-        drawing_image.copyTo(dst);
-        */
 
 
         /*
@@ -280,7 +263,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
 */
 
-        cv::Mat dst;
+        //cv::Mat dst;
 /*
         angle = 0;
         cv::Point2f pt(obsMat.rows/2, obsMat.cols/2);
@@ -297,31 +280,33 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
         //obsMat.copyTo(dst);
 
-        //convert matrix to occupancy grid
+        //convert matrix to occupancy grid //TODO: instead, add directly to map
         nav_msgs::OccupancyGrid obstacle;
-        vector<signed char> obstacleData(dst.rows * dst.cols);
-        obstacle.info.width = dst.cols;
-        obstacle.info.height = dst.rows;
+        vector<signed char> obstacleData(obsMat.rows * obsMat.cols);
+        obstacle.info.width = obsMat.cols;
+        obstacle.info.height = obsMat.rows;
         obstacle.info.resolution = map.info.resolution;
-        for (int ptX = 0; ptX < dst.cols; ptX++) {
-          for (int ptY = 0; ptY < dst.rows; ptY++){
-            cv::Vec3b intensity = dst.at<cv::Vec3b>(cv::Point(ptX, ptY));
+        for (int ptX = 0; ptX < obsMat.cols; ptX++) {
+          for (int ptY = 0; ptY < obsMat.rows; ptY++){
+            cv::Vec3b intensity = obsMat.at<cv::Vec3b>(cv::Point(ptX, ptY));
             uchar blue = intensity.val[0];
             //uchar green = intensity.val[1];
             //uchar red = intensity.val[2];
-            obstacleData[ptX+ptY*dst.cols] = (blue > 128) ? 100 : 0; //TODO: clean/optimize (only need greyscale images)
+            obstacleData[ptX+ptY*obsMat.cols] = (blue > 128) ? 100 : 0; //TODO: clean/optimize (only need greyscale images)
           }
         }
 
+        int xOffset = minX + round(rotCenterX,map.info.resolution)/map.info.resolution;
+        int yOffset = minY + round(rotCenterY,map.info.resolution)/map.info.resolution;
         //add the obstacle to the map
         for (int x = 0; x < obstacle.info.width; x++) {
           for (int y = 0; y < obstacle.info.height; y++) {
-            mapData[(xGrid+x)+(yGrid+y)*map.info.width] = obstacleData[x+y*obstacle.info.width];
+            mapData[(xGrid+x+xOffset)+(yGrid+y+yOffset)*map.info.width] = obstacleData[x+y*obstacle.info.width];
           }
         }
         //todo remove
-        obstacle.data = obstacleData;
-        map_out.publish(obstacle);
+        //obstacle.data = obstacleData;
+        //map_out.publish(obstacle);
       }
       catch (tf::TransformException ex)
       {
@@ -331,7 +316,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
     //TODO: publish the map
     map.data = mapData;
-    //map_out.publish(map);
+    map_out.publish(map);
 
 
 /*

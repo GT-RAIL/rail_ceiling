@@ -110,6 +110,7 @@ bool Bundle::parseBundleFootprint(char* filepath)
   for( pFootprintNode; pFootprintNode; pFootprintNode=pFootprintNode->NextSiblingElement())
   {
     ROS_INFO("%s",pFootprintNode->Value());
+    footprint.header.frame_id = "map";
     if (boost::iequals(pFootprintNode->Value(),"point")) {
       geometry_msgs::Point32* point = new geometry_msgs::Point32();
       pFootprintNode->QueryFloatAttribute("x", &temp);
@@ -118,7 +119,6 @@ bool Bundle::parseBundleFootprint(char* filepath)
       point->y = temp;
       point->z = 0;
       footprint.polygon.points.push_back(*point);
-      footprint.header.frame_id = "map";
     }
     if (!masterMarkerFound && boost::iequals(pFootprintNode->Value(),"marker")) {
       masterMarkerFound == true;
