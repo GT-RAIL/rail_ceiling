@@ -25,7 +25,7 @@
 enum map_type_t {ROLLING, MATCH_SIZE, MATCH_DATA};
 struct layer_t {
   std::string name; /*! <The name of this layer */
-  geometry_msgs::PolygonStamped footprint; /*! <The footprint of the obstacle bundle to be drawn on this layer of the map */
+  std::vector<geometry_msgs::PolygonStamped*> footprint; /*! <The footprint of the obstacle bundle to be drawn on this layer of the map */
   map_type_t mapType;
 };
 
@@ -44,6 +44,7 @@ public:
    *\returns True is parse is successful. False is parse fails.
    */
   bool parseBundleFootprint(char* filepath);
+
 
 
   //TODO: remove
@@ -90,6 +91,7 @@ private:
    * TODO: comment
    */
   layer_t* parseLayer(TiXmlElement* layerElement);
+  geometry_msgs::PolygonStamped* parsePolygon(TiXmlElement* polygonElement);
 
   int id; /*!< associated bundle id */
 

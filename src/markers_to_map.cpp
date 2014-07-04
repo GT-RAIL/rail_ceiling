@@ -64,6 +64,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
   if (globalMapReceived)
   {
     //Initialize maps
+    vector<signed char> globalMapData = globalMap.data;
     for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++) {
       mapLayers[mapId]->map = new nav_msgs::OccupancyGrid();
       mapLayers[mapId]->map->header.frame_id = "ar_map";
@@ -72,7 +73,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       if (mapLayers[mapId]->mapType == MATCH_SIZE) {
         mapLayers[mapId]->mapData = new vector<signed char>(mapLayers[mapId]->map->info.width * mapLayers[mapId]->map->info.height);
       } else if (mapLayers[mapId]->mapType == MATCH_DATA) {
-        mapLayers[mapId]->mapData = &globalMap.data;
+        mapLayers[mapId]->mapData = &globalMapData;
       }
     }
     float globalOriginX = globalMap.info.origin.position.x;
@@ -131,76 +132,81 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           float rotCenterX = bundles[bundleIndex]->getMarkerX();
           float rotCenterY = bundles[bundleIndex]->getMarkerY();
           angle = angle + bundles[bundleIndex]->getMarkerYaw();
-          geometry_msgs::PolygonStamped transformedFootprint;
-          transformedFootprint.header.frame_id = bundles[bundleIndex]->getLayers()->at(layerId)->footprint.header.frame_id;
-          for (int pt = 0; pt < bundles[bundleIndex]->getLayers()->at(layerId)->footprint.polygon.points.size(); pt++)
-          {
-            geometry_msgs::Point32 point = bundles[bundleIndex]->getLayers()->at(layerId)->footprint.polygon.points[pt];
-            //translate by center of rotation
-            point.x += rotCenterX;
-            point.y += rotCenterY;
-            //rotate by desired angle
-            float x = point.x * cos(angle) - point.y * sin(angle);
-            float y = point.x * sin(angle) + point.y * cos(angle);
-            point.x = x;
-            point.y = y;
-            //translate back to origin
-            point.x -= rotCenterX;
-            point.y -= rotCenterY;
-            transformedFootprint.polygon.points.push_back(point);
-          }
-          //footprint_out.publish(transformedFootprint);
 
-          //find bounding box of polygon footprint
-          float minX = numeric_limits<float>::max();
-          float maxX = -numeric_limits<float>::max();
-          float minY = numeric_limits<float>::max();
-          float maxY = -numeric_limits<float>::max();
-          for (unsigned int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++)
-          {
-            float x = transformedFootprint.polygon.points[pt].x;
-            float y = transformedFootprint.polygon.points[pt].y;
-            if (x < minX)
-              minX = x;
-            if (x > maxX)
-              maxX = x;
-            if (y < minY)
-              minY = y;
-            if (y > maxY)
-              maxY = y;
-          }
-          maxX = round(maxX, globalResolution) / globalResolution;
-          minX = round(minX, globalResolution) / globalResolution;
-          maxY = round(maxY, globalResolution) / globalResolution;
-          minY = round(minY, globalResolution) / globalResolution;
-          int width = abs(maxX) - minX;
-          int height = abs(maxY) - minY;
+          for (int poly = 0; poly < bundles[bundleIndex]->getLayers()->at(layerId)->footprint.size(); poly++) {
 
-          //rasterize polygon footprint
-          cv::Mat obsMat = cv::Mat::zeros(height, width, CV_8U);
-          int lineType = 8; // 8-connected line
-          cv::Point obsPoints[transformedFootprint.polygon.points.size()];
-          for (unsigned int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++)
-          {
-            int x = round(transformedFootprint.polygon.points[pt].x, globalResolution) / globalResolution;
-            x -= minX;
-            int y = round(transformedFootprint.polygon.points[pt].y, globalResolution) / globalResolution;
-            y -= minY;
-            obsPoints[pt] = cv::Point(x, y);
-          }
-          const cv::Point* ppt[1] = {obsPoints};
-          int npt[] = {transformedFootprint.polygon.points.size()};
-          cv::fillPoly(obsMat, ppt, npt, 1, 255, lineType);
+            geometry_msgs::PolygonStamped transformedFootprint;
+            transformedFootprint.header.frame_id = bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->header.frame_id;
 
-          //draw obstacle on map
-          int xOffset = minX + round(rotCenterX, globalResolution) / globalResolution;
-          int yOffset = minY + round(rotCenterY, globalResolution) / globalResolution;
-          for (unsigned int x = 0; x < obsMat.cols; x++)
-          {
-            for (unsigned int y = 0; y < obsMat.rows; y++)
+            for (int pt = 0; pt < bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->polygon.points.size(); pt++)
             {
-              if (obsMat.at < uchar > (y, x) > 128) {
-                mapLayers[mapId]->mapData->at((xGrid + x + xOffset) + (yGrid + y + yOffset) * globalWidth) = 100;
+              geometry_msgs::Point32 point = bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->polygon.points[pt];
+              //translate by center of rotation
+              point.x += rotCenterX;
+              point.y += rotCenterY;
+              //rotate by desired angle
+              float x = point.x * cos(angle) - point.y * sin(angle);
+              float y = point.x * sin(angle) + point.y * cos(angle);
+              point.x = x;
+              point.y = y;
+              //translate back to origin
+              point.x -= rotCenterX;
+              point.y -= rotCenterY;
+              transformedFootprint.polygon.points.push_back(point);
+            }
+            //footprint_out.publish(transformedFootprint);
+
+            //find bounding box of polygon footprint
+            float minX = numeric_limits<float>::max();
+            float maxX = -numeric_limits<float>::max();
+            float minY = numeric_limits<float>::max();
+            float maxY = -numeric_limits<float>::max();
+            for (unsigned int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++)
+            {
+              float x = transformedFootprint.polygon.points[pt].x;
+              float y = transformedFootprint.polygon.points[pt].y;
+              if (x < minX)
+                minX = x;
+              if (x > maxX)
+                maxX = x;
+              if (y < minY)
+                minY = y;
+              if (y > maxY)
+                maxY = y;
+            }
+            maxX = round(maxX, globalResolution) / globalResolution;
+            minX = round(minX, globalResolution) / globalResolution;
+            maxY = round(maxY, globalResolution) / globalResolution;
+            minY = round(minY, globalResolution) / globalResolution;
+            int width = abs(maxX) - minX;
+            int height = abs(maxY) - minY;
+
+            //rasterize polygon footprint
+            cv::Mat obsMat = cv::Mat::zeros(height, width, CV_8U);
+            int lineType = 8; // 8-connected line
+            cv::Point obsPoints[transformedFootprint.polygon.points.size()];
+            for (unsigned int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++)
+            {
+              int x = round(transformedFootprint.polygon.points[pt].x, globalResolution) / globalResolution;
+              x -= minX;
+              int y = round(transformedFootprint.polygon.points[pt].y, globalResolution) / globalResolution;
+              y -= minY;
+              obsPoints[pt] = cv::Point(x, y);
+            }
+            const cv::Point* ppt[1] = {obsPoints};
+            int npt[] = {transformedFootprint.polygon.points.size()};
+            cv::fillPoly(obsMat, ppt, npt, 1, 255, lineType);
+
+            //draw obstacle on map
+            int xOffset = minX + round(rotCenterX, globalResolution) / globalResolution;
+            int yOffset = minY + round(rotCenterY, globalResolution) / globalResolution;
+            for (unsigned int x = 0; x < obsMat.cols; x++)
+            {
+              for (unsigned int y = 0; y < obsMat.rows; y++)
+              {
+                if (obsMat.at < uchar > (y, x) > 128) {
+                  mapLayers[mapId]->mapData->at((xGrid + x + xOffset) + (yGrid + y + yOffset) * globalWidth) = 100;
+                }
               }
             }
           }

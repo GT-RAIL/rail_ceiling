@@ -19,6 +19,22 @@ Bundle::Bundle()
 {
 }
 
+geometry_msgs::PolygonStamped* Bundle::parsePolygon(TiXmlElement* polygonElement) {
+  //add points to the polygon
+  geometry_msgs::PolygonStamped* polygon = new geometry_msgs::PolygonStamped();
+  polygon->header.frame_id = "map";
+  TiXmlElement* pointElement = polygonElement->FirstChildElement("point");
+  for (pointElement; pointElement; pointElement = pointElement->NextSiblingElement())
+  {
+    geometry_msgs::Point32* point = new geometry_msgs::Point32();
+    pointElement->QueryFloatAttribute("x", &(point->x));
+    pointElement->QueryFloatAttribute("y", &(point->y));
+    point->z = 0;
+    polygon->polygon.points.push_back(*point);
+  }
+  return polygon;
+}
+
 layer_t* Bundle::parseLayer(TiXmlElement* layerElement) {
   layer_t* layer = new layer_t();
 
@@ -36,16 +52,10 @@ layer_t* Bundle::parseLayer(TiXmlElement* layerElement) {
     ROS_ERROR("Invalid map type in bundle xml");
   }
 
-  //add points to the layer footprint
-  TiXmlElement* pointElement = layerElement->FirstChildElement("point");
-  layer->footprint.header.frame_id = "map";
-  for (pointElement; pointElement; pointElement = pointElement->NextSiblingElement())
-  {
-    geometry_msgs::Point32* point = new geometry_msgs::Point32();
-    pointElement->QueryFloatAttribute("x", &(point->x));
-    pointElement->QueryFloatAttribute("y", &(point->y));
-    point->z = 0;
-    layer->footprint.polygon.points.push_back(*point);
+  //parse polygons
+  TiXmlElement* polygonElement = layerElement->FirstChildElement("polygon");
+  for (polygonElement; polygonElement; polygonElement = polygonElement->NextSiblingElement()) {
+    layer->footprint.push_back(parsePolygon(polygonElement));
   }
 
   return layer;
