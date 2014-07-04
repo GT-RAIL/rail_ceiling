@@ -20,23 +20,20 @@
        	<marker index="0" x="-0.5565" y="0.2005" yaw="0"/>
     	<layer name="global_cost" maptype="match_size">
     		<!--<polygon>-->
-    		<point x="-0.6095" y="-0.2535"/>
-    		<point x="-0.6095" y="0.2535"/>
-    		<point x="0.6095" y="0.2535"/>
-    		<point x="0.6095" y="-0.2535"/>
+    			<point x="-0.6095" y="-0.2535"/>
+    			<point x="-0.6095" y="0.2535"/>
+    			<point x="0.6095" y="0.2535"/>
+    			<point x="0.6095" y="-0.2535"/>
     		<!--</polygon>-->
     	</layer>
     	<layer name="localization" maptype="match_data">
-    	    <point x="-0.3095" y="-0.1535"/>
-    		<point x="-0.3095" y="0.1535"/>
-    		<point x="0.3095" y="0.1535"/>
-    		<point x="0.3095" y="-0.1535"/>
-    		
-    		
-    		<!--<polygon>
-    		</polygon>
-    		<polygon>
-    		</polygon>-->
+    		<!--<polygon>-->
+    	    	<point x="-0.3095" y="-0.1535"/>
+    			<point x="-0.3095" y="0.1535"/>
+    			<point x="0.3095" y="0.1535"/>
+    			<point x="0.3095" y="-0.1535"/>
+    		<!--</polygon>-->
+
     	</layer>
     	    	<!--
     	<layer name="local_cost" maptype="rolling" from="global_cost"/>

@@ -19,7 +19,7 @@ markers_to_map::markers_to_map()
   nh = node;
 
   //initialize variables
-  mapReceived = false;
+  globalMapReceived = false;
 
   //Read in the update rate
   node.param<double>("update_rate", updateRate, 0.2);
@@ -55,13 +55,13 @@ float markers_to_map::max(float a, float b)
 void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
 {
   globalMap = *map;
-  mapReceived = true;
+  globalMapReceived = true;
   ROS_INFO("Map Received");
 }
 
 void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers)
 {
-  if (mapReceived) //TODO: rename globalMap Recieved
+  if (globalMapReceived)
   {
     //Initialize maps
     for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++) {
@@ -69,15 +69,17 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       mapLayers[mapId]->map->header.frame_id = "ar_map";
       mapLayers[mapId]->map->header.stamp = ros::Time::now();
       mapLayers[mapId]->map->info = globalMap.info;
-      mapLayers[mapId]->mapData = new vector<signed char>(mapLayers[mapId]->map->info.width * mapLayers[mapId]->map->info.height);
+      if (mapLayers[mapId]->mapType == MATCH_SIZE) {
+        mapLayers[mapId]->mapData = new vector<signed char>(mapLayers[mapId]->map->info.width * mapLayers[mapId]->map->info.height);
+      } else if (mapLayers[mapId]->mapType == MATCH_DATA) {
+        mapLayers[mapId]->mapData = &globalMap.data;
+      }
     }
     float globalOriginX = globalMap.info.origin.position.x;
     float globalOriginY = globalMap.info.origin.position.y;
     float globalWidth = globalMap.info.width;
     float globalHeight = globalMap.info.height;
     float globalResolution = globalMap.info.resolution;
-
-    //TODO copy data to data maps
 
     //Iterate over the detected marker bundles
     for (int i = 0; i < markers->markers.size(); i++)
