@@ -19,11 +19,8 @@ Bundle::Bundle()
 {
 }
 
-
-//TODO: move to bundle class
 layer_t* Bundle::parseLayer(TiXmlElement* layerElement) {
   layer_t* layer = new layer_t();
-
 
   //set layer name and type
   layerElement->QueryStringAttribute("name", &(layer->name));
@@ -39,8 +36,6 @@ layer_t* Bundle::parseLayer(TiXmlElement* layerElement) {
     ROS_ERROR("Invalid map type in bundle xml");
   }
 
-
-
   //add points to the layer footprint
   TiXmlElement* pointElement = layerElement->FirstChildElement("point");
   layer->footprint.header.frame_id = "map";
@@ -48,7 +43,6 @@ layer_t* Bundle::parseLayer(TiXmlElement* layerElement) {
   {
     geometry_msgs::Point32* point = new geometry_msgs::Point32();
     pointElement->QueryFloatAttribute("x", &(point->x));
-    //TODO temps
     pointElement->QueryFloatAttribute("y", &(point->y));
     point->z = 0;
     layer->footprint.polygon.points.push_back(*point);

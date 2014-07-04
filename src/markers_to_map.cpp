@@ -61,14 +61,23 @@ void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
 
 void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers)
 {
-  if (mapReceived)
+  if (mapReceived) //TODO: rename globalMap Recieved
   {
-    //Initialize map object
-    nav_msgs::OccupancyGrid map;
-    map.header.frame_id = "ar_map";
-    map.header.stamp = ros::Time::now();
-    map.info = globalMap.info;
-    vector<signed char> mapData(map.info.width * map.info.height);
+    //Initialize maps
+    for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++) {
+      mapLayers[mapId]->map = new nav_msgs::OccupancyGrid();
+      mapLayers[mapId]->map->header.frame_id = "ar_map";
+      mapLayers[mapId]->map->header.stamp = ros::Time::now();
+      mapLayers[mapId]->map->info = globalMap.info;
+      mapLayers[mapId]->mapData = new vector<signed char>(mapLayers[mapId]->map->info.width * mapLayers[mapId]->map->info.height);
+    }
+    float globalOriginX = globalMap.info.origin.position.x;
+    float globalOriginY = globalMap.info.origin.position.y;
+    float globalWidth = globalMap.info.width;
+    float globalHeight = globalMap.info.height;
+    float globalResolution = globalMap.info.resolution;
+
+    //TODO copy data to data maps
 
     //Iterate over the detected marker bundles
     for (int i = 0; i < markers->markers.size(); i++)
@@ -94,10 +103,10 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         tf::StampedTransform transform;
         listener.lookupTransform("/ar_map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                  ros::Time(0), transform);
-        int xGrid = round(transform.getOrigin().x() - map.info.origin.position.x, map.info.resolution)
-            / map.info.resolution;
-        int yGrid = round(transform.getOrigin().y() - map.info.origin.position.y, map.info.resolution)
-            / map.info.resolution;
+        int xGrid = round(transform.getOrigin().x() - globalOriginX, globalResolution)
+            / globalResolution;
+        int yGrid = round(transform.getOrigin().y() - globalOriginY, globalResolution)
+            / globalResolution;
 
         //extract the rotation angle
         tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(),
@@ -106,90 +115,91 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
         float angle = yaw;
 
+        for (unsigned int layerId = 0; layerId < bundles[bundleIndex]->getLayers()->size(); layerId++) {
 
+          //find the layers map
+          unsigned int mapId;
+          for (mapId = 0; mapId < mapLayers.size(); mapId++) {
+            if (mapLayers[mapId]->name == bundles[bundleIndex]->getLayers()->at(layerId)->name) {
+              break;
+            }
+          }
 
-        /*
-         *
-         *
-         * TODO, remove constant layer index (find/replace ->at(0))
-         *
-         */
-
-
-        //transform the polygon footprint
-        float rotCenterX = bundles[bundleIndex]->getMarkerX();
-        float rotCenterY = bundles[bundleIndex]->getMarkerY();
-        angle = angle + bundles[bundleIndex]->getMarkerYaw();
-        geometry_msgs::PolygonStamped transformedFootprint;
-        transformedFootprint.header.frame_id = bundles[bundleIndex]->getLayers()->at(0)->footprint.header.frame_id;
-        for (int pt = 0; pt < bundles[bundleIndex]->getLayers()->at(0)->footprint.polygon.points.size(); pt++)
-        {
-          geometry_msgs::Point32 point = bundles[bundleIndex]->getLayers()->at(0)->footprint.polygon.points[pt];
-          //translate by center of rotation
-          point.x += rotCenterX;
-          point.y += rotCenterY;
-          //rotate by desired angle
-          float x = point.x * cos(angle) - point.y * sin(angle);
-          float y = point.x * sin(angle) + point.y * cos(angle);
-          point.x = x;
-          point.y = y;
-          //translate back to origin
-          point.x -= rotCenterX;
-          point.y -= rotCenterY;
-          transformedFootprint.polygon.points.push_back(point);
-        }
-        //footprint_out.publish(transformedFootprint);
-
-        //find bounding box of polygon footprint
-        float minX = numeric_limits<float>::max();
-        float maxX = -numeric_limits<float>::max();
-        float minY = numeric_limits<float>::max();
-        float maxY = -numeric_limits<float>::max();
-        for (int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++)
-        {
-          float x = transformedFootprint.polygon.points[pt].x;
-          float y = transformedFootprint.polygon.points[pt].y;
-          if (x < minX)
-            minX = x;
-          if (x > maxX)
-            maxX = x;
-          if (y < minY)
-            minY = y;
-          if (y > maxY)
-            maxY = y;
-        }
-        maxX = round(maxX, map.info.resolution) / map.info.resolution;
-        minX = round(minX, map.info.resolution) / map.info.resolution;
-        maxY = round(maxY, map.info.resolution) / map.info.resolution;
-        minY = round(minY, map.info.resolution) / map.info.resolution;
-        int width = abs(maxX) - minX;
-        int height = abs(maxY) - minY;
-
-        //rasterize polygon footprint
-        cv::Mat obsMat = cv::Mat::zeros(height, width, CV_8U);
-        int lineType = 8; // 8-connected line
-        cv::Point obsPoints[transformedFootprint.polygon.points.size()];
-        for (int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++)
-        {
-          int x = round(transformedFootprint.polygon.points[pt].x, map.info.resolution) / map.info.resolution;
-          x -= minX;
-          int y = round(transformedFootprint.polygon.points[pt].y, map.info.resolution) / map.info.resolution;
-          y -= minY;
-          obsPoints[pt] = cv::Point(x, y);
-        }
-        const cv::Point* ppt[1] = {obsPoints};
-        int npt[] = {transformedFootprint.polygon.points.size()};
-        cv::fillPoly(obsMat, ppt, npt, 1, 255, lineType);
-
-        //draw obstacle on map
-        int xOffset = minX + round(rotCenterX, map.info.resolution) / map.info.resolution;
-        int yOffset = minY + round(rotCenterY, map.info.resolution) / map.info.resolution;
-        for (int x = 0; x < obsMat.cols; x++)
-        {
-          for (int y = 0; y < obsMat.rows; y++)
+          //transform the polygon footprint
+          float rotCenterX = bundles[bundleIndex]->getMarkerX();
+          float rotCenterY = bundles[bundleIndex]->getMarkerY();
+          angle = angle + bundles[bundleIndex]->getMarkerYaw();
+          geometry_msgs::PolygonStamped transformedFootprint;
+          transformedFootprint.header.frame_id = bundles[bundleIndex]->getLayers()->at(layerId)->footprint.header.frame_id;
+          for (int pt = 0; pt < bundles[bundleIndex]->getLayers()->at(layerId)->footprint.polygon.points.size(); pt++)
           {
-            if (obsMat.at < uchar > (y, x) > 128) {
-              mapData[(xGrid + x + xOffset) + (yGrid + y + yOffset) * map.info.width] = 100;
+            geometry_msgs::Point32 point = bundles[bundleIndex]->getLayers()->at(layerId)->footprint.polygon.points[pt];
+            //translate by center of rotation
+            point.x += rotCenterX;
+            point.y += rotCenterY;
+            //rotate by desired angle
+            float x = point.x * cos(angle) - point.y * sin(angle);
+            float y = point.x * sin(angle) + point.y * cos(angle);
+            point.x = x;
+            point.y = y;
+            //translate back to origin
+            point.x -= rotCenterX;
+            point.y -= rotCenterY;
+            transformedFootprint.polygon.points.push_back(point);
+          }
+          //footprint_out.publish(transformedFootprint);
+
+          //find bounding box of polygon footprint
+          float minX = numeric_limits<float>::max();
+          float maxX = -numeric_limits<float>::max();
+          float minY = numeric_limits<float>::max();
+          float maxY = -numeric_limits<float>::max();
+          for (unsigned int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++)
+          {
+            float x = transformedFootprint.polygon.points[pt].x;
+            float y = transformedFootprint.polygon.points[pt].y;
+            if (x < minX)
+              minX = x;
+            if (x > maxX)
+              maxX = x;
+            if (y < minY)
+              minY = y;
+            if (y > maxY)
+              maxY = y;
+          }
+          maxX = round(maxX, globalResolution) / globalResolution;
+          minX = round(minX, globalResolution) / globalResolution;
+          maxY = round(maxY, globalResolution) / globalResolution;
+          minY = round(minY, globalResolution) / globalResolution;
+          int width = abs(maxX) - minX;
+          int height = abs(maxY) - minY;
+
+          //rasterize polygon footprint
+          cv::Mat obsMat = cv::Mat::zeros(height, width, CV_8U);
+          int lineType = 8; // 8-connected line
+          cv::Point obsPoints[transformedFootprint.polygon.points.size()];
+          for (unsigned int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++)
+          {
+            int x = round(transformedFootprint.polygon.points[pt].x, globalResolution) / globalResolution;
+            x -= minX;
+            int y = round(transformedFootprint.polygon.points[pt].y, globalResolution) / globalResolution;
+            y -= minY;
+            obsPoints[pt] = cv::Point(x, y);
+          }
+          const cv::Point* ppt[1] = {obsPoints};
+          int npt[] = {transformedFootprint.polygon.points.size()};
+          cv::fillPoly(obsMat, ppt, npt, 1, 255, lineType);
+
+          //draw obstacle on map
+          int xOffset = minX + round(rotCenterX, globalResolution) / globalResolution;
+          int yOffset = minY + round(rotCenterY, globalResolution) / globalResolution;
+          for (unsigned int x = 0; x < obsMat.cols; x++)
+          {
+            for (unsigned int y = 0; y < obsMat.rows; y++)
+            {
+              if (obsMat.at < uchar > (y, x) > 128) {
+                mapLayers[mapId]->mapData->at((xGrid + x + xOffset) + (yGrid + y + yOffset) * globalWidth) = 100;
+              }
             }
           }
         }
@@ -199,22 +209,32 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         ROS_ERROR("%s", ex.what());
       }
     }
-    map.data = mapData;
-    //map_out.publish(map);
 
-    //todo: remove static index
-    out_maps[0].publish(map);
+    //publish all the maps
+    for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++) {
+      mapLayers[mapId]->map->data = *(mapLayers[mapId]->mapData);
+      mapLayers[mapId]->publisher.publish(*(mapLayers[mapId]->map));
+    }
   }
 }
 
 void markers_to_map::createMapTopics() {
-  //layerNamers
-  for (int i = 0; i < bundles.size(); i++) {
-    for (int j = 0; j < bundles[i]->getLayers()->size(); j++) {
-      if (!(std::find(layerNames.begin(), layerNames.end(), bundles[i]->getLayers()->at(j)->name) != layerNames.end())) {
-        layerNames.push_back(bundles[i]->getLayers()->at(j)->name); //TODO: unnecessary?
-        out_maps.push_back(nh.advertise < nav_msgs::OccupancyGrid > ("ar_"+bundles[i]->getLayers()->at(j)->name+"_map", 1));
-        ROS_INFO("Found layer: %s", bundles[i]->getLayers()->at(j)->name.c_str());
+  for (unsigned int i = 0; i < bundles.size(); i++) {
+    for (unsigned int j = 0; j < bundles[i]->getLayers()->size(); j++) {
+      bool contains = false;
+      for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++) {
+        if (mapLayers[mapId]->name == bundles[i]->getLayers()->at(j)->name) {
+          contains = true;
+          break;
+        }
+      }
+      if (!contains) {
+        layer_info_t* layer = new layer_info_t();;
+        layer->name = bundles[i]->getLayers()->at(j)->name;
+        layer->mapType = bundles[i]->getLayers()->at(j)->mapType;
+        layer->publisher = nh.advertise < nav_msgs::OccupancyGrid > ("ar_"+bundles[i]->getLayers()->at(j)->name+"_map", 1);
+        mapLayers.push_back(layer);
+        ROS_INFO("Found layer: %s", layer->name.c_str());
       }
     }
   }

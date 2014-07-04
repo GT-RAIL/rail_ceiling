@@ -22,7 +22,18 @@
 #include <rail_ceiling/bundle.h>
 #include "opencv2/core/core.hpp"
 
+
 #define PI 3.14159265358979323846  /* pi */
+
+
+//TODO comment
+struct layer_info_t {
+  std::string name; /*! <The name of this layer */
+  map_type_t mapType;
+  ros::Publisher publisher;
+  nav_msgs::OccupancyGrid* map;
+  std::vector<signed char>* mapData;
+};
 
 class markers_to_map
 {
@@ -62,7 +73,13 @@ private:
   ros::NodeHandle nh; /*!< a handle for this ros node */
   ros::Subscriber markers_in; /*!< markers topic */
   ros::Subscriber map_in; /*!< map_in topic */
-  std::vector<ros::Publisher> out_maps; /*! < topics for each output map */
+
+  //TODO:comment
+  std::vector<layer_info_t*> mapLayers;
+
+  //TODO:remove
+  //std::vector<ros::Publisher> out_maps; /*! < topics for each output map */
+
 
   tf::TransformListener listener; /*!< transform listener */
   nav_msgs::OccupancyGrid globalMap; /*!< map used for determining parameters of output obstacle map */
@@ -71,7 +88,7 @@ private:
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
 
   //TODO: comment
-  std::vector<std::string> layerNames;
+  //std::vector<std::string> layerNames;
 
   /*!
    * marker callback function: publishes a map with obstacles corresponding to ar markers
