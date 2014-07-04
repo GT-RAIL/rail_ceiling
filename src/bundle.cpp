@@ -19,6 +19,42 @@ Bundle::Bundle()
 {
 }
 
+
+//TODO: move to bundle class
+layer_t* Bundle::parseLayer(TiXmlElement* layerElement) {
+  layer_t* layer = new layer_t();
+
+  //set layer name and type
+  layerElement->QueryStringAttribute("name", &(layer->name));
+  string temp;
+  layerElement->QueryStringAttribute("name", &temp);
+  if (boost::iequals(temp, "rolling")) {
+    layer->mapType = ROLLING;
+  } else if (boost::iequals(temp, "match_size")) {
+    layer->mapType = MATCH_SIZE;
+  } else if (boost::iequals(temp, "match_data")) {
+    layer->mapType = MATCH_DATA;
+  } else {
+    ROS_ERROR("Invalid map type in bundle xml");
+  }
+
+  //add points to the layer footprint
+  TiXmlElement* pointElement = layerElement->FirstChildElement("point");
+  layer->footprint.header.frame_id = "map";
+  for (pointElement; pointElement; pointElement = pointElement->NextSiblingElement())
+  {
+    geometry_msgs::Point32* point = new geometry_msgs::Point32();
+    pointElement->QueryFloatAttribute("x", &(point->x));
+    //point->x = temp;
+    pointElement->QueryFloatAttribute("y", &(point->y));
+    //point->y = temp;
+    point->z = 0;
+    layer->footprint.polygon.points.push_back(*point);
+  }
+
+  return layer;
+}
+
 bool Bundle::parseBundleFootprint(char* filepath)
 {
   TiXmlDocument doc(filepath);
@@ -44,17 +80,6 @@ bool Bundle::parseBundleFootprint(char* filepath)
   TiXmlElement* pFootprintNode = hRoot.FirstChild("footprint").FirstChild().Element();
   for (pFootprintNode; pFootprintNode; pFootprintNode = pFootprintNode->NextSiblingElement())
   {
-    footprint.header.frame_id = "map";
-    if (boost::iequals(pFootprintNode->Value(), "point"))
-    {
-      geometry_msgs::Point32* point = new geometry_msgs::Point32();
-      pFootprintNode->QueryFloatAttribute("x", &temp);
-      point->x = temp;
-      pFootprintNode->QueryFloatAttribute("y", &temp);
-      point->y = temp;
-      point->z = 0;
-      footprint.polygon.points.push_back(*point);
-    }
     if (!masterMarkerFound && boost::iequals(pFootprintNode->Value(), "marker"))
     {
       masterMarkerFound == true;
@@ -63,6 +88,11 @@ bool Bundle::parseBundleFootprint(char* filepath)
       pFootprintNode->QueryFloatAttribute("y", &markerY);
       pFootprintNode->QueryFloatAttribute("yaw", &markerYaw);
     }
+
+    if (boost::iequals(pFootprintNode->Value(), "layer")){
+      layers.push_back(parseLayer(pFootprintNode));
+    }
+
   }
   ROS_INFO("Loaded bundle from %s with ar_id=%d", filepath, id);
 
@@ -72,6 +102,10 @@ bool Bundle::parseBundleFootprint(char* filepath)
 geometry_msgs::PolygonStamped Bundle::getFootprint()
 {
   return footprint;
+}
+
+vector<layer_t*>* Bundle::getLayers() {
+  return &layers;
 }
 
 int Bundle::getId()

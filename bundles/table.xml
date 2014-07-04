@@ -14,13 +14,28 @@
         <corner x="-116.6" y="45.4" z="0.0" />
     </marker>
     
-    <!-- used by rail_ceiling/markers_to_map to project a footprint of the bundle onto a map -->
+    <!-- Used by rail_ceiling/markers_to_map to project a footprint of the bundle onto a map -->
+    <!-- Units are in meters or radians. All defined with respect to the origin of the footprint-->
     <footprint>
-    	<point x="-0.6095" y="-0.2535"/>
-    	<point x="-0.6095" y="0.2535"/>
-    	<point x="0.6095" y="0.2535"/>
-    	<point x="0.6095" y="-0.2535"/>
-    	<!-- Only necessary to provide the master marker. Origin is with respect to the geometric center of the object. -->
+       	<!-- Only necessary to provide the master marker. Origin is with respect to the geometric center of the object. -->
     	<marker index="0" x="-0.5565" y="0.2005" yaw="0"/>
+    	<layer name="global_cost" maptype="match_size">
+    		<!--<polygon>-->
+    		<point x="-0.6095" y="-0.2535"/>
+    		<point x="-0.6095" y="0.2535"/>
+    		<point x="0.6095" y="0.2535"/>
+    		<point x="0.6095" y="-0.2535"/>
+    		<!--</polygon>-->
+    	</layer>
+    	<!--
+    	<layer name="localization" maptype="match_data">
+    		<polygon>
+    		</polygon>
+    		<polygon>
+    		</polygon>
+    	</layer>
+    	<layer name="local_cost" maptype="rolling" from="global_cost"/>
+    	-->
+
     </footprint>
 </multimarker>
