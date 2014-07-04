@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <multimarker markers="2">
-	<!-- used by ar_track_avlar for building multimarker bundles to be robust against occlusion -->
     <marker index="8" status="1">
         <corner x="-5.3" y="-5.3" z="0.0" />
         <corner x="5.3" y="-5.3" z="0.0" />
@@ -13,15 +12,15 @@
         <corner x="41.9" y="49.9" z="0.0" />
         <corner x="31.3" y="49.9" z="0.0" />
     </marker>
-    
-    
-    <!-- used by rail_ceiling/markers_to_map to project a footprint of the bundle onto a map -->
     <footprint>
-    	<point x="-0.4125" y="-0.4143"/>
-    	<point x="-0.365" y="0.4143"/>
-    	<point x="0.365" y="0.4143"/>
-    	<point x="0.4125" y="-0.4143"/>
-    	<!-- Only necessary to provide the master marker. Origin is with respect to the geometric center of the object. -->
-    	<marker index="8" x="0.2195" y="0.3613" yaw="0"/>
+       <marker index="8" x="0.2195" y="0.3613" yaw="0"/>
+       <layer name="localization" maptype="match_data">
+    		<polygon>
+    			<point x="-0.4125" y="-0.4143"/>
+    			<point x="-0.365" y="0.4143"/>
+    			<point x="0.365" y="0.4143"/>
+    			<point x="0.4125" y="-0.4143"/>
+    		</polygon>
+    	</layer>
     </footprint>
 </multimarker>
