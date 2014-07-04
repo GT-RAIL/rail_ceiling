@@ -19,7 +19,8 @@ Bundle::Bundle()
 {
 }
 
-geometry_msgs::PolygonStamped* Bundle::parsePolygon(TiXmlElement* polygonElement) {
+geometry_msgs::PolygonStamped* Bundle::parsePolygon(TiXmlElement* polygonElement)
+{
   //add points to the polygon
   geometry_msgs::PolygonStamped* polygon = new geometry_msgs::PolygonStamped();
   polygon->header.frame_id = "map";
@@ -35,26 +36,35 @@ geometry_msgs::PolygonStamped* Bundle::parsePolygon(TiXmlElement* polygonElement
   return polygon;
 }
 
-layer_t* Bundle::parseLayer(TiXmlElement* layerElement) {
+layer_t* Bundle::parseLayer(TiXmlElement* layerElement)
+{
   layer_t* layer = new layer_t();
 
   //set layer name and type
   layerElement->QueryStringAttribute("name", &(layer->name));
   string temp;
   layerElement->QueryStringAttribute("maptype", &temp);
-  if (boost::iequals(temp, "rolling")) {
+  if (boost::iequals(temp, "rolling"))
+  {
     layer->mapType = ROLLING;
-  } else if (boost::iequals(temp, "match_size")) {
+  }
+  else if (boost::iequals(temp, "match_size"))
+  {
     layer->mapType = MATCH_SIZE;
-  } else if (boost::iequals(temp, "match_data")) {
+  }
+  else if (boost::iequals(temp, "match_data"))
+  {
     layer->mapType = MATCH_DATA;
-  } else {
+  }
+  else
+  {
     ROS_ERROR("Invalid map type in bundle xml");
   }
 
   //parse polygons
   TiXmlElement* polygonElement = layerElement->FirstChildElement("polygon");
-  for (polygonElement; polygonElement; polygonElement = polygonElement->NextSiblingElement()) {
+  for (polygonElement; polygonElement; polygonElement = polygonElement->NextSiblingElement())
+  {
     layer->footprint.push_back(parsePolygon(polygonElement));
   }
 
@@ -95,7 +105,8 @@ bool Bundle::parseBundleFootprint(char* filepath)
       pFootprintNode->QueryFloatAttribute("yaw", &markerYaw);
     }
 
-    if (boost::iequals(pFootprintNode->Value(), "layer")){
+    if (boost::iequals(pFootprintNode->Value(), "layer"))
+    {
       layers.push_back(parseLayer(pFootprintNode));
     }
 
@@ -104,12 +115,8 @@ bool Bundle::parseBundleFootprint(char* filepath)
   return true;
 }
 
-geometry_msgs::PolygonStamped Bundle::getFootprint()
+vector<layer_t*>* Bundle::getLayers()
 {
-  return footprint;
-}
-
-vector<layer_t*>* Bundle::getLayers() {
   return &layers;
 }
 

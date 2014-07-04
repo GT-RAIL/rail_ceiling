@@ -65,14 +65,19 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
   {
     //Initialize maps
     vector<signed char> globalMapData = globalMap.data;
-    for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++) {
+    for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
+    {
       mapLayers[mapId]->map = new nav_msgs::OccupancyGrid();
       mapLayers[mapId]->map->header.frame_id = "ar_map";
       mapLayers[mapId]->map->header.stamp = ros::Time::now();
       mapLayers[mapId]->map->info = globalMap.info;
-      if (mapLayers[mapId]->mapType == MATCH_SIZE) {
-        mapLayers[mapId]->mapData = new vector<signed char>(mapLayers[mapId]->map->info.width * mapLayers[mapId]->map->info.height);
-      } else if (mapLayers[mapId]->mapType == MATCH_DATA) {
+      if (mapLayers[mapId]->mapType == MATCH_SIZE)
+      {
+        mapLayers[mapId]->mapData = new vector<signed char>(
+            mapLayers[mapId]->map->info.width * mapLayers[mapId]->map->info.height);
+      }
+      else if (mapLayers[mapId]->mapType == MATCH_DATA)
+      {
         mapLayers[mapId]->mapData = &globalMapData;
       }
     }
@@ -106,10 +111,8 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         tf::StampedTransform transform;
         listener.lookupTransform("/ar_map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                  ros::Time(0), transform);
-        int xGrid = round(transform.getOrigin().x() - globalOriginX, globalResolution)
-            / globalResolution;
-        int yGrid = round(transform.getOrigin().y() - globalOriginY, globalResolution)
-            / globalResolution;
+        int xGrid = round(transform.getOrigin().x() - globalOriginX, globalResolution) / globalResolution;
+        int yGrid = round(transform.getOrigin().y() - globalOriginY, globalResolution) / globalResolution;
 
         //extract the rotation angle
         tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(),
@@ -118,29 +121,34 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
         float angle = yaw;
 
-        for (unsigned int layerId = 0; layerId < bundles[bundleIndex]->getLayers()->size(); layerId++) {
-
-          //find the layers map
+        //iterate over every layer in this bundle
+        for (unsigned int layerId = 0; layerId < bundles[bundleIndex]->getLayers()->size(); layerId++)
+        {
+          //find the corresponding layers map
           unsigned int mapId;
-          for (mapId = 0; mapId < mapLayers.size(); mapId++) {
-            if (mapLayers[mapId]->name == bundles[bundleIndex]->getLayers()->at(layerId)->name) {
+          for (mapId = 0; mapId < mapLayers.size(); mapId++)
+          {
+            if (mapLayers[mapId]->name == bundles[bundleIndex]->getLayers()->at(layerId)->name)
+            {
               break;
             }
           }
 
-          //transform the polygon footprint
           float rotCenterX = bundles[bundleIndex]->getMarkerX();
           float rotCenterY = bundles[bundleIndex]->getMarkerY();
           angle = angle + bundles[bundleIndex]->getMarkerYaw();
-
-          for (int poly = 0; poly < bundles[bundleIndex]->getLayers()->at(layerId)->footprint.size(); poly++) {
-
+          //iterate over every polygon in this layer
+          for (int poly = 0; poly < bundles[bundleIndex]->getLayers()->at(layerId)->footprint.size(); poly++)
+          {
+            //transform the polygon footprint
             geometry_msgs::PolygonStamped transformedFootprint;
-            transformedFootprint.header.frame_id = bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->header.frame_id;
-
-            for (int pt = 0; pt < bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->polygon.points.size(); pt++)
+            transformedFootprint.header.frame_id =
+                bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->header.frame_id;
+            for (int pt = 0;
+                pt < bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->polygon.points.size(); pt++)
             {
-              geometry_msgs::Point32 point = bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->polygon.points[pt];
+              geometry_msgs::Point32 point =
+                  bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->polygon.points[pt];
               //translate by center of rotation
               point.x += rotCenterX;
               point.y += rotCenterY;
@@ -204,7 +212,8 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
             {
               for (unsigned int y = 0; y < obsMat.rows; y++)
               {
-                if (obsMat.at < uchar > (y, x) > 128) {
+                if (obsMat.at < uchar > (y, x) > 128)
+                {
                   mapLayers[mapId]->mapData->at((xGrid + x + xOffset) + (yGrid + y + yOffset) * globalWidth) = 100;
                 }
               }
@@ -219,28 +228,37 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     }
 
     //publish all the maps
-    for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++) {
+    for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
+    {
       mapLayers[mapId]->map->data = *(mapLayers[mapId]->mapData);
       mapLayers[mapId]->publisher.publish(*(mapLayers[mapId]->map));
     }
   }
 }
 
-void markers_to_map::createMapTopics() {
-  for (unsigned int i = 0; i < bundles.size(); i++) {
-    for (unsigned int j = 0; j < bundles[i]->getLayers()->size(); j++) {
+void markers_to_map::initializeLayers()
+{
+  for (unsigned int i = 0; i < bundles.size(); i++)
+  {
+    for (unsigned int j = 0; j < bundles[i]->getLayers()->size(); j++)
+    {
       bool contains = false;
-      for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++) {
-        if (mapLayers[mapId]->name == bundles[i]->getLayers()->at(j)->name) {
+      for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
+      {
+        if (mapLayers[mapId]->name == bundles[i]->getLayers()->at(j)->name)
+        {
           contains = true;
           break;
         }
       }
-      if (!contains) {
-        layer_info_t* layer = new layer_info_t();;
+      if (!contains)
+      {
+        layer_info_t* layer = new layer_info_t();
+        ;
         layer->name = bundles[i]->getLayers()->at(j)->name;
         layer->mapType = bundles[i]->getLayers()->at(j)->mapType;
-        layer->publisher = nh.advertise < nav_msgs::OccupancyGrid > ("ar_"+bundles[i]->getLayers()->at(j)->name+"_map", 1);
+        layer->publisher = nh.advertise < nav_msgs::OccupancyGrid
+            > ("ar_" + bundles[i]->getLayers()->at(j)->name + "_map", 1);
         mapLayers.push_back(layer);
         ROS_INFO("Found layer: %s", layer->name.c_str());
       }
@@ -282,7 +300,7 @@ int main(int argc, char **argv)
   }
 
   //create the output map topics for each map layer
-  converter.createMapTopics();
+  converter.initializeLayers();
 
   while (ros::ok())
   {

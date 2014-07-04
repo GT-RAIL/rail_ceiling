@@ -20,15 +20,16 @@
 #include <geometry_msgs/Point.h>
 #include <boost/algorithm/string.hpp>
 
-
-//TODO: comment
-enum map_type_t {ROLLING, MATCH_SIZE, MATCH_DATA};
-struct layer_t {
+enum map_type_t
+{
+  ROLLING, MATCH_SIZE, MATCH_DATA
+};
+struct layer_t
+{
   std::string name; /*! <The name of this layer */
   std::vector<geometry_msgs::PolygonStamped*> footprint; /*! <The footprint of the obstacle bundle to be drawn on this layer of the map */
-  map_type_t mapType;
+  map_type_t mapType; /*! < The type of this map */
 };
-
 
 class Bundle
 {
@@ -44,16 +45,6 @@ public:
    *\returns True is parse is successful. False is parse fails.
    */
   bool parseBundleFootprint(char* filepath);
-
-
-
-  //TODO: remove
-  /*!
-   * Returns the the bundle footprint
-   *\returns the bundle footprint
-   */
-  geometry_msgs::PolygonStamped getFootprint();
-
 
   /*!
    * Returns a pointer to the list of footprint layers
@@ -86,21 +77,11 @@ public:
   float getMarkerYaw();
 
 private:
-
-  /*
-   * TODO: comment
-   */
-  layer_t* parseLayer(TiXmlElement* layerElement);
-  geometry_msgs::PolygonStamped* parsePolygon(TiXmlElement* polygonElement);
+  layer_t* parseLayer(TiXmlElement* layerElement); /*! <Parses a footprint layer section of a bundle xml file */
+  geometry_msgs::PolygonStamped* parsePolygon(TiXmlElement* polygonElement); /*! <Parses a polygon section of a bundle xml file */
 
   int id; /*!< associated bundle id */
-
-  std::vector<layer_t*> layers;
-
-  //TODO: remove
-  geometry_msgs::PolygonStamped footprint; /*! <The footprint of the obstacle bundle to be drawn on the map */
-
-
+  std::vector<layer_t*> layers; /*!< All the layers associated with this bundle */
   float markerX; /*! <The x position of the marker origin with respect to the footprint origin */
   float markerY; /*! <The y position of the marker origin with respect to the footprint origin  */
   float markerYaw; /*! <The rotation of the marker with respect to it's own origin in radians*/
