@@ -54,16 +54,24 @@ public:
 
   //TODO: make private
   ros::Publisher footprint_out; /*< footprint polygon topic */
+
+  //TODO:comment
+  void createMapTopics();
+
 private:
+  ros::NodeHandle nh; /*!< a handle for this ros node */
   ros::Subscriber markers_in; /*!< markers topic */
   ros::Subscriber map_in; /*!< map_in topic */
-  ros::Publisher map_out; /*!< map_out topic */
+  std::vector<ros::Publisher> out_maps; /*! < topics for each output map */
 
   tf::TransformListener listener; /*!< transform listener */
   nav_msgs::OccupancyGrid globalMap; /*!< map used for determining parameters of output obstacle map */
   bool mapReceived; /*!< true when a map has been received */
   double updateRate; /*!< Rate at which to update the obstacle map */
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
+
+  //TODO: comment
+  std::vector<std::string> layerNames;
 
   /*!
    * marker callback function: publishes a map with obstacles corresponding to ar markers

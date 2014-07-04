@@ -24,10 +24,11 @@ Bundle::Bundle()
 layer_t* Bundle::parseLayer(TiXmlElement* layerElement) {
   layer_t* layer = new layer_t();
 
+
   //set layer name and type
   layerElement->QueryStringAttribute("name", &(layer->name));
   string temp;
-  layerElement->QueryStringAttribute("name", &temp);
+  layerElement->QueryStringAttribute("maptype", &temp);
   if (boost::iequals(temp, "rolling")) {
     layer->mapType = ROLLING;
   } else if (boost::iequals(temp, "match_size")) {
@@ -38,6 +39,8 @@ layer_t* Bundle::parseLayer(TiXmlElement* layerElement) {
     ROS_ERROR("Invalid map type in bundle xml");
   }
 
+
+
   //add points to the layer footprint
   TiXmlElement* pointElement = layerElement->FirstChildElement("point");
   layer->footprint.header.frame_id = "map";
@@ -45,9 +48,8 @@ layer_t* Bundle::parseLayer(TiXmlElement* layerElement) {
   {
     geometry_msgs::Point32* point = new geometry_msgs::Point32();
     pointElement->QueryFloatAttribute("x", &(point->x));
-    //point->x = temp;
+    //TODO temps
     pointElement->QueryFloatAttribute("y", &(point->y));
-    //point->y = temp;
     point->z = 0;
     layer->footprint.polygon.points.push_back(*point);
   }
@@ -95,7 +97,6 @@ bool Bundle::parseBundleFootprint(char* filepath)
 
   }
   ROS_INFO("Loaded bundle from %s with ar_id=%d", filepath, id);
-
   return true;
 }
 

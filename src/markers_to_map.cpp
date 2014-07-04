@@ -16,6 +16,7 @@ markers_to_map::markers_to_map()
 {
   //a private handle for this ROS node
   ros::NodeHandle node("~");
+  nh = node;
 
   //initialize variables
   mapReceived = false;
@@ -27,7 +28,6 @@ markers_to_map::markers_to_map()
   markers_in = node.subscribe < ar_track_alvar::AlvarMarkers
       > ("ar_pose_marker", 1, &markers_to_map::markers_cback, this);
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
-  map_out = node.advertise < nav_msgs::OccupancyGrid > ("marker_map", 1);
   footprint_out = node.advertise < geometry_msgs::PolygonStamped > ("bundle_footprint", 1);
 
   ROS_INFO("Markers To Map Started");
@@ -106,15 +106,25 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
         float angle = yaw;
 
+
+
+        /*
+         *
+         *
+         * TODO, remove constant layer index (find/replace ->at(0))
+         *
+         */
+
+
         //transform the polygon footprint
         float rotCenterX = bundles[bundleIndex]->getMarkerX();
         float rotCenterY = bundles[bundleIndex]->getMarkerY();
         angle = angle + bundles[bundleIndex]->getMarkerYaw();
         geometry_msgs::PolygonStamped transformedFootprint;
-        transformedFootprint.header.frame_id = bundles[bundleIndex]->getFootprint().header.frame_id;
-        for (int pt = 0; pt < bundles[bundleIndex]->getFootprint().polygon.points.size(); pt++)
+        transformedFootprint.header.frame_id = bundles[bundleIndex]->getLayers()->at(0)->footprint.header.frame_id;
+        for (int pt = 0; pt < bundles[bundleIndex]->getLayers()->at(0)->footprint.polygon.points.size(); pt++)
         {
-          geometry_msgs::Point32 point = bundles[bundleIndex]->getFootprint().polygon.points[pt];
+          geometry_msgs::Point32 point = bundles[bundleIndex]->getLayers()->at(0)->footprint.polygon.points[pt];
           //translate by center of rotation
           point.x += rotCenterX;
           point.y += rotCenterY;
@@ -190,7 +200,23 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       }
     }
     map.data = mapData;
-    map_out.publish(map);
+    //map_out.publish(map);
+
+    //todo: remove static index
+    out_maps[0].publish(map);
+  }
+}
+
+void markers_to_map::createMapTopics() {
+  //layerNamers
+  for (int i = 0; i < bundles.size(); i++) {
+    for (int j = 0; j < bundles[i]->getLayers()->size(); j++) {
+      if (!(std::find(layerNames.begin(), layerNames.end(), bundles[i]->getLayers()->at(j)->name) != layerNames.end())) {
+        layerNames.push_back(bundles[i]->getLayers()->at(j)->name); //TODO: unnecessary?
+        out_maps.push_back(nh.advertise < nav_msgs::OccupancyGrid > ("ar_"+bundles[i]->getLayers()->at(j)->name+"_map", 1));
+        ROS_INFO("Found layer: %s", bundles[i]->getLayers()->at(j)->name.c_str());
+      }
+    }
   }
 }
 
@@ -226,6 +252,9 @@ int main(int argc, char **argv)
     if (bundle->parseBundleFootprint(argv[arg]))
       converter.addBundle(bundle);
   }
+
+  //create the output map topics for each map layer
+  converter.createMapTopics();
 
   while (ros::ok())
   {
