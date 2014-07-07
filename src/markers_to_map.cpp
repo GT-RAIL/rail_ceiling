@@ -69,8 +69,8 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     float globalWidth = globalMap.info.width;
     float globalHeight = globalMap.info.height;
     float globalResolution = globalMap.info.resolution;
-    int rollingMapWidth = round(6,globalResolution)/globalResolution;  //TODO parameterize 6
-    int rollingMapHeight = round(6,globalResolution)/globalResolution; //TODO parameterize 6
+    int rollingMapWidth = round(6, globalResolution) / globalResolution;  //TODO parameterize 6
+    int rollingMapHeight = round(6, globalResolution) / globalResolution; //TODO parameterize 6
     vector<signed char> globalMapData = globalMap.data;
     for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
     {
@@ -87,16 +87,45 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       {
         mapLayers[mapId]->mapData = &globalMapData;
       }
-      else if (mapLayers[mapId]->mapType == ROLLING) {
+      else if (mapLayers[mapId]->mapType == ROLLING)
+      {
         mapLayers[mapId]->mapData = new vector<signed char>(rollingMapWidth * rollingMapHeight);
-        mapLayers[mapId]->map->info.origin.position.x = 0;
-        mapLayers[mapId]->map->info.origin.position.y = 0;
+
+        tf::Stamped < tf::Pose > global_pose;
+        global_pose.setIdentity();
+        tf::Stamped < tf::Pose > robot_pose;
+        robot_pose.setIdentity();
+        robot_pose.frame_id_ = "base_footprint";
+        robot_pose.stamp_ = ros::Time();
+        //get the global pose of the robot
+        try
+        {
+          /*
+          listener.transformPose("odom_combined", robot_pose, global_pose);
+          mapLayers[mapId]->map->info.origin.position.x = global_pose.getOrigin().x() - 6.0 / 2; //todo, parameterize
+          mapLayers[mapId]->map->info.origin.position.y = global_pose.getOrigin().y() - 6.0 / 2;
+          */
+
+          /*
+          listener.transformPose("odom_combined", robot_pose, global_pose);
+          mapLayers[mapId]->map->info.origin.position.x = global_pose.getOrigin().x() - 6.0 / 2; //todo, parameterize
+          mapLayers[mapId]->map->info.origin.position.y = global_pose.getOrigin().y() - 6.0 / 2;
+          */
+          tf::StampedTransform transform;
+          listener.lookupTransform("/odom_combined", "/base_footprint",ros::Time(0), transform);
+          mapLayers[mapId]->map->info.origin.position.x = round(transform.getOrigin().x() - 6.0/2 + globalResolution/2, globalResolution);//todo, parameterize
+          mapLayers[mapId]->map->info.origin.position.y = round(transform.getOrigin().y() - 6.0/2 + globalResolution/2, globalResolution);
+        }
+        catch (tf::TransformException ex)
+        {
+          ROS_ERROR("%s", ex.what());
+        }
+
         mapLayers[mapId]->map->info.width = rollingMapWidth;
         mapLayers[mapId]->map->info.height = rollingMapHeight;
-        mapLayers[mapId]->map->header.frame_id = "base_footprint";
+        mapLayers[mapId]->map->header.frame_id = "odom_combined";
       }
     }
-
 
     //Iterate over the detected marker bundles
     for (int i = 0; i < markers->markers.size(); i++)
@@ -118,8 +147,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
 
       try
       {
-
-
         //iterate over every layer in this bundle
         for (unsigned int layerId = 0; layerId < bundles[bundleIndex]->getLayers()->size(); layerId++)
         {
@@ -140,8 +167,10 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           tf::StampedTransform transform;
 
           //TODO: clean below if
-          if (mapLayers[mapId]->mapType != ROLLING) {
-            listener.lookupTransform("/ar_map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
+          if (mapLayers[mapId]->mapType != ROLLING)
+          {
+            listener.lookupTransform("/ar_map",
+                                     "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                      ros::Time(0), transform);
             xGrid = round(transform.getOrigin().x() - globalOriginX, globalResolution) / globalResolution;
             yGrid = round(transform.getOrigin().y() - globalOriginY, globalResolution) / globalResolution;
@@ -155,10 +184,13 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           }
           else
           {
-            listener.lookupTransform("/base_footprint", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
+            listener.lookupTransform("/odom_combined",
+                                     "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                      ros::Time(0), transform);
-            xGrid = round(transform.getOrigin().x(), globalResolution) / globalResolution;
-            yGrid = round(transform.getOrigin().y(), globalResolution) / globalResolution;
+            xGrid = round(transform.getOrigin().x() - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
+                / globalResolution;
+            yGrid = round(transform.getOrigin().y() - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
+                / globalResolution;
 
             //extract the rotation angle
             tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(),
@@ -167,8 +199,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
             tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
             angle = yaw;
           }
-
-
 
           float rotCenterX = bundles[bundleIndex]->getMarkerX();
           float rotCenterY = bundles[bundleIndex]->getMarkerY();
@@ -226,25 +256,26 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
             int height = abs(maxY) - minY;
 
             /*
-            //determine if this obstacle is within the limits of the map //TODO: necessary?
-            bool visibleInMapWindow;
-            if (mapLayers[mapId]->mapType != ROLLING) {
-              visibleInMapWindow = true;
-            } else {
-              int rotCenterGridX = round(rotCenterX, globalResolution)/globalResolution; //TODO move higher in code, this is useful other places too
-              int rotCenterGridY = round(rotCenterY, globalResolution)/globalResolution; //TODO move higher in code, this is useful other places too
+             //determine if this obstacle is within the limits of the map //TODO: necessary?
+             bool visibleInMapWindow;
+             if (mapLayers[mapId]->mapType != ROLLING) {
+             visibleInMapWindow = true;
+             } else {
+             int rotCenterGridX = round(rotCenterX, globalResolution)/globalResolution; //TODO move higher in code, this is useful other places too
+             int rotCenterGridY = round(rotCenterY, globalResolution)/globalResolution; //TODO move higher in code, this is useful other places too
 
-              if ( (xGrid - rotCenterGridX - minX < rollingMapWidth) && (xGrid - rotCenterGridX + maxX > 0) && (yGrid - rotCenterGridY - minY < rollingMapHeight) && (yGrid - rotCenterGridY + maxY > 0) ) {
-                visibleInMapWindow = true;
-              } else {
-                visibleInMapWindow = false;
-              }
-            }
-            */
+             if ( (xGrid - rotCenterGridX - minX < rollingMapWidth) && (xGrid - rotCenterGridX + maxX > 0) && (yGrid - rotCenterGridY - minY < rollingMapHeight) && (yGrid - rotCenterGridY + maxY > 0) ) {
+             visibleInMapWindow = true;
+             } else {
+             visibleInMapWindow = false;
+             }
+             }
+             */
             //todo remove
             bool visibleInMapWindow = true;
 
-            if (visibleInMapWindow) { //TODO: draw rolling obstacles
+            if (visibleInMapWindow)
+            { //TODO: draw rolling obstacles
               //rasterize polygon footprint
               cv::Mat obsMat = cv::Mat::zeros(height, width, CV_8U);
               int lineType = 8; // 8-connected line
@@ -271,9 +302,12 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
                   if (obsMat.at < uchar > (y, x) > 128)
                   {
                     //check if point is within  map limits
-                    if ((xGrid + x + xOffset) > 0 && (xGrid + x + xOffset) < mapLayers[mapId]->map->info.width &&  (yGrid + y + yOffset) > 0 && (yGrid + y + yOffset) < mapLayers[mapId]->map->info.height) {
+                    if ((xGrid + x + xOffset) > 0 && (xGrid + x + xOffset) < mapLayers[mapId]->map->info.width
+                        && (yGrid + y + yOffset) > 0 && (yGrid + y + yOffset) < mapLayers[mapId]->map->info.height)
+                    {
                       //draw on map
-                      mapLayers[mapId]->mapData->at((xGrid + x + xOffset) + (yGrid + y + yOffset) * mapLayers[mapId]->map->info.width) = 100;
+                      mapLayers[mapId]->mapData->at(
+                          (xGrid + x + xOffset) + (yGrid + y + yOffset) * mapLayers[mapId]->map->info.width) = 100;
                     }
                   }
                 }
