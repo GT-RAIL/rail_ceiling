@@ -26,15 +26,9 @@ void CeilingLayer::onInitialize()
       &CeilingLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
 
-  nh.param<std::string>("cost_map_type", costMapType, "global");
+  nh.param<std::string>("map_topic", map_topic, "/markers_to_map/ar_global_cost_map");
 
-  if (boost::iequals(costMapType, "global")) {
-  map_in = nh.subscribe < nav_msgs::OccupancyGrid
-      > ("/markers_to_map/ar_global_cost_map", 1, &CeilingLayer::map_in_cback, this);
-  } else {
-    map_in = nh.subscribe < nav_msgs::OccupancyGrid
-        > ("/markers_to_map/ar_local_cost_map", 1, &CeilingLayer::map_in_cback, this);
-  }
+  map_in = nh.subscribe < nav_msgs::OccupancyGrid > (map_topic, 1, &CeilingLayer::map_in_cback, this);
 }
 
 void CeilingLayer::matchSize()
@@ -71,7 +65,6 @@ void CeilingLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, in
     for (int i = min_i; i < max_i; i++)
     {
       int index = getIndex(i, j);
-
       if (obstacleMap.data[index] > 1) {
 	master_grid.setCost(i, j, LETHAL_OBSTACLE);
       }

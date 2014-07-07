@@ -32,7 +32,7 @@ private:
   ros::Subscriber map_in; /*!< map_in topic */
   nav_msgs::OccupancyGrid obstacleMap; /*!< map used for determining parameters of output map */
   bool mapReceived; /*!< true when a map has been received */
-  std::string costMapType; /*! < parameter describing the type of costmap, either local or global */
+  std::string map_topic; /*! < the topic to get the ar map from */
 
   /*!
    * callback for receiving the obstacle map
