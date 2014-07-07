@@ -16,6 +16,7 @@ CeilingLayer::CeilingLayer()
 void CeilingLayer::onInitialize()
 {
   ros::NodeHandle nh("~/" + name_);
+  mapReceived = false;
   current_ = true;
   default_value_ = NO_INFORMATION;
   matchSize();
@@ -25,8 +26,15 @@ void CeilingLayer::onInitialize()
       &CeilingLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
 
+  nh.param<std::string>("cost_map_type", costMapType, "global");
+
+  if (boost::iequals(costMapType, "global")) {
   map_in = nh.subscribe < nav_msgs::OccupancyGrid
-      > ("/markers_to_map/marker_map", 1, &CeilingLayer::map_in_cback, this);
+      > ("/markers_to_map/ar_global_cost_map", 1, &CeilingLayer::map_in_cback, this);
+  } else {
+    map_in = nh.subscribe < nav_msgs::OccupancyGrid
+        > ("/markers_to_map/ar_local_cost_map", 1, &CeilingLayer::map_in_cback, this);
+  }
 }
 
 void CeilingLayer::matchSize()
@@ -51,26 +59,6 @@ void CeilingLayer::updateBounds(double origin_x, double origin_y, double origin_
   *min_y = -std::abs(obstacleMap.info.origin.position.y);                                                             
   *max_x = *min_x+obstacleMap.info.width;
   *max_y = *min_y+obstacleMap.info.height;
-  //ROS_ERROR("%f, %f, %f, %f",*min_x, *min_y, *max_x, * max_y);
-
-  /*
-  double mark_x = origin_x + cos(origin_yaw), mark_y = origin_y + sin(origin_yaw);
-  unsigned int mx;
-  unsigned int my;
-  if (worldToMap(mark_x, mark_y, mx, my))
-  {
-    setCost(mx, my, LETHAL_OBSTACLE);
-  }
-  */
-
-  /*
-  *min_x = std::min(*min_x, mark_x);
-  *min_y = std::min(*min_y, mark_y);
-  *max_x = std::max(*max_x, mark_x);
-  *max_y = std::max(*max_y, mark_y);
-  *max_y */
-
-
 }
 
 void CeilingLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
@@ -82,28 +70,11 @@ void CeilingLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, in
   {
     for (int i = min_i; i < max_i; i++)
     {
-
-      
       int index = getIndex(i, j);
-      //      master_grid.setCost(i, j, obstacleMap.data[index]);
-      
-      if (costmap_[index] != NO_INFORMATION)                                                                          
-        continue; 
+
       if (obstacleMap.data[index] > 1) {
-	//setCost(i, j, 254);
 	master_grid.setCost(i, j, LETHAL_OBSTACLE);
-	//ROS_ERROR("%d_%d",LETHAL_OBSTACLE, NO_INFORMATION);
-      } else {
-        //setCost(i, j, NO_INFORMATION);
-        //master_grid.setCost(i, j, 255);
-	//	ROS_ERROR("nope");
       }
-      
-      /*
-      if (costmap_[index] == NO_INFORMATION)
-        continue;
-      master_grid.setCost(i, j, costmap_[index]);
-      */
     }
   }
 }

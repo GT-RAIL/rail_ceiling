@@ -7,6 +7,7 @@
 #include <costmap_2d/GenericPluginConfig.h>
 #include <dynamic_reconfigure/server.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <boost/algorithm/string.hpp>
 
 namespace ceiling_layer_namespace
 {
@@ -31,6 +32,7 @@ private:
   ros::Subscriber map_in; /*!< map_in topic */
   nav_msgs::OccupancyGrid obstacleMap; /*!< map used for determining parameters of output map */
   bool mapReceived; /*!< true when a map has been received */
+  std::string costMapType; /*! < parameter describing the type of costmap, either local or global */
 
   /*!
    * callback for receiving the obstacle map

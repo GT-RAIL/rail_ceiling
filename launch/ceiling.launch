@@ -21,7 +21,7 @@
 	<node pkg="tf" type="static_transform_publisher" name="map_to_ar_map" args="0 0 0 0 0 0 map ar_map 5" />
 
 	<!-- TODO: remove, used just for easy testing -->
-	<node pkg="tf" type="static_transform_publisher" name="footprint_to_map" args="1 1.3 0 1 0 0 base_footprint map 5" />
+	<!--node pkg="tf" type="static_transform_publisher" name="footprint_to_map" args="1 1.3 0 1 0 0 base_footprint map 5" /-->
 
 
 	<node pkg="rail_ceiling" type="markers_to_map" name="markers_to_map" output="screen" respawn="true" args=" $(arg bundle_files)">
