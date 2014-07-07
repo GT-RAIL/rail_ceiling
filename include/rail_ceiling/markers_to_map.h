@@ -76,8 +76,14 @@ private:
   tf::TransformListener listener; /*!< transform listener */
   nav_msgs::OccupancyGrid globalMap; /*!< map used for determining parameters of output obstacle map */
   bool globalMapReceived; /*!< true when a map has been received */
-  double updateRate; /*!< Rate at which to update the obstacle map */
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
+
+  //parameters
+  double updateRate; /*!< rate at which to update the obstacle map */
+  double rollingMapWidth; /*! <width of the rolling map in meters */
+  double rollingMapHeight; /*!< height of the roling map in meters */
+  std::string odomFrameId; /*! < robot's odometry frame (used for rolling map) */
+  std::string baseFrameId; /*! < robot's base frame (used for rolling map) */
 
   /*!
    * marker callback function: publishes a map with obstacles corresponding to ar markers
