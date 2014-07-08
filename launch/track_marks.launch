@@ -14,6 +14,8 @@
 		<param name="image_height" value="1080" />
 		<param name="io_method" value="mmap"/>
 	</node>
+	
+	<node pkg="rail_ceiling" name="configure_cameras" type="configure_cameras.bash" />
 
 	<node pkg="tf" type="static_transform_publisher" name="map_to_camera" args=".9 -1.4 2.5 0.8 3.14159265 0 map head_camera 5" />
 </launch>

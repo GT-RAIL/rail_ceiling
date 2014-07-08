@@ -80,10 +80,25 @@ private:
 
   //parameters
   double updateRate; /*!< rate at which to update the obstacle map */
+  double matchSizePublishPeriod; /*!< time (in seconds) between publications of layers of the match_size type */
+  double matchDataPublishPeriod; /*!< time (in seconds) between publications of layers of the match_data type */
+  double rollingPublishPeriod; /*!< time (in seconds) between publications of layers of the rolling type */
   double rollingMapWidth; /*! <width of the rolling map in meters */
   double rollingMapHeight; /*!< height of the roling map in meters */
   std::string odomFrameId; /*! < robot's odometry frame (used for rolling map) */
   std::string baseFrameId; /*! < robot's base frame (used for rolling map) */
+
+  //todo: doxygen
+  bool publishTimersStarted;
+  ros::Timer matchSizeTimer;
+  ros::Timer matchDataTimer;
+  ros::Timer rollingTimer;
+
+  //TODO doxygen
+  //map publisher callbacks
+  void publishMatchSizeTimerCallback(const ros::TimerEvent&);
+  void publishMatchDataTimerCallback(const ros::TimerEvent&);
+  void publishRollingTimerCallback(const ros::TimerEvent&);
 
   /*!
    * marker callback function: publishes a map with obstacles corresponding to ar markers
@@ -97,6 +112,7 @@ private:
    */
   void map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map);
 
+
   /*!
    * Rounds a floating point number to a specified precision, used for discretizing continuous values into grid cells
    * \param f The number to round
@@ -105,6 +121,8 @@ private:
    */
   float round(float f, float prec);
 
+
+  //TODO: remove min/max
   /*!
    * Returns the minimum of two input values
    * \param a The first input value

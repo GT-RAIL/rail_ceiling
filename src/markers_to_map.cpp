@@ -23,16 +23,31 @@ markers_to_map::markers_to_map()
 
   //Read in parameters
   node.param<double>("update_rate", updateRate, 2.0);
-  nh.param<double>("rolling_map_width", rollingMapWidth, 6.0);
-  nh.param<double>("rolling_map_height", rollingMapHeight, 6.0);
-  nh.param<string>("odom_frame_id", odomFrameId, "/odom");
-  nh.param<string>("base_frame_id", baseFrameId, "/base_link");
+  node.param<double>("match_size_publish_period", matchSizePublishPeriod, 0.5);
+  node.param<double>("match_data_publish_period", matchDataPublishPeriod, 15.0);
+  node.param<double>("rolling_publish_period", rollingPublishPeriod, 0.5);
+  node.param<double>("rolling_map_width", rollingMapWidth, 6.0);
+  node.param<double>("rolling_map_height", rollingMapHeight, 6.0);
+  node.param < string > ("odom_frame_id", odomFrameId, "/odom");
+  node.param < string > ("base_frame_id", baseFrameId, "/base_link");
 
   // create the ROS topics
   markers_in = node.subscribe < ar_track_alvar::AlvarMarkers
       > ("ar_pose_marker", 1, &markers_to_map::markers_cback, this);
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
   footprint_out = node.advertise < geometry_msgs::PolygonStamped > ("bundle_footprint", 1);
+
+  //create timers to publish different map layer types at different rates
+  matchSizeTimer = node.createTimer(ros::Duration(matchSizePublishPeriod),
+                                    &markers_to_map::publishMatchSizeTimerCallback, this);
+  matchSizeTimer.stop();
+  matchDataTimer = node.createTimer(ros::Duration(matchDataPublishPeriod),
+                                    &markers_to_map::publishMatchDataTimerCallback, this);
+  matchDataTimer.stop();
+  rollingTimer = node.createTimer(ros::Duration(rollingPublishPeriod), &markers_to_map::publishRollingTimerCallback,
+                                  this);
+  rollingTimer.stop();
+  publishTimersStarted = false;
 
   ROS_INFO("Markers To Map Started");
 }
@@ -42,6 +57,7 @@ float markers_to_map::round(float f, float prec)
   return (float)(floor(f * (1.0f / prec) + 0.5) / (1.0f / prec));
 }
 
+//TODO: remove (use std)
 float markers_to_map::min(float a, float b)
 {
   if (a <= b)
@@ -49,6 +65,7 @@ float markers_to_map::min(float a, float b)
   return b;
 }
 
+//TODO: remove (use std)
 float markers_to_map::max(float a, float b)
 {
   if (a >= b)
@@ -75,7 +92,6 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     float globalResolution = globalMap.info.resolution;
     int rollingMapGridWidth = round(rollingMapWidth, globalResolution) / globalResolution;
     int rollingMapGridHeight = round(rollingMapHeight, globalResolution) / globalResolution;
-    vector<signed char> globalMapData = globalMap.data;
     for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
     {
       mapLayers[mapId]->map = new nav_msgs::OccupancyGrid();
@@ -89,7 +105,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
       }
       else if (mapLayers[mapId]->mapType == MATCH_DATA)
       {
-        mapLayers[mapId]->mapData = &globalMapData;
+        mapLayers[mapId]->mapData = new vector<signed char>(globalMap.data);
       }
       else if (mapLayers[mapId]->mapType == ROLLING)
       {
@@ -99,8 +115,10 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         {
           tf::StampedTransform transform;
           listener.lookupTransform(odomFrameId, baseFrameId, ros::Time(0), transform);
-          mapLayers[mapId]->map->info.origin.position.x = round(transform.getOrigin().x() - rollingMapWidth/2 + globalResolution/2, globalResolution);
-          mapLayers[mapId]->map->info.origin.position.y = round(transform.getOrigin().y() - rollingMapHeight/2 + globalResolution/2, globalResolution);
+          mapLayers[mapId]->map->info.origin.position.x = round(
+              transform.getOrigin().x() - rollingMapWidth / 2 + globalResolution / 2, globalResolution);
+          mapLayers[mapId]->map->info.origin.position.y = round(
+              transform.getOrigin().y() - rollingMapHeight / 2 + globalResolution / 2, globalResolution);
         }
         catch (tf::TransformException ex)
         {
@@ -149,14 +167,23 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           tf::StampedTransform transform;
           if (mapLayers[mapId]->mapType != ROLLING)
           {
-            listener.lookupTransform("/ar_map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)), ros::Time(0), transform);
-          } else {
-            listener.lookupTransform(odomFrameId, "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)), ros::Time(0), transform);
+            listener.lookupTransform("/ar_map",
+                                     "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
+                                     ros::Time(0), transform);
           }
-          int xGrid = round(transform.getOrigin().x() - mapLayers[mapId]->map->info.origin.position.x, globalResolution) / globalResolution;
-          int yGrid = round(transform.getOrigin().y() - mapLayers[mapId]->map->info.origin.position.y, globalResolution) / globalResolution;
+          else
+          {
+            listener.lookupTransform(odomFrameId,
+                                     "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
+                                     ros::Time(0), transform);
+          }
+          int xGrid = round(transform.getOrigin().x() - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
+              / globalResolution;
+          int yGrid = round(transform.getOrigin().y() - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
+              / globalResolution;
           //extract the rotation angle
-          tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(), transform.getRotation().w());
+          tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(),
+                           transform.getRotation().w());
           double roll, pitch, yaw;
           tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
           float angle = yaw;
@@ -260,12 +287,17 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         ROS_WARN("%s", ex.what());
       }
     }
-
-    //publish all the maps
-    for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
+    if (!publishTimersStarted)
     {
-      mapLayers[mapId]->map->data = *(mapLayers[mapId]->mapData);
-      mapLayers[mapId]->publisher.publish(*(mapLayers[mapId]->map));
+      //Publish the maps immediately
+      publishMatchSizeTimerCallback(*(new ros::TimerEvent));
+      publishMatchDataTimerCallback(*(new ros::TimerEvent));
+      publishRollingTimerCallback(*(new ros::TimerEvent));
+      //start the timers to publish at interval times from now on
+      matchSizeTimer.start();
+      matchDataTimer.start();
+      rollingTimer.start();
+      publishTimersStarted = true;
     }
   }
 }
@@ -296,6 +328,42 @@ void markers_to_map::initializeLayers()
         mapLayers.push_back(layer);
         ROS_INFO("Found layer: %s", layer->name.c_str());
       }
+    }
+  }
+}
+
+void markers_to_map::publishMatchSizeTimerCallback(const ros::TimerEvent&)
+{
+  for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
+  {
+    if (mapLayers[mapId]->mapType == MATCH_SIZE)
+    {
+      mapLayers[mapId]->map->data = *(mapLayers[mapId]->mapData);
+      mapLayers[mapId]->publisher.publish(*(mapLayers[mapId]->map));
+    }
+  }
+}
+
+void markers_to_map::publishMatchDataTimerCallback(const ros::TimerEvent&)
+{
+  for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
+  {
+    if (mapLayers[mapId]->mapType == MATCH_DATA)
+    {
+      mapLayers[mapId]->map->data = *(mapLayers[mapId]->mapData);
+      mapLayers[mapId]->publisher.publish(*(mapLayers[mapId]->map));
+    }
+  }
+}
+
+void markers_to_map::publishRollingTimerCallback(const ros::TimerEvent&)
+{
+  for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
+  {
+    if (mapLayers[mapId]->mapType == ROLLING)
+    {
+      mapLayers[mapId]->map->data = *(mapLayers[mapId]->mapData);
+      mapLayers[mapId]->publisher.publish(*(mapLayers[mapId]->map));
     }
   }
 }
