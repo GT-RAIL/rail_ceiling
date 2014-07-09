@@ -1,42 +1,85 @@
 <launch>
+
+	<!--AR TRACKERS-->
 	<arg name="marker_size" default="10.5" />
 	<arg name="max_new_marker_error" default="0.09" /> 
 	<arg name="max_track_error" default="0.2" />
-	<arg name="cam_image_topic" default="/cameraNode/image_raw" />
-	<arg name="cam_info_topic" default="/cameraNode/camera_info" />	
-	<arg name="output_frame" value="/head_camera" />
 	<arg name="bundle_files" default="$(find rail_ceiling)/bundles/table.xml $(find rail_ceiling)/bundles/sofa_chair_1.xml $(find rail_ceiling)/bundles/sofa_chair_2.xml $(find rail_ceiling)/bundles/stool.xml $(find rail_ceiling)/bundles/couch.xml" />
+	
+	<arg name="cam_image_topic_0" default="/cameraNode_0/image_raw" />
+	<arg name="cam_info_topic_0" default="/cameraNode_0/camera_info" />	
+	<!--<arg name="output_frame_0" value="/head_camera_0" />-->
+	<arg name="output_frame_0" value="/map" />
+	
+	<arg name="cam_image_topic_1" default="/cameraNode_1/image_raw" />
+	<arg name="cam_info_topic_1" default="/cameraNode_1/camera_info" />	
+	<!--<arg name="output_frame_1" value="/head_camera_1" />-->
+	<arg name="output_frame_1" value="/map" />
 
-	<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame) $(arg bundle_files)" />
+	<group ns="cam0">
+		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_0) $(arg cam_info_topic_0) $(arg output_frame_0) $(arg bundle_files)" />
+	</group>
+	<group ns="cam1">
+		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_1) $(arg cam_info_topic_1) $(arg output_frame_1) $(arg bundle_files)" />
+	</group>
 
-	<node pkg="usb_cam" name="cameraNode" type="usb_cam_node" output = "screen" respawn="true">
+	<!--CAMERAS -->
+	
+	<node pkg="usb_cam" name="cameraNode_0" type="usb_cam_node" output = "screen" respawn="true">
 		<param name="pixel_format" value="yuyv" />
 		<param name="image_width" value="1920" />
 		<param name="image_height" value="1080" />
 		<param name="io_method" value="mmap"/>
+		<param name="video_device" value="/dev/video0" />
+		<param name="camera_frame_id" value="head_camera_0" />
 	</node>
-	
+	<node pkg="usb_cam" name="cameraNode_1" type="usb_cam_node" output = "screen" respawn="true">
+		<param name="pixel_format" value="yuyv" />
+		<param name="image_width" value="1920" />
+		<param name="image_height" value="1080" />
+		<param name="io_method" value="mmap"/>
+		<param name="video_device" value="/dev/video1" />
+		<param name="camera_frame_id" value="head_camera_1" />
+	</node>
+	<!--
+	<node pkg="usb_cam" name="cameraNode_2" type="usb_cam_node" output = "screen" respawn="true">
+		<param name="pixel_format" value="yuyv" />
+		<param name="image_width" value="1920" />
+		<param name="image_height" value="1080" />
+		<param name="io_method" value="mmap"/>
+		<param name="video_device" value="/dev/video2" />
+		<param name="camera_frame_id" value="head_camera_2" />
+	</node>
+	<node pkg="usb_cam" name="cameraNode_3" type="usb_cam_node" output = "screen" respawn="true">
+		<param name="pixel_format" value="yuyv" />
+		<param name="image_width" value="1920" />
+		<param name="image_height" value="1080" />
+		<param name="io_method" value="mmap"/>
+		<param name="video_device" value="/dev/video3" />
+		<param name="camera_frame_id" value="head_camera_3" />
+
+	</node>
+	-->
 	<node pkg="rail_ceiling" name="configure_cameras" type="configure_cameras.bash" />
 
+	<!--TRANSFORMS-->
 	<!-- TODO: MAKE URDF FOR 'ENVIRONMENT' -->
-	<node pkg="tf" type="static_transform_publisher" name="map_to_camera" args=".9 -1.4 2.5 0.8 3.14159265 0 map head_camera 5" />
-	<node pkg="tf" type="static_transform_publisher" name="map_to_ar_map" args="0 0 0 0 0 0 map ar_map 5" />
+	<node pkg="tf" type="static_transform_publisher" name="map_to_camera_0" args=".9 -1.4 2.5 0.8 3.14159265 0 map head_camera_0 5" />
+	<node pkg="tf" type="static_transform_publisher" name="map_to_camera_1" args=".9 -1.4 2.5 0.8 3.14159265 0 map head_camera_1 5" />
 
-	<!-- TODO: remove, used just for easy testing -->
-	<!--node pkg="tf" type="static_transform_publisher" name="footprint_to_map" args="1 1.3 0 1 0 0 base_footprint map 5" /-->
 
+	<!--OBSTACLE CONVERTER-->
 	<node pkg="rail_ceiling" type="markers_to_map" name="markers_to_map" output="screen" respawn="true" args=" $(arg bundle_files)">
 	  	<param name="update_rate" type="double" value="5" />
 	  	<param name="match_size_publish_period" type="double" value="0.5" />
-	  	<param name="match_data_publish_period" type="double" value="30.0" />
-	  	<param name="rolling_publish_period" type="double" value="0.5" />
-	  	
+	  	<param name="match_data_publish_period" type="double" value="5.0" />
+	  	<param name="rolling_publish_period" type="double" value="0.5" />	  	
 	  	<param name="rolling_map_width" type="double" value="6" />
 	  	<param name="rolling_map_height" type="double" value="6" />
-	 	 <param name="base_frame_id" type="string" value="base_footprint" />
+	 	<param name="base_frame_id" type="string" value="base_footprint" />
 	  	<param name="odom_frame_id" type="string" value="odom_combined" />
 		<remap from="/markers_to_map/map" to="/map" />
-		<remap from="/markers_to_map/ar_pose_marker" to="/ar_pose_marker" />
+		<remap from="/markers_to_map/ar_pose_marker" to="/cam0/ar_pose_marker" />	
 	</node>
 
 </launch>

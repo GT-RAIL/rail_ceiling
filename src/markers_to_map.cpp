@@ -82,6 +82,9 @@ void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
 
 void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers)
 {
+
+  //todo: wait for transforms to become available
+
   if (globalMapReceived)
   {
     //Initialize maps
@@ -95,7 +98,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
     for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
     {
       mapLayers[mapId]->map = new nav_msgs::OccupancyGrid();
-      mapLayers[mapId]->map->header.frame_id = "ar_map";
+      mapLayers[mapId]->map->header.frame_id = "map";
       mapLayers[mapId]->map->header.stamp = ros::Time::now();
       mapLayers[mapId]->map->info = globalMap.info;
       if (mapLayers[mapId]->mapType == MATCH_SIZE)
@@ -122,7 +125,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
         }
         catch (tf::TransformException ex)
         {
-          ROS_ERROR("%s", ex.what());
+          ROS_WARN("%s", ex.what());
         }
         mapLayers[mapId]->map->info.width = rollingMapGridWidth;
         mapLayers[mapId]->map->info.height = rollingMapGridHeight;
@@ -167,7 +170,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           tf::StampedTransform transform;
           if (mapLayers[mapId]->mapType != ROLLING)
           {
-            listener.lookupTransform("/ar_map",
+            listener.lookupTransform("/map",
                                      "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                      ros::Time(0), transform);
           }
@@ -177,6 +180,7 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
                                      "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                      ros::Time(0), transform);
           }
+          /*
           int xGrid = round(transform.getOrigin().x() - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
               / globalResolution;
           int yGrid = round(transform.getOrigin().y() - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
@@ -184,6 +188,18 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           //extract the rotation angle
           tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(),
                            transform.getRotation().w());
+          double roll, pitch, yaw;
+          tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+          float angle = yaw;
+
+           */
+          int xGrid = round(markers->markers[i].pose.pose.position.x - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
+              / globalResolution;
+          int yGrid = round(markers->markers[i].pose.pose.position.y - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
+              / globalResolution;
+          //extract the rotation angle
+          tf::Quaternion q(markers->markers[i].pose.pose.orientation.x, markers->markers[i].pose.pose.orientation.y, markers->markers[i].pose.pose.orientation.z,
+                           markers->markers[i].pose.pose.orientation.w);
           double roll, pitch, yaw;
           tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
           float angle = yaw;
@@ -324,7 +340,7 @@ void markers_to_map::initializeLayers()
         layer->name = bundles[i]->getLayers()->at(j)->name;
         layer->mapType = bundles[i]->getLayers()->at(j)->mapType;
         layer->publisher = nh.advertise < nav_msgs::OccupancyGrid
-            > ("ar_" + bundles[i]->getLayers()->at(j)->name + "_map", 1);
+            > ("ar_" + bundles[i]->getLayers()->at(j)->name + "_map", 1, true);
         mapLayers.push_back(layer);
         ROS_INFO("Found layer: %s", layer->name.c_str());
       }
