@@ -18,10 +18,8 @@ markers_to_map::markers_to_map()
   ros::NodeHandle node("~");
   nh = node;
 
-  //initialize variables
-  globalMapReceived = false;
-
   //Read in parameters
+  node.param<int>("camera_count", cameraCount, 1);
   node.param<double>("update_rate", updateRate, 2.0);
   node.param<double>("match_size_publish_period", matchSizePublishPeriod, 0.5);
   node.param<double>("match_data_publish_period", matchDataPublishPeriod, 15.0);
@@ -31,9 +29,15 @@ markers_to_map::markers_to_map()
   node.param < string > ("odom_frame_id", odomFrameId, "/odom");
   node.param < string > ("base_frame_id", baseFrameId, "/base_link");
 
+  //initialize variables
+  globalMapReceived = false;
+  marker_data_in = *(new vector<ar_track_alvar::AlvarMarkers::ConstPtr>(cameraCount));
+
   // create the ROS topics
-  markers_in = node.subscribe < ar_track_alvar::AlvarMarkers
-      > ("ar_pose_marker", 1, &markers_to_map::markers_cback, this);
+  for (unsigned int i = 0; i < cameraCount; i++) {
+    MarkerCallbackFunctor* marker_cback = new MarkerCallbackFunctor(&marker_data_in, i);
+    markers_in.push_back(node.subscribe < ar_track_alvar::AlvarMarkers> ("ar_pose_marker_"+(boost::lexical_cast < string > (i)), 1, *marker_cback));
+  }
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
   footprint_out = node.advertise < geometry_msgs::PolygonStamped > ("bundle_footprint", 1);
 
@@ -80,11 +84,15 @@ void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
   ROS_INFO("Map Received");
 }
 
+/*
 void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers)
 {
+}*/
 
-  //todo: wait for transforms to become available
-
+void markers_to_map::updateMarkerMaps()
+{
+  //todo" multiple cameras
+  const ar_track_alvar::AlvarMarkers::ConstPtr& markers = marker_data_in.at(0); //todo: clean;
   if (globalMapReceived)
   {
     //Initialize maps
@@ -176,6 +184,9 @@ void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr&
           }
           else
           {
+
+            //TODO: rolling transforms?
+
             listener.lookupTransform(odomFrameId,
                                      "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                      ros::Time(0), transform);
@@ -423,6 +434,7 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
     ros::spinOnce();
+    converter.updateMarkerMaps();
     loop_rate.sleep();
   }
 

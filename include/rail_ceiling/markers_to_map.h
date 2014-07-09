@@ -20,6 +20,7 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 #include <rail_ceiling/bundle.h>
+#include <rail_ceiling/marker_callback_functor.h>
 #include "opencv2/core/core.hpp"
 
 #define PI 3.14159265358979323846  /* pi */
@@ -66,11 +67,15 @@ public:
    */
   void initializeLayers();
 
+
+  //TODO comment
+    void updateMarkerMaps();
+
   //TODO: consider removing (only used for debugging)
   ros::Publisher footprint_out; /*< footprint polygon topic */
 private:
   ros::NodeHandle nh; /*!< a handle for this ros node */
-  ros::Subscriber markers_in; /*!< markers topic */
+  std::vector<ros::Subscriber> markers_in; /*!< list of input marker topics */
   ros::Subscriber map_in; /*!< map_in topic */
   std::vector<layer_info_t*> mapLayers; /*< A global list of all the map layers which will be published */
   tf::TransformListener listener; /*!< transform listener */
@@ -78,13 +83,19 @@ private:
   bool globalMapReceived; /*!< true when a map has been received */
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
 
+  //todo doxygen
+  std::vector<ar_track_alvar::AlvarMarkers::ConstPtr> marker_data_in;
+
   //parameters
+  int cameraCount; //TODO: comment
   double updateRate; /*!< rate at which to update the obstacle map */
   double matchSizePublishPeriod; /*!< time (in seconds) between publications of layers of the match_size type */
   double matchDataPublishPeriod; /*!< time (in seconds) between publications of layers of the match_data type */
   double rollingPublishPeriod; /*!< time (in seconds) between publications of layers of the rolling type */
   double rollingMapWidth; /*! <width of the rolling map in meters */
   double rollingMapHeight; /*!< height of the roling map in meters */
+
+  //TODO: since we're using pose info now, are these still needed? (not yet using pose for rolling map)
   std::string odomFrameId; /*! < robot's odometry frame (used for rolling map) */
   std::string baseFrameId; /*! < robot's base frame (used for rolling map) */
 
@@ -100,11 +111,17 @@ private:
   void publishMatchDataTimerCallback(const ros::TimerEvent&);
   void publishRollingTimerCallback(const ros::TimerEvent&);
 
+
+
+  //todo: fix comment
+
   /*!
    * marker callback function: publishes a map with obstacles corresponding to ar markers
    * \param markers Markers registered by ar_track_alvar
    */
-  void markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers);
+  //void markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers);
+
+
 
   /*!
    * callback for receiving the environment map, used for determining output map parameters
