@@ -47,7 +47,6 @@ markers_to_map::markers_to_map()
             > ("ar_vis_marker_" + (boost::lexical_cast < string > (i)), 1, *vis_marker_cback));
   }
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
-  footprint_out = node.advertise < geometry_msgs::PolygonStamped > ("bundle_footprint", 1);
 
   //create timers to publish different map layer types at different rates
   matchSizeTimer = node.createTimer(ros::Duration(matchSizePublishPeriod),
@@ -230,21 +229,17 @@ void markers_to_map::updateMarkerMaps()
               break;
             }
           }
-
           //Find transform to ar_marker
           //tf::StampedTransform transform;
-
           int xGrid;
           int yGrid;
           float angle;
-
           if (mapLayers[mapId]->mapType != ROLLING)
           {
             /*
             listener.lookupTransform("/map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                      ros::Time(0), transform);
                                      */
-
             xGrid = round(markers->markers[i].pose.pose.position.x - mapLayers[mapId]->map->info.origin.position.x,
                               globalResolution) / globalResolution;
             yGrid = round(markers->markers[i].pose.pose.position.y - mapLayers[mapId]->map->info.origin.position.y,
@@ -255,21 +250,14 @@ void markers_to_map::updateMarkerMaps()
             double roll, pitch, yaw;
             tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
             angle = yaw;
-
-
-
           }
           else
           {
-
-            //TODO: rolling transforms?
-
             /*
             listener.lookupTransform(odomFrameId,
                                      "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                      ros::Time(0), transform);
                                      */
-
             geometry_msgs::PoseStamped poseOut;
             listener.transformPose (odomFrameId, ros::Time(0), markers->markers[i].pose, "map" , poseOut);
 
@@ -281,9 +269,6 @@ void markers_to_map::updateMarkerMaps()
             tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
             angle = yaw;
           }
-
-
-
           float rotCenterX = bundles[bundleIndex]->getMarkerX();
           float rotCenterY = bundles[bundleIndex]->getMarkerY();
           angle = angle + bundles[bundleIndex]->getMarkerYaw();
@@ -327,7 +312,6 @@ void markers_to_map::updateMarkerMaps()
               point.y -= rotCenterY;
               transformedFootprint.polygon.points.push_back(point);
             }
-            //footprint_out.publish(transformedFootprint);
 
             //find bounding box of polygon footprint
             float minX = numeric_limits<float>::max();

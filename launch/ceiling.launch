@@ -25,13 +25,15 @@
 
 	<!--CAMERAS -->
 	
+	
+	<!--TODO, check camera frame ids -->
 	<node pkg="usb_cam" name="cameraNode_0" type="usb_cam_node" output = "screen" respawn="true">
 		<param name="pixel_format" value="yuyv" />
 		<param name="image_width" value="1920" />
 		<param name="image_height" value="1080" />
 		<param name="io_method" value="mmap"/>
 		<param name="video_device" value="/dev/video0" />
-		<param name="camera_frame_id" value="head_camera_0" />
+		<param name="camera_frame_id" value="head_camera_1" />
 	</node>
 	<node pkg="usb_cam" name="cameraNode_1" type="usb_cam_node" output = "screen" respawn="true">
 		<param name="pixel_format" value="yuyv" />
@@ -39,7 +41,7 @@
 		<param name="image_height" value="1080" />
 		<param name="io_method" value="mmap"/>
 		<param name="video_device" value="/dev/video1" />
-		<param name="camera_frame_id" value="head_camera_1" />
+		<param name="camera_frame_id" value="head_camera_0" />
 	</node>
 	<!--
 	<node pkg="usb_cam" name="cameraNode_2" type="usb_cam_node" output = "screen" respawn="true">
@@ -64,8 +66,8 @@
 
 	<!--TRANSFORMS-->
 	<!-- TODO: MAKE URDF FOR 'ENVIRONMENT' -->
-	<node pkg="tf" type="static_transform_publisher" name="map_to_camera_0" args=".9 -1.4 2.5 0.8 3.14159265 0 map head_camera_0 5" />
-	<node pkg="tf" type="static_transform_publisher" name="map_to_camera_1" args=".9 -1.4 2.5 0.8 3.14159265 0 map head_camera_1 5" />
+	<node pkg="tf" type="static_transform_publisher" name="map_to_camera_0" args=".9 -1.2 2.5 0.8 3.14159265 0 map head_camera_0 5" />
+	<node pkg="tf" type="static_transform_publisher" name="map_to_camera_1" args="-0.4 -1.5 2.5 0.8 3.14159265 0 map head_camera_1 5" />
 
 
 	<!--OBSTACLE CONVERTER-->

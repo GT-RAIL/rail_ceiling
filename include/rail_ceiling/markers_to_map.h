@@ -64,65 +64,62 @@ public:
   double getUpdateRate();
 
   /*!
-   * Creates a global list of layes and generates the ros publishers for each layer
+   * Creates a global list of layers and generates the ros publishers for each layer
    */
   void initializeLayers();
 
-  //TODO comment
+  /*!
+   * updates the maps with with obstacles corresponding to ar markers
+   */
   void updateMarkerMaps();
 
-  //TODO: consider removing (only used for debugging)
-  ros::Publisher footprint_out; /*< footprint polygon topic */
 private:
   ros::NodeHandle nh; /*!< a handle for this ros node */
+  tf::TransformListener listener; /*!< transform listener */
   std::vector<ros::Subscriber> markers_in; /*!< list of input marker topics */
   std::vector<ros::Subscriber> vis_markers_in; /*!< list of input marker topics with camera information */
   ros::Subscriber map_in; /*!< map_in topic */
-  std::vector<layer_info_t*> mapLayers; /*< A global list of all the map layers which will be published */
-  tf::TransformListener listener; /*!< transform listener */
-  nav_msgs::OccupancyGrid globalMap; /*!< map used for determining parameters of output obstacle map */
+  nav_msgs::OccupancyGrid globalMap; /*!< the incoming static map of the area */
   bool globalMapReceived; /*!< true when a map has been received */
+  std::vector<layer_info_t*> mapLayers; /*< A global list of all the map layers which will be published */
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
-
-  //todo doxygen
-  std::vector<ar_track_alvar::AlvarMarkers::ConstPtr> markerDataIn;
-  std::vector<std::vector<visualization_msgs::Marker::ConstPtr> > markerVisDataIn;
+  std::vector<ar_track_alvar::AlvarMarkers::ConstPtr> markerDataIn; /*! < Incoming marker data from each camera. Poses are with respect to map. Contains only master markers. */
+  std::vector<std::vector<visualization_msgs::Marker::ConstPtr> > markerVisDataIn; /*! < Incoming marker data from each camera. Poses are with respect to the camera. Contains all markers. */
 
   //parameters
-  int cameraCount; //TODO: comment
+  int cameraCount; /*!< the number of cameras */
   double updateRate; /*!< rate at which to update the obstacle map */
   double matchSizePublishPeriod; /*!< time (in seconds) between publications of layers of the match_size type */
   double matchDataPublishPeriod; /*!< time (in seconds) between publications of layers of the match_data type */
   double rollingPublishPeriod; /*!< time (in seconds) between publications of layers of the rolling type */
   double rollingMapWidth; /*! <width of the rolling map in meters */
-  double rollingMapHeight; /*!< height of the roling map in meters */
-
-  //TODO: since we're using pose info now, are these still needed? (not yet using pose for rolling map)
+  double rollingMapHeight; /*!< height of the rolling map in meters */
   std::string odomFrameId; /*! < robot's odometry frame (used for rolling map) */
   std::string baseFrameId; /*! < robot's base frame (used for rolling map) */
 
-  //todo: doxygen
-  bool publishTimersStarted;
-  ros::Timer matchSizeTimer;
-  ros::Timer matchDataTimer;
-  ros::Timer rollingTimer;
+  //timers
+  bool publishTimersStarted; /*!< state of the map publication timers */
+  ros::Timer matchSizeTimer; /*!< timer for determining when to publish match size maps */
+  ros::Timer matchDataTimer; /*!< timer for determining when to publish match data maps */
+  ros::Timer rollingTimer; /*!< timer for determining when to publish rolling maps */
 
-  //TODO doxygen
-  //map publisher callbacks
+  /*!
+   * Callback for the match size map publishing timer
+   */
   void publishMatchSizeTimerCallback(const ros::TimerEvent&);
+
+  /*!
+   * Callback for the match data map publishing timer
+   */
   void publishMatchDataTimerCallback(const ros::TimerEvent&);
+
+  /*!
+   * Callback for the rolling map publishing timer
+   */
   void publishRollingTimerCallback(const ros::TimerEvent&);
 
-  //todo: fix comment
-
   /*!
-   * marker callback function: publishes a map with obstacles corresponding to ar markers
-   * \param markers Markers registered by ar_track_alvar
-   */
-  //void markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers);
-
-  /*!
-   * callback for receiving the environment map, used for determining output map parameters
+   * callback for receiving the static environment map
    * \param map The map
    */
   void map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map);
