@@ -108,15 +108,17 @@ void markers_to_map::updateMarkerMaps()
     //Look at the markers detected by every camera and select which ones to add to the maps
     ar_track_alvar::AlvarMarkers* markers = new ar_track_alvar::AlvarMarkers();
     vector < ar_track_alvar::AlvarMarker > markerData;
+    vector < int > associatedCameras;
 
-    for (unsigned int i = 0; i < markerDataIn.size(); i++)
+    for (unsigned int camera = 0; camera < markerDataIn.size(); camera++)
     {
-      for (unsigned int j = 0; j < markerDataIn[i]->markers.size(); j++)
+      for (unsigned int j = 0; j < markerDataIn[camera]->markers.size(); j++)
       {
         bool contains = false;
-        for (unsigned int k = 0; k < markerData.size(); k++)
+        unsigned int k;
+        for (k = 0; k < markerData.size(); k++)
         {
-          if (markerData[k].id == markerDataIn[i]->markers[j].id)
+          if (markerData[k].id == markerDataIn[camera]->markers[j].id)
           {
             contains = true;
             break;
@@ -124,11 +126,34 @@ void markers_to_map::updateMarkerMaps()
         }
         if (!contains)
         {
-          markerData.push_back(markerDataIn[i]->markers[j]);
+          markerData.push_back(markerDataIn[camera]->markers[j]);
+          associatedCameras.push_back(camera);
         }
         else
         {
           //todo: check distances and add the closest here
+          double distance;
+          //find the pose of this marker with respect to its camera
+          for (unsigned int markIndex = 0; markIndex < markerVisDataIn[camera].size(); markIndex++) {
+            if (markerVisDataIn[camera].at(markIndex)->id == markerDataIn[camera]->markers[j].id) {
+              distance = sqrt( pow(markerVisDataIn[camera].at(markIndex)->pose.position.x,2)+pow(markerVisDataIn[camera].at(markIndex)->pose.position.y,2)+pow(markerVisDataIn[camera].at(markIndex)->pose.position.y,2) );
+              break;
+            }
+          }
+
+          //find the pose of the current marker in the list
+          for (unsigned int markIndex = 0; markIndex < markerVisDataIn[associatedCameras[k]].size(); markIndex++) {
+            if (markerVisDataIn[associatedCameras[k]].at(markIndex)->id == markerData[k].id) {
+              double oldDistance = sqrt(pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.x,2) + pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.y,2)+pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.z,2) );
+
+              //use the new one marker if it is closer to the camera than the old marker (markers closer to the camera will be more accurate)
+              if (distance < oldDistance) {
+                markerData[k] = markerDataIn[camera]->markers[j];
+                associatedCameras[k] = camera;
+              }
+              break;
+            }
+          }
         }
       }
     }
