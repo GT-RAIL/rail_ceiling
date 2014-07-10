@@ -32,13 +32,13 @@ markers_to_map::markers_to_map()
   //initialize variables
   globalMapReceived = false;
   markerDataIn = *(new vector<ar_track_alvar::AlvarMarkers::ConstPtr>(cameraCount));
-  markerVisDataIn = *(new vector< vector<visualization_msgs::Marker::ConstPtr> >(cameraCount));
+  markerVisDataIn = *(new vector<vector<visualization_msgs::Marker::ConstPtr> >(cameraCount));
 
   // create the ROS topics
   for (unsigned int i = 0; i < cameraCount; i++)
   {
     MarkerCallbackFunctor* marker_cback = new MarkerCallbackFunctor(&markerDataIn, i);
-    MarkerVisCallbackFunctor* vis_marker_cback = new MarkerVisCallbackFunctor(&markerVisDataIn,i);
+    MarkerVisCallbackFunctor* vis_marker_cback = new MarkerVisCallbackFunctor(&markerVisDataIn, i);
     markers_in.push_back(
         node.subscribe < ar_track_alvar::AlvarMarkers
             > ("ar_pose_marker_" + (boost::lexical_cast < string > (i)), 1, *marker_cback));
@@ -92,7 +92,7 @@ void markers_to_map::updateMarkerMaps()
     //Look at the markers detected by every camera and select which ones to add to the maps
     ar_track_alvar::AlvarMarkers* markers = new ar_track_alvar::AlvarMarkers();
     vector < ar_track_alvar::AlvarMarker > markerData;
-    vector < int > associatedCameras;
+    vector<int> associatedCameras;
 
     for (unsigned int camera = 0; camera < markerDataIn.size(); camera++)
     {
@@ -118,19 +118,29 @@ void markers_to_map::updateMarkerMaps()
           //this marker was seen by more than 1 camera. Use information from whichever camera is closest to the marker.
           double distance;
           //find the pose of this marker with respect to its camera
-          for (unsigned int markIndex = 0; markIndex < markerVisDataIn[camera].size(); markIndex++) {
-            if (markerVisDataIn[camera].at(markIndex)->id == markerDataIn[camera]->markers[j].id) {
-              distance = sqrt( pow(markerVisDataIn[camera].at(markIndex)->pose.position.x,2)+pow(markerVisDataIn[camera].at(markIndex)->pose.position.y,2)+pow(markerVisDataIn[camera].at(markIndex)->pose.position.y,2) );
+          for (unsigned int markIndex = 0; markIndex < markerVisDataIn[camera].size(); markIndex++)
+          {
+            if (markerVisDataIn[camera].at(markIndex)->id == markerDataIn[camera]->markers[j].id)
+            {
+              distance = sqrt(
+                  pow(markerVisDataIn[camera].at(markIndex)->pose.position.x, 2)
+                      + pow(markerVisDataIn[camera].at(markIndex)->pose.position.y, 2)
+                      + pow(markerVisDataIn[camera].at(markIndex)->pose.position.z, 2));
               break;
             }
           }
           //find the pose of the current marker in the list
-          for (unsigned int markIndex = 0; markIndex < markerVisDataIn[associatedCameras[k]].size(); markIndex++) {
-            if (markerVisDataIn[associatedCameras[k]].at(markIndex)->id == markerData[k].id) {
-              double oldDistance = sqrt(pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.x,2) + pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.y,2)+pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.z,2) );
-
+          for (unsigned int markIndex = 0; markIndex < markerVisDataIn[associatedCameras[k]].size(); markIndex++)
+          {
+            if (markerVisDataIn[associatedCameras[k]].at(markIndex)->id == markerData[k].id)
+            {
+              double oldDistance = sqrt(
+                  pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.x, 2)
+                      + pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.y, 2)
+                      + pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.z, 2));
               //use the new one marker if it is closer to the camera than the old marker (markers closer to the camera will be more accurate)
-              if (distance < oldDistance) {
+              if (distance < oldDistance)
+              {
                 markerData[k] = markerDataIn[camera]->markers[j];
                 associatedCameras[k] = camera;
               }

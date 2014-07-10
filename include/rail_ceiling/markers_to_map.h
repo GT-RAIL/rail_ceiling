@@ -68,9 +68,8 @@ public:
    */
   void initializeLayers();
 
-
   //TODO comment
-    void updateMarkerMaps();
+  void updateMarkerMaps();
 
   //TODO: consider removing (only used for debugging)
   ros::Publisher footprint_out; /*< footprint polygon topic */
@@ -87,7 +86,7 @@ private:
 
   //todo doxygen
   std::vector<ar_track_alvar::AlvarMarkers::ConstPtr> markerDataIn;
-  std::vector< std::vector<visualization_msgs::Marker::ConstPtr> > markerVisDataIn;
+  std::vector<std::vector<visualization_msgs::Marker::ConstPtr> > markerVisDataIn;
 
   //parameters
   int cameraCount; //TODO: comment
@@ -114,8 +113,6 @@ private:
   void publishMatchDataTimerCallback(const ros::TimerEvent&);
   void publishRollingTimerCallback(const ros::TimerEvent&);
 
-
-
   //todo: fix comment
 
   /*!
@@ -124,14 +121,11 @@ private:
    */
   //void markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers);
 
-
-
   /*!
    * callback for receiving the environment map, used for determining output map parameters
    * \param map The map
    */
   void map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map);
-
 
   /*!
    * Rounds a floating point number to a specified precision, used for discretizing continuous values into grid cells

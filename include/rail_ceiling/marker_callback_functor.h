@@ -21,7 +21,8 @@ private:
 class MarkerVisCallbackFunctor
 {
 public:
-  MarkerVisCallbackFunctor(std::vector<std::vector<visualization_msgs::Marker::ConstPtr> >* markerVisDataIn, int cameraNumber);
+  MarkerVisCallbackFunctor(std::vector<std::vector<visualization_msgs::Marker::ConstPtr> >* markerVisDataIn,
+                           int cameraNumber);
   void operator()(const visualization_msgs::Marker::ConstPtr& vis_marker);
 private:
   int cameraNumber;
