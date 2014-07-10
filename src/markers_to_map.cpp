@@ -232,21 +232,61 @@ void markers_to_map::updateMarkerMaps()
           }
 
           //Find transform to ar_marker
-          tf::StampedTransform transform;
+          //tf::StampedTransform transform;
+
+          int xGrid;
+          int yGrid;
+          float angle;
+
           if (mapLayers[mapId]->mapType != ROLLING)
           {
+            /*
             listener.lookupTransform("/map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                      ros::Time(0), transform);
+                                     */
+
+            xGrid = round(markers->markers[i].pose.pose.position.x - mapLayers[mapId]->map->info.origin.position.x,
+                              globalResolution) / globalResolution;
+            yGrid = round(markers->markers[i].pose.pose.position.y - mapLayers[mapId]->map->info.origin.position.y,
+                              globalResolution) / globalResolution;
+            //extract the rotation angle
+            tf::Quaternion q(markers->markers[i].pose.pose.orientation.x, markers->markers[i].pose.pose.orientation.y,
+                             markers->markers[i].pose.pose.orientation.z, markers->markers[i].pose.pose.orientation.w);
+            double roll, pitch, yaw;
+            tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+            angle = yaw;
+
+
+
           }
           else
           {
 
             //TODO: rolling transforms?
 
+            /*
             listener.lookupTransform(odomFrameId,
                                      "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                      ros::Time(0), transform);
+                                     */
+
+            geometry_msgs::PoseStamped poseOut;
+            listener.transformPose (odomFrameId, ros::Time(0), markers->markers[i].pose, "map" , poseOut);
+
+            xGrid = round(poseOut.pose.position.x - mapLayers[mapId]->map->info.origin.position.x, globalResolution) / globalResolution;
+            yGrid = round(poseOut.pose.position.y - mapLayers[mapId]->map->info.origin.position.y, globalResolution) / globalResolution;
+            //extract the rotation angle
+            tf::Quaternion q(poseOut.pose.orientation.x, poseOut.pose.orientation.y, poseOut.pose.orientation.z, poseOut.pose.orientation.w);
+            double roll, pitch, yaw;
+            tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+            angle = yaw;
           }
+
+
+
+          float rotCenterX = bundles[bundleIndex]->getMarkerX();
+          float rotCenterY = bundles[bundleIndex]->getMarkerY();
+          angle = angle + bundles[bundleIndex]->getMarkerYaw();
           /*
            int xGrid = round(transform.getOrigin().x() - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
            / globalResolution;
@@ -260,20 +300,8 @@ void markers_to_map::updateMarkerMaps()
            float angle = yaw;
 
            */
-          int xGrid = round(markers->markers[i].pose.pose.position.x - mapLayers[mapId]->map->info.origin.position.x,
-                            globalResolution) / globalResolution;
-          int yGrid = round(markers->markers[i].pose.pose.position.y - mapLayers[mapId]->map->info.origin.position.y,
-                            globalResolution) / globalResolution;
-          //extract the rotation angle
-          tf::Quaternion q(markers->markers[i].pose.pose.orientation.x, markers->markers[i].pose.pose.orientation.y,
-                           markers->markers[i].pose.pose.orientation.z, markers->markers[i].pose.pose.orientation.w);
-          double roll, pitch, yaw;
-          tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-          float angle = yaw;
 
-          float rotCenterX = bundles[bundleIndex]->getMarkerX();
-          float rotCenterY = bundles[bundleIndex]->getMarkerY();
-          angle = angle + bundles[bundleIndex]->getMarkerYaw();
+
           //iterate over every polygon in this layer
           for (int poly = 0; poly < bundles[bundleIndex]->getLayers()->at(layerId)->footprint.size(); poly++)
           {
