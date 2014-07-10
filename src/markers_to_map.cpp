@@ -69,22 +69,6 @@ float markers_to_map::round(float f, float prec)
   return (float)(floor(f * (1.0f / prec) + 0.5) / (1.0f / prec));
 }
 
-//TODO: remove (use std)
-float markers_to_map::min(float a, float b)
-{
-  if (a <= b)
-    return a;
-  return b;
-}
-
-//TODO: remove (use std)
-float markers_to_map::max(float a, float b)
-{
-  if (a >= b)
-    return a;
-  return b;
-}
-
 void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
 {
   globalMap = *map;
@@ -131,7 +115,7 @@ void markers_to_map::updateMarkerMaps()
         }
         else
         {
-          //todo: check distances and add the closest here
+          //this marker was seen by more than 1 camera. Use information from whichever camera is closest to the marker.
           double distance;
           //find the pose of this marker with respect to its camera
           for (unsigned int markIndex = 0; markIndex < markerVisDataIn[camera].size(); markIndex++) {
@@ -140,7 +124,6 @@ void markers_to_map::updateMarkerMaps()
               break;
             }
           }
-
           //find the pose of the current marker in the list
           for (unsigned int markIndex = 0; markIndex < markerVisDataIn[associatedCameras[k]].size(); markIndex++) {
             if (markerVisDataIn[associatedCameras[k]].at(markIndex)->id == markerData[k].id) {

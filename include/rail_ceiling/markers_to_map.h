@@ -140,25 +140,6 @@ private:
    * \returns The input value rounded to the specified precision
    */
   float round(float f, float prec);
-
-
-  //TODO: remove min/max
-  /*!
-   * Returns the minimum of two input values
-   * \param a The first input value
-   * \param b The second input value
-   * \returns The smallest of the two inputs
-   */
-  float min(float a, float b);
-
-  /*!
-   * Returns the maximum of two input values
-   * \param a The first input value
-   * \param b The second input value
-   * \returns The largest of the two inputs
-   */
-  float max(float a, float b);
-
 };
 
 /*!
