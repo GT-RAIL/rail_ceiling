@@ -16,6 +16,7 @@
 #include <boost/lexical_cast.hpp>
 #include <ros/ros.h>
 #include <ar_track_alvar/AlvarMarkers.h>
+#include <visualization_msgs/Marker.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
@@ -76,6 +77,7 @@ public:
 private:
   ros::NodeHandle nh; /*!< a handle for this ros node */
   std::vector<ros::Subscriber> markers_in; /*!< list of input marker topics */
+  std::vector<ros::Subscriber> vis_markers_in; /*!< list of input marker topics with camera information */
   ros::Subscriber map_in; /*!< map_in topic */
   std::vector<layer_info_t*> mapLayers; /*< A global list of all the map layers which will be published */
   tf::TransformListener listener; /*!< transform listener */
@@ -84,7 +86,8 @@ private:
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
 
   //todo doxygen
-  std::vector<ar_track_alvar::AlvarMarkers::ConstPtr> marker_data_in;
+  std::vector<ar_track_alvar::AlvarMarkers::ConstPtr> markerDataIn;
+  std::vector< std::vector<visualization_msgs::Marker::ConstPtr> > markerVisDataIn;
 
   //parameters
   int cameraCount; //TODO: comment

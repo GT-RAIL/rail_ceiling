@@ -81,7 +81,9 @@
 	  	<param name="odom_frame_id" type="string" value="odom_combined" />
 		<remap from="/markers_to_map/map" to="/map" />
 		<remap from="/markers_to_map/ar_pose_marker_0" to="/cam0/ar_pose_marker" />	
-		<remap from="/markers_to_map/ar_pose_marker_1" to="/cam1/ar_pose_marker" />	
+		<remap from="/markers_to_map/ar_pose_marker_1" to="/cam1/ar_pose_marker" />			
+		<remap from="/markers_to_map/ar_vis_marker_0" to="/cam0/visualization_marker" />	
+		<remap from="/markers_to_map/ar_vis_marker_1" to="/cam1/visualization_marker" />			
 	</node>
 
 </launch>

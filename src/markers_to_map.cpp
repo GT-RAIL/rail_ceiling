@@ -31,12 +31,20 @@ markers_to_map::markers_to_map()
 
   //initialize variables
   globalMapReceived = false;
-  marker_data_in = *(new vector<ar_track_alvar::AlvarMarkers::ConstPtr>(cameraCount));
+  markerDataIn = *(new vector<ar_track_alvar::AlvarMarkers::ConstPtr>(cameraCount));
+  markerVisDataIn = *(new vector< vector<visualization_msgs::Marker::ConstPtr> >(cameraCount));
 
   // create the ROS topics
-  for (unsigned int i = 0; i < cameraCount; i++) {
-    MarkerCallbackFunctor* marker_cback = new MarkerCallbackFunctor(&marker_data_in, i);
-    markers_in.push_back(node.subscribe < ar_track_alvar::AlvarMarkers> ("ar_pose_marker_"+(boost::lexical_cast < string > (i)), 1, *marker_cback));
+  for (unsigned int i = 0; i < cameraCount; i++)
+  {
+    MarkerCallbackFunctor* marker_cback = new MarkerCallbackFunctor(&markerDataIn, i);
+    MarkerVisCallbackFunctor* vis_marker_cback = new MarkerVisCallbackFunctor(&markerVisDataIn,i);
+    markers_in.push_back(
+        node.subscribe < ar_track_alvar::AlvarMarkers
+            > ("ar_pose_marker_" + (boost::lexical_cast < string > (i)), 1, *marker_cback));
+    vis_markers_in.push_back(
+        node.subscribe < visualization_msgs::Marker
+            > ("ar_vis_marker_" + (boost::lexical_cast < string > (i)), 1, *vis_marker_cback));
   }
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
   footprint_out = node.advertise < geometry_msgs::PolygonStamped > ("bundle_footprint", 1);
@@ -84,17 +92,52 @@ void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
   ROS_INFO("Map Received");
 }
 
-/*
-void markers_to_map::markers_cback(const ar_track_alvar::AlvarMarkers::ConstPtr& markers)
-{
-}*/
-
 void markers_to_map::updateMarkerMaps()
 {
-  //todo" multiple cameras
-  const ar_track_alvar::AlvarMarkers::ConstPtr& markers = marker_data_in.at(0); //todo: clean;
+  static int counter = 0;
   if (globalMapReceived)
   {
+
+    //todo, remove after testing, might be null data coming in
+    if (counter++ < 10)
+    {
+      return;
+    }
+    //todo: ensure data was received from each camera
+
+    //Look at the markers detected by every camera and select which ones to add to the maps
+    ar_track_alvar::AlvarMarkers* markers = new ar_track_alvar::AlvarMarkers();
+    vector < ar_track_alvar::AlvarMarker > markerData;
+
+    for (unsigned int i = 0; i < markerDataIn.size(); i++)
+    {
+      for (unsigned int j = 0; j < markerDataIn[i]->markers.size(); j++)
+      {
+        bool contains = false;
+        for (unsigned int k = 0; k < markerData.size(); k++)
+        {
+          if (markerData[k].id == markerDataIn[i]->markers[j].id)
+          {
+            contains = true;
+            break;
+          }
+        }
+        if (!contains)
+        {
+          markerData.push_back(markerDataIn[i]->markers[j]);
+        }
+        else
+        {
+          //todo: check distances and add the closest here
+        }
+      }
+    }
+    markers->markers = markerData;
+
+    //if that marker is not in the list of markers, add it
+    //if it is, add it only if it is closer to it's source camera
+    //const ar_track_alvar::AlvarMarkers::ConstPtr& markers = markerDataIn.at(0);
+
     //Initialize maps
     float globalOriginX = globalMap.info.origin.position.x;
     float globalOriginY = globalMap.info.origin.position.y;
@@ -178,8 +221,7 @@ void markers_to_map::updateMarkerMaps()
           tf::StampedTransform transform;
           if (mapLayers[mapId]->mapType != ROLLING)
           {
-            listener.lookupTransform("/map",
-                                     "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
+            listener.lookupTransform("/map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
                                      ros::Time(0), transform);
           }
           else
@@ -192,25 +234,25 @@ void markers_to_map::updateMarkerMaps()
                                      ros::Time(0), transform);
           }
           /*
-          int xGrid = round(transform.getOrigin().x() - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
-              / globalResolution;
-          int yGrid = round(transform.getOrigin().y() - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
-              / globalResolution;
-          //extract the rotation angle
-          tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(),
-                           transform.getRotation().w());
-          double roll, pitch, yaw;
-          tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-          float angle = yaw;
+           int xGrid = round(transform.getOrigin().x() - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
+           / globalResolution;
+           int yGrid = round(transform.getOrigin().y() - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
+           / globalResolution;
+           //extract the rotation angle
+           tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(),
+           transform.getRotation().w());
+           double roll, pitch, yaw;
+           tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+           float angle = yaw;
 
            */
-          int xGrid = round(markers->markers[i].pose.pose.position.x - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
-              / globalResolution;
-          int yGrid = round(markers->markers[i].pose.pose.position.y - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
-              / globalResolution;
+          int xGrid = round(markers->markers[i].pose.pose.position.x - mapLayers[mapId]->map->info.origin.position.x,
+                            globalResolution) / globalResolution;
+          int yGrid = round(markers->markers[i].pose.pose.position.y - mapLayers[mapId]->map->info.origin.position.y,
+                            globalResolution) / globalResolution;
           //extract the rotation angle
-          tf::Quaternion q(markers->markers[i].pose.pose.orientation.x, markers->markers[i].pose.pose.orientation.y, markers->markers[i].pose.pose.orientation.z,
-                           markers->markers[i].pose.pose.orientation.w);
+          tf::Quaternion q(markers->markers[i].pose.pose.orientation.x, markers->markers[i].pose.pose.orientation.y,
+                           markers->markers[i].pose.pose.orientation.z, markers->markers[i].pose.pose.orientation.w);
           double roll, pitch, yaw;
           tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
           float angle = yaw;
