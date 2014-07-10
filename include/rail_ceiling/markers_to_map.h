@@ -1,11 +1,11 @@
 /*!
- * \markers_to_map.cpp
+ * \markers_to_map.h
  * \brief places obstacles on a map at a location corresponding to an ar marker
  *
  * places obstacles on a map at a location corresponding to an ar marker
  *
  * \author Steven Kordell, WPI - spkordell@wpi.edu
- * \date June 25, 2014
+ * \date July 10, 2014
  */
 
 #ifndef MARKERS_TO_MAP_H_
@@ -22,6 +22,7 @@
 #include <tf/transform_datatypes.h>
 #include <rail_ceiling/bundle.h>
 #include <rail_ceiling/marker_callback_functor.h>
+#include <rail_ceiling/marker_vis_callback_functor.h>
 #include "opencv2/core/core.hpp"
 
 #define PI 3.14159265358979323846  /* pi */

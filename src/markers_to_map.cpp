@@ -5,7 +5,7 @@
  * places obstacles on a map at a location corresponding to an ar marker
  *
  * \author Steven Kordell, WPI - spkordell@wpi.edu
- * \date June 25, 2014
+ * \date July 10, 2014
  */
 
 #include <rail_ceiling/markers_to_map.h>
@@ -285,7 +285,6 @@ void markers_to_map::updateMarkerMaps()
            float angle = yaw;
 
            */
-
 
           //iterate over every polygon in this layer
           for (int poly = 0; poly < bundles[bundleIndex]->getLayers()->at(layerId)->footprint.size(); poly++)

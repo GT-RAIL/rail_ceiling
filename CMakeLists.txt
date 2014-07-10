@@ -41,7 +41,7 @@ include_directories(
 )
 
 ## Declare a cpp library
-add_library(rail_ceiling src/bundle.cpp src/marker_callback_functor.cpp)
+add_library(rail_ceiling src/bundle.cpp src/marker_callback_functor.cpp src/marker_vis_callback_functor.cpp)
 target_link_libraries(rail_ceiling ${TinyXML_LIBRARIES} ${catkin_LIBRARIES})
 
 add_library(ceiling_layer src/ceiling_layer.cpp)
