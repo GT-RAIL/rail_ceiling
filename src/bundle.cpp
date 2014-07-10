@@ -19,6 +19,16 @@ Bundle::Bundle()
 {
 }
 
+Bundle::~Bundle()
+{
+  for (unsigned int i; i < layers.size(); i++){
+    for (unsigned int j; j < layers[i]->footprint.size(); j++) {
+      delete layers[i]->footprint[j];
+    }
+    delete layers[i];
+  }
+}
+
 geometry_msgs::PolygonStamped* Bundle::parsePolygon(TiXmlElement* polygonElement)
 {
   //add points to the polygon
@@ -32,6 +42,7 @@ geometry_msgs::PolygonStamped* Bundle::parsePolygon(TiXmlElement* polygonElement
     pointElement->QueryFloatAttribute("y", &(point->y));
     point->z = 0;
     polygon->polygon.points.push_back(*point);
+    delete point;
   }
   return polygon;
 }

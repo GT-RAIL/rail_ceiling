@@ -40,6 +40,11 @@ public:
   Bundle();
 
   /*!
+   * Frees memory used by bundle object
+   */
+  ~Bundle();
+
+  /*!
    * Attempts to parse an xml bundle file containing the bundle footprint at the given file location
    *\param filepath The location of the xml file
    *\returns True is parse is successful. False is parse fails.

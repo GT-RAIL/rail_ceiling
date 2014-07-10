@@ -161,6 +161,10 @@ void markers_to_map::updateMarkerMaps()
     int rollingMapGridHeight = round(rollingMapHeight, globalResolution) / globalResolution;
     for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
     {
+      //free any map and map data currently in memory
+      delete mapLayers[mapId]->map;
+      delete mapLayers[mapId]->mapData;
+
       mapLayers[mapId]->map = new nav_msgs::OccupancyGrid();
       mapLayers[mapId]->map->header.frame_id = "map";
       mapLayers[mapId]->map->header.stamp = ros::Time::now();
@@ -393,6 +397,9 @@ void markers_to_map::updateMarkerMaps()
       rollingTimer.start();
       publishTimersStarted = true;
     }
+
+    //free used memory
+    delete markers;
   }
 }
 
@@ -414,7 +421,6 @@ void markers_to_map::initializeLayers()
       if (!contains)
       {
         layer_info_t* layer = new layer_info_t();
-        ;
         layer->name = bundles[i]->getLayers()->at(j)->name;
         layer->mapType = bundles[i]->getLayers()->at(j)->mapType;
         layer->publisher = nh.advertise < nav_msgs::OccupancyGrid
