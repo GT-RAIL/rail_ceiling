@@ -82,12 +82,12 @@ void markers_to_map::updateMarkerMaps()
   if (globalMapReceived)
   {
 
-    //todo, remove after testing, might be null data coming in
-    if (counter++ < 10)
-    {
-      return;
+    //ensure every camera is publishing before trying to access the data
+    for (unsigned int camera = 0; camera < markerDataIn.size(); camera++) {
+      if ( markerDataIn[camera] == NULL) {
+        return;
+      }
     }
-    //todo: ensure data was received from each camera
 
     //Look at the markers detected by every camera and select which ones to add to the maps
     ar_track_alvar::AlvarMarkers* markers = new ar_track_alvar::AlvarMarkers();
@@ -151,10 +151,6 @@ void markers_to_map::updateMarkerMaps()
       }
     }
     markers->markers = markerData;
-
-    //if that marker is not in the list of markers, add it
-    //if it is, add it only if it is closer to it's source camera
-    //const ar_track_alvar::AlvarMarkers::ConstPtr& markers = markerDataIn.at(0);
 
     //Initialize maps
     float globalOriginX = globalMap.info.origin.position.x;
