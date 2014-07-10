@@ -104,6 +104,17 @@ private:
   ros::Timer matchDataTimer; /*!< timer for determining when to publish match data maps */
   ros::Timer rollingTimer; /*!< timer for determining when to publish rolling maps */
 
+  /*
+   * Combines the markers from multiple cameras into a single list of markers
+   *\returns The list of markers from all the cameras
+   */
+  ar_track_alvar::AlvarMarkers* mergeMarkerData();
+
+  /*
+   * Initializes the various maps
+   */
+  void initializeMaps();
+
   /*!
    * Callback for the match size map publishing timer
    */

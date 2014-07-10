@@ -75,131 +75,140 @@ void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
   ROS_INFO("Map Received");
 }
 
-void markers_to_map::updateMarkerMaps()
+ar_track_alvar::AlvarMarkers* markers_to_map::mergeMarkerData()
 {
-  static int counter = 0;
-  if (globalMapReceived)
+  //merge the marker data from all the cameras
+  ar_track_alvar::AlvarMarkers* markers = new ar_track_alvar::AlvarMarkers();
+  vector < ar_track_alvar::AlvarMarker > markerData;
+  vector<int> associatedCameras;
+  for (unsigned int camera = 0; camera < markerDataIn.size(); camera++)
   {
-
-    //ensure every camera is publishing before trying to access the data
-    for (unsigned int camera = 0; camera < markerDataIn.size(); camera++) {
-      if ( markerDataIn[camera] == NULL) {
-        return;
-      }
-    }
-
-    //Look at the markers detected by every camera and select which ones to add to the maps
-    ar_track_alvar::AlvarMarkers* markers = new ar_track_alvar::AlvarMarkers();
-    vector < ar_track_alvar::AlvarMarker > markerData;
-    vector<int> associatedCameras;
-
-    for (unsigned int camera = 0; camera < markerDataIn.size(); camera++)
+    for (unsigned int j = 0; j < markerDataIn[camera]->markers.size(); j++)
     {
-      for (unsigned int j = 0; j < markerDataIn[camera]->markers.size(); j++)
+      bool contains = false;
+      unsigned int k;
+      for (k = 0; k < markerData.size(); k++)
       {
-        bool contains = false;
-        unsigned int k;
-        for (k = 0; k < markerData.size(); k++)
+        if (markerData[k].id == markerDataIn[camera]->markers[j].id)
         {
-          if (markerData[k].id == markerDataIn[camera]->markers[j].id)
+          contains = true;
+          break;
+        }
+      }
+      if (!contains)
+      {
+        markerData.push_back(markerDataIn[camera]->markers[j]);
+        associatedCameras.push_back(camera);
+      }
+      else
+      {
+        //this marker was seen by more than 1 camera. Use information from whichever camera is closest to the marker.
+        double distance;
+        //find the pose of this marker with respect to its camera
+        for (unsigned int markIndex = 0; markIndex < markerVisDataIn[camera].size(); markIndex++)
+        {
+          if (markerVisDataIn[camera].at(markIndex)->id == markerDataIn[camera]->markers[j].id)
           {
-            contains = true;
+            distance = sqrt(
+                pow(markerVisDataIn[camera].at(markIndex)->pose.position.x, 2)
+                    + pow(markerVisDataIn[camera].at(markIndex)->pose.position.y, 2)
+                    + pow(markerVisDataIn[camera].at(markIndex)->pose.position.z, 2));
             break;
           }
         }
-        if (!contains)
+        //find the pose of the current marker in the list
+        for (unsigned int markIndex = 0; markIndex < markerVisDataIn[associatedCameras[k]].size(); markIndex++)
         {
-          markerData.push_back(markerDataIn[camera]->markers[j]);
-          associatedCameras.push_back(camera);
-        }
-        else
-        {
-          //this marker was seen by more than 1 camera. Use information from whichever camera is closest to the marker.
-          double distance;
-          //find the pose of this marker with respect to its camera
-          for (unsigned int markIndex = 0; markIndex < markerVisDataIn[camera].size(); markIndex++)
+          if (markerVisDataIn[associatedCameras[k]].at(markIndex)->id == markerData[k].id)
           {
-            if (markerVisDataIn[camera].at(markIndex)->id == markerDataIn[camera]->markers[j].id)
+            double oldDistance = sqrt(
+                pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.x, 2)
+                    + pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.y, 2)
+                    + pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.z, 2));
+            //use the new one marker if it is closer to the camera than the old marker (markers closer to the camera will be more accurate)
+            if (distance < oldDistance)
             {
-              distance = sqrt(
-                  pow(markerVisDataIn[camera].at(markIndex)->pose.position.x, 2)
-                      + pow(markerVisDataIn[camera].at(markIndex)->pose.position.y, 2)
-                      + pow(markerVisDataIn[camera].at(markIndex)->pose.position.z, 2));
-              break;
+              markerData[k] = markerDataIn[camera]->markers[j];
+              associatedCameras[k] = camera;
             }
-          }
-          //find the pose of the current marker in the list
-          for (unsigned int markIndex = 0; markIndex < markerVisDataIn[associatedCameras[k]].size(); markIndex++)
-          {
-            if (markerVisDataIn[associatedCameras[k]].at(markIndex)->id == markerData[k].id)
-            {
-              double oldDistance = sqrt(
-                  pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.x, 2)
-                      + pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.y, 2)
-                      + pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.z, 2));
-              //use the new one marker if it is closer to the camera than the old marker (markers closer to the camera will be more accurate)
-              if (distance < oldDistance)
-              {
-                markerData[k] = markerDataIn[camera]->markers[j];
-                associatedCameras[k] = camera;
-              }
-              break;
-            }
+            break;
           }
         }
       }
     }
-    markers->markers = markerData;
+  }
+  markers->markers = markerData;
+  return markers;
+}
 
-    //Initialize maps
-    float globalOriginX = globalMap.info.origin.position.x;
-    float globalOriginY = globalMap.info.origin.position.y;
-    float globalWidth = globalMap.info.width;
-    float globalHeight = globalMap.info.height;
-    float globalResolution = globalMap.info.resolution;
-    int rollingMapGridWidth = round(rollingMapWidth, globalResolution) / globalResolution;
-    int rollingMapGridHeight = round(rollingMapHeight, globalResolution) / globalResolution;
-    for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
+void markers_to_map::initializeMaps()
+{
+  //Initialize maps
+  float globalOriginX = globalMap.info.origin.position.x;
+  float globalOriginY = globalMap.info.origin.position.y;
+  float globalWidth = globalMap.info.width;
+  float globalHeight = globalMap.info.height;
+  float globalResolution = globalMap.info.resolution;
+  int rollingMapGridWidth = round(rollingMapWidth, globalResolution) / globalResolution;
+  int rollingMapGridHeight = round(rollingMapHeight, globalResolution) / globalResolution;
+  for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
+  {
+    //free any map and map data currently in memory
+    delete mapLayers[mapId]->map;
+    delete mapLayers[mapId]->mapData;
+
+    mapLayers[mapId]->map = new nav_msgs::OccupancyGrid();
+    mapLayers[mapId]->map->header.frame_id = "map";
+    mapLayers[mapId]->map->header.stamp = ros::Time::now();
+    mapLayers[mapId]->map->info = globalMap.info;
+    if (mapLayers[mapId]->mapType == MATCH_SIZE)
     {
-      //free any map and map data currently in memory
-      delete mapLayers[mapId]->map;
-      delete mapLayers[mapId]->mapData;
+      mapLayers[mapId]->mapData = new vector<signed char>(
+          mapLayers[mapId]->map->info.width * mapLayers[mapId]->map->info.height);
+    }
+    else if (mapLayers[mapId]->mapType == MATCH_DATA)
+    {
+      mapLayers[mapId]->mapData = new vector<signed char>(globalMap.data);
+    }
+    else if (mapLayers[mapId]->mapType == ROLLING)
+    {
+      mapLayers[mapId]->mapData = new vector<signed char>(rollingMapGridWidth * rollingMapGridHeight);
+      //get the global pose of the robot
+      try
+      {
+        tf::StampedTransform transform;
+        listener.lookupTransform(odomFrameId, baseFrameId, ros::Time(0), transform);
+        mapLayers[mapId]->map->info.origin.position.x = round(
+            transform.getOrigin().x() - rollingMapWidth / 2 + globalResolution / 2, globalResolution);
+        mapLayers[mapId]->map->info.origin.position.y = round(
+            transform.getOrigin().y() - rollingMapHeight / 2 + globalResolution / 2, globalResolution);
+      }
+      catch (tf::TransformException ex)
+      {
+        ROS_WARN("%s", ex.what());
+      }
+      mapLayers[mapId]->map->info.width = rollingMapGridWidth;
+      mapLayers[mapId]->map->info.height = rollingMapGridHeight;
+      mapLayers[mapId]->map->header.frame_id = odomFrameId;
+    }
+  }
+}
 
-      mapLayers[mapId]->map = new nav_msgs::OccupancyGrid();
-      mapLayers[mapId]->map->header.frame_id = "map";
-      mapLayers[mapId]->map->header.stamp = ros::Time::now();
-      mapLayers[mapId]->map->info = globalMap.info;
-      if (mapLayers[mapId]->mapType == MATCH_SIZE)
+void markers_to_map::updateMarkerMaps()
+{
+  if (globalMapReceived)
+  {
+    //ensure every camera is publishing before trying to access the data
+    for (unsigned int camera = 0; camera < markerDataIn.size(); camera++)
+    {
+      if (markerDataIn[camera] == NULL)
       {
-        mapLayers[mapId]->mapData = new vector<signed char>(
-            mapLayers[mapId]->map->info.width * mapLayers[mapId]->map->info.height);
-      }
-      else if (mapLayers[mapId]->mapType == MATCH_DATA)
-      {
-        mapLayers[mapId]->mapData = new vector<signed char>(globalMap.data);
-      }
-      else if (mapLayers[mapId]->mapType == ROLLING)
-      {
-        mapLayers[mapId]->mapData = new vector<signed char>(rollingMapGridWidth * rollingMapGridHeight);
-        //get the global pose of the robot
-        try
-        {
-          tf::StampedTransform transform;
-          listener.lookupTransform(odomFrameId, baseFrameId, ros::Time(0), transform);
-          mapLayers[mapId]->map->info.origin.position.x = round(
-              transform.getOrigin().x() - rollingMapWidth / 2 + globalResolution / 2, globalResolution);
-          mapLayers[mapId]->map->info.origin.position.y = round(
-              transform.getOrigin().y() - rollingMapHeight / 2 + globalResolution / 2, globalResolution);
-        }
-        catch (tf::TransformException ex)
-        {
-          ROS_WARN("%s", ex.what());
-        }
-        mapLayers[mapId]->map->info.width = rollingMapGridWidth;
-        mapLayers[mapId]->map->info.height = rollingMapGridHeight;
-        mapLayers[mapId]->map->header.frame_id = odomFrameId;
+        return;
       }
     }
+    ar_track_alvar::AlvarMarkers* markers = mergeMarkerData();
+    initializeMaps();
+    float globalResolution = globalMap.info.resolution;
 
     //Iterate over the detected marker bundles
     for (int i = 0; i < markers->markers.size(); i++)
@@ -241,13 +250,13 @@ void markers_to_map::updateMarkerMaps()
           if (mapLayers[mapId]->mapType != ROLLING)
           {
             /*
-            listener.lookupTransform("/map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
-                                     ros::Time(0), transform);
-                                     */
+             listener.lookupTransform("/map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
+             ros::Time(0), transform);
+             */
             xGrid = round(markers->markers[i].pose.pose.position.x - mapLayers[mapId]->map->info.origin.position.x,
-                              globalResolution) / globalResolution;
+                          globalResolution) / globalResolution;
             yGrid = round(markers->markers[i].pose.pose.position.y - mapLayers[mapId]->map->info.origin.position.y,
-                              globalResolution) / globalResolution;
+                          globalResolution) / globalResolution;
             //extract the rotation angle
             tf::Quaternion q(markers->markers[i].pose.pose.orientation.x, markers->markers[i].pose.pose.orientation.y,
                              markers->markers[i].pose.pose.orientation.z, markers->markers[i].pose.pose.orientation.w);
@@ -258,17 +267,20 @@ void markers_to_map::updateMarkerMaps()
           else
           {
             /*
-            listener.lookupTransform(odomFrameId,
-                                     "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
-                                     ros::Time(0), transform);
-                                     */
+             listener.lookupTransform(odomFrameId,
+             "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
+             ros::Time(0), transform);
+             */
             geometry_msgs::PoseStamped poseOut;
-            listener.transformPose (odomFrameId, ros::Time(0), markers->markers[i].pose, "map" , poseOut);
+            listener.transformPose(odomFrameId, ros::Time(0), markers->markers[i].pose, "map", poseOut);
 
-            xGrid = round(poseOut.pose.position.x - mapLayers[mapId]->map->info.origin.position.x, globalResolution) / globalResolution;
-            yGrid = round(poseOut.pose.position.y - mapLayers[mapId]->map->info.origin.position.y, globalResolution) / globalResolution;
+            xGrid = round(poseOut.pose.position.x - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
+                / globalResolution;
+            yGrid = round(poseOut.pose.position.y - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
+                / globalResolution;
             //extract the rotation angle
-            tf::Quaternion q(poseOut.pose.orientation.x, poseOut.pose.orientation.y, poseOut.pose.orientation.z, poseOut.pose.orientation.w);
+            tf::Quaternion q(poseOut.pose.orientation.x, poseOut.pose.orientation.y, poseOut.pose.orientation.z,
+                             poseOut.pose.orientation.w);
             double roll, pitch, yaw;
             tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
             angle = yaw;
