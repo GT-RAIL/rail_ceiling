@@ -32,19 +32,14 @@ markers_to_map::markers_to_map()
   //initialize variables
   globalMapReceived = false;
   markerDataIn = *(new vector<ar_track_alvar::AlvarMarkers::ConstPtr>(cameraCount));
-  markerVisDataIn = *(new vector<vector<visualization_msgs::Marker::ConstPtr> >(cameraCount));
 
   // create the ROS topics
   for (unsigned int i = 0; i < cameraCount; i++)
   {
     MarkerCallbackFunctor* marker_cback = new MarkerCallbackFunctor(&markerDataIn, i);
-    MarkerVisCallbackFunctor* vis_marker_cback = new MarkerVisCallbackFunctor(&markerVisDataIn, i);
     markers_in.push_back(
         node.subscribe < ar_track_alvar::AlvarMarkers
             > ("ar_pose_marker_" + (boost::lexical_cast < string > (i)), 1, *marker_cback));
-    vis_markers_in.push_back(
-        node.subscribe < visualization_msgs::Marker
-            > ("ar_vis_marker_" + (boost::lexical_cast < string > (i)), 1, *vis_marker_cback));
   }
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
 
@@ -80,7 +75,6 @@ ar_track_alvar::AlvarMarkers* markers_to_map::mergeMarkerData()
   //merge the marker data from all the cameras
   ar_track_alvar::AlvarMarkers* markers = new ar_track_alvar::AlvarMarkers();
   vector < ar_track_alvar::AlvarMarker > markerData;
-  vector<int> associatedCameras;
   for (unsigned int camera = 0; camera < markerDataIn.size(); camera++)
   {
     for (unsigned int j = 0; j < markerDataIn[camera]->markers.size(); j++)
@@ -98,41 +92,21 @@ ar_track_alvar::AlvarMarkers* markers_to_map::mergeMarkerData()
       if (!contains)
       {
         markerData.push_back(markerDataIn[camera]->markers[j]);
-        associatedCameras.push_back(camera);
       }
       else
       {
         //this marker was seen by more than 1 camera. Use information from whichever camera is closest to the marker.
-        double distance;
-        //find the pose of this marker with respect to its camera
-        for (unsigned int markIndex = 0; markIndex < markerVisDataIn[camera].size(); markIndex++)
+        double distance = sqrt(
+            pow(markerDataIn[camera]->markers[j].pose.pose.position.x, 2)
+                + pow(markerDataIn[camera]->markers[j].pose.pose.position.y, 2)
+                + pow(markerDataIn[camera]->markers[j].pose.pose.position.z, 2));
+
+        double oldDistance = sqrt(
+            pow(markerData[k].pose.pose.position.x, 2) + pow(markerData[k].pose.pose.position.y, 2)
+                + pow(markerData[k].pose.pose.position.z, 2));
+        if (distance < oldDistance)
         {
-          if (markerVisDataIn[camera].at(markIndex)->id == markerDataIn[camera]->markers[j].id)
-          {
-            distance = sqrt(
-                pow(markerVisDataIn[camera].at(markIndex)->pose.position.x, 2)
-                    + pow(markerVisDataIn[camera].at(markIndex)->pose.position.y, 2)
-                    + pow(markerVisDataIn[camera].at(markIndex)->pose.position.z, 2));
-            break;
-          }
-        }
-        //find the pose of the current marker in the list
-        for (unsigned int markIndex = 0; markIndex < markerVisDataIn[associatedCameras[k]].size(); markIndex++)
-        {
-          if (markerVisDataIn[associatedCameras[k]].at(markIndex)->id == markerData[k].id)
-          {
-            double oldDistance = sqrt(
-                pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.x, 2)
-                    + pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.y, 2)
-                    + pow(markerVisDataIn[associatedCameras[k]].at(markIndex)->pose.position.z, 2));
-            //use the new one marker if it is closer to the camera than the old marker (markers closer to the camera will be more accurate)
-            if (distance < oldDistance)
-            {
-              markerData[k] = markerDataIn[camera]->markers[j];
-              associatedCameras[k] = camera;
-            }
-            break;
-          }
+          markerData[k] = markerDataIn[camera]->markers[j];
         }
       }
     }
@@ -247,37 +221,32 @@ void markers_to_map::updateMarkerMaps()
           int xGrid;
           int yGrid;
           float angle;
+          geometry_msgs::PoseStamped poseOut;
           if (mapLayers[mapId]->mapType == ROLLING)
           {
             //transform marker pose into odometry frame
-            geometry_msgs::PoseStamped poseOut;
-            markers->markers[i].pose.header.frame_id =  markers->markers[i].header.frame_id;
-            listener.transformPose(odomFrameId, ros::Time(0), markers->markers[i].pose, "map", poseOut);
-            xGrid = round(poseOut.pose.position.x - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
-                / globalResolution;
-            yGrid = round(poseOut.pose.position.y - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
-                / globalResolution;
-            //extract the rotation angle
-            tf::Quaternion q(poseOut.pose.orientation.x, poseOut.pose.orientation.y, poseOut.pose.orientation.z,
-                             poseOut.pose.orientation.w);
-            double roll, pitch, yaw;
-            tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-            angle = yaw;
+            markers->markers[i].pose.header.frame_id = markers->markers[i].header.frame_id;
+            listener.transformPose(odomFrameId, ros::Time(0), markers->markers[i].pose,
+                                   markers->markers[i].header.frame_id, poseOut);
           }
           else
           {
-            //marker pose is already with respect to the map frame, just need to discretize it
-            xGrid = round(markers->markers[i].pose.pose.position.x - mapLayers[mapId]->map->info.origin.position.x,
-                          globalResolution) / globalResolution;
-            yGrid = round(markers->markers[i].pose.pose.position.y - mapLayers[mapId]->map->info.origin.position.y,
-                          globalResolution) / globalResolution;
-            //extract the rotation angle
-            tf::Quaternion q(markers->markers[i].pose.pose.orientation.x, markers->markers[i].pose.pose.orientation.y,
-                             markers->markers[i].pose.pose.orientation.z, markers->markers[i].pose.pose.orientation.w);
-            double roll, pitch, yaw;
-            tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-            angle = yaw;
+            //transform marker pose into map frame
+            markers->markers[i].pose.header.frame_id = markers->markers[i].header.frame_id;
+            listener.transformPose("map", ros::Time(0), markers->markers[i].pose,
+                                   markers->markers[i].pose.header.frame_id, poseOut);
           }
+          //discretize to grid
+          xGrid = round(poseOut.pose.position.x - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
+              / globalResolution;
+          yGrid = round(poseOut.pose.position.y - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
+              / globalResolution;
+          //extract the rotation angle
+          tf::Quaternion q(poseOut.pose.orientation.x, poseOut.pose.orientation.y, poseOut.pose.orientation.z,
+                           poseOut.pose.orientation.w);
+          double roll, pitch, yaw;
+          tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+          angle = yaw;
           float rotCenterX = bundles[bundleIndex]->getMarkerX();
           float rotCenterY = bundles[bundleIndex]->getMarkerY();
           angle = angle + bundles[bundleIndex]->getMarkerYaw();

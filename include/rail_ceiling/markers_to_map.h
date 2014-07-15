@@ -16,13 +16,11 @@
 #include <boost/lexical_cast.hpp>
 #include <ros/ros.h>
 #include <ar_track_alvar/AlvarMarkers.h>
-#include <visualization_msgs/Marker.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 #include <rail_ceiling/bundle.h>
 #include <rail_ceiling/marker_callback_functor.h>
-#include <rail_ceiling/marker_vis_callback_functor.h>
 #include "opencv2/core/core.hpp"
 
 #define PI 3.14159265358979323846  /* pi */
@@ -78,14 +76,12 @@ private:
   ros::NodeHandle nh; /*!< a handle for this ros node */
   tf::TransformListener listener; /*!< transform listener */
   std::vector<ros::Subscriber> markers_in; /*!< list of input marker topics */
-  std::vector<ros::Subscriber> vis_markers_in; /*!< list of input marker topics with camera information */
   ros::Subscriber map_in; /*!< map_in topic */
   nav_msgs::OccupancyGrid globalMap; /*!< the incoming static map of the area */
   bool globalMapReceived; /*!< true when a map has been received */
   std::vector<layer_info_t*> mapLayers; /*< A global list of all the map layers which will be published */
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
   std::vector<ar_track_alvar::AlvarMarkers::ConstPtr> markerDataIn; /*! < Incoming marker data from each camera. Poses are with respect to map. Contains only master markers. */
-  std::vector<std::vector<visualization_msgs::Marker::ConstPtr> > markerVisDataIn; /*! < Incoming marker data from each camera. Poses are with respect to the camera. Contains all markers. */
 
   //parameters
   int cameraCount; /*!< the number of cameras */
