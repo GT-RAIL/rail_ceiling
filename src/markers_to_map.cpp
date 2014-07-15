@@ -203,10 +203,10 @@ void markers_to_map::updateMarkerMaps()
         continue;
       }
 
-      try
+      for (unsigned int layerId = 0; layerId < bundles[bundleIndex]->getLayers()->size(); layerId++)
       {
         //iterate over every layer in this bundle
-        for (unsigned int layerId = 0; layerId < bundles[bundleIndex]->getLayers()->size(); layerId++)
+        try
         {
           //find the corresponding layers map
           unsigned int mapId;
@@ -340,10 +340,10 @@ void markers_to_map::updateMarkerMaps()
             }
           }
         }
-      }
-      catch (tf::TransformException ex)
-      {
-        ROS_WARN("%s", ex.what());
+        catch (tf::TransformException ex)
+        {
+          ROS_WARN("%s", ex.what());
+        }
       }
     }
     if (!publishTimersStarted)
