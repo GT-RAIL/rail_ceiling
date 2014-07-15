@@ -8,13 +8,23 @@
     </marker>
     <footprint>
     	<marker index="9" x="0" y="0" yaw="0"/>
-        <layer name="localization" maptype="match_data">
+        <layer name="global_cost" maptype="match_data">
     		<polygon>
     			<point x="-0.165" y="-0.165"/>
 	    		<point x="-0.165" y="0.165"/>
     			<point x="0.165" y="0.165"/>
     			<point x="0.165" y="-0.165"/>
      		</polygon>
-    	</layer>   			
+    	</layer>  
+    	
+    	 <layer name="local_cost" maptype="rolling">
+    		<polygon>
+    			<point x="-0.165" y="-0.165"/>
+	    		<point x="-0.165" y="0.165"/>
+    			<point x="0.165" y="0.165"/>
+    			<point x="0.165" y="-0.165"/>
+     		</polygon>
+    	</layer>  
+    	 			
     </footprint>
 </multimarker>

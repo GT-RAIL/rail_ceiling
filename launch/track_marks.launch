@@ -2,17 +2,19 @@
 	<arg name="marker_size" default="10.5" />
 	<arg name="max_new_marker_error" default="0.09" /> 
 	<arg name="max_track_error" default="0.2" />
-	<arg name="cam_image_topic" default="/cameraNode/image_raw" />
-	<arg name="cam_info_topic" default="/cameraNode/camera_info" />	
-	<arg name="output_frame" value="/head_camera" />
+	<arg name="cam_image_topic" default="/cameraNode_2/image_raw" />
+	<arg name="cam_info_topic" default="/cameraNode_2/camera_info" />	
+	<arg name="output_frame" value="/head_camera_2" />
 
 	<node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame)" />
 
-	<node pkg="usb_cam" name="cameraNode" type="usb_cam_node" output = "screen" respawn="true">
+	<node pkg="usb_cam" name="cameraNode_2" type="usb_cam_node" output = "screen" respawn="true">
 		<param name="pixel_format" value="yuyv" />
 		<param name="image_width" value="1920" />
 		<param name="image_height" value="1080" />
 		<param name="io_method" value="mmap"/>
+		<param name="video_device" value="/dev/video2" />
+		<param name="camera_frame_id" value="head_camera_2" />
 	</node>
 	
 	<node pkg="rail_ceiling" name="configure_cameras" type="configure_cameras.bash" />
