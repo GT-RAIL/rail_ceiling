@@ -206,6 +206,7 @@ void markers_to_map::updateMarkerMaps()
         return;
       }
     }
+
     ar_track_alvar::AlvarMarkers* markers = mergeMarkerData();
     initializeMaps();
     float globalResolution = globalMap.info.resolution;
@@ -242,38 +243,16 @@ void markers_to_map::updateMarkerMaps()
               break;
             }
           }
-          //Find transform to ar_marker
-          //tf::StampedTransform transform;
+          //Find pose of ar_marker
           int xGrid;
           int yGrid;
           float angle;
-          if (mapLayers[mapId]->mapType != ROLLING)
+          if (mapLayers[mapId]->mapType == ROLLING)
           {
-            /*
-             listener.lookupTransform("/map", "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
-             ros::Time(0), transform);
-             */
-            xGrid = round(markers->markers[i].pose.pose.position.x - mapLayers[mapId]->map->info.origin.position.x,
-                          globalResolution) / globalResolution;
-            yGrid = round(markers->markers[i].pose.pose.position.y - mapLayers[mapId]->map->info.origin.position.y,
-                          globalResolution) / globalResolution;
-            //extract the rotation angle
-            tf::Quaternion q(markers->markers[i].pose.pose.orientation.x, markers->markers[i].pose.pose.orientation.y,
-                             markers->markers[i].pose.pose.orientation.z, markers->markers[i].pose.pose.orientation.w);
-            double roll, pitch, yaw;
-            tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-            angle = yaw;
-          }
-          else
-          {
-            /*
-             listener.lookupTransform(odomFrameId,
-             "/ar_marker_" + (boost::lexical_cast < string > (markers->markers[i].id)),
-             ros::Time(0), transform);
-             */
+            //transform marker pose into odometry frame
             geometry_msgs::PoseStamped poseOut;
+            markers->markers[i].pose.header.frame_id =  markers->markers[i].header.frame_id;
             listener.transformPose(odomFrameId, ros::Time(0), markers->markers[i].pose, "map", poseOut);
-
             xGrid = round(poseOut.pose.position.x - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
                 / globalResolution;
             yGrid = round(poseOut.pose.position.y - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
@@ -285,22 +264,23 @@ void markers_to_map::updateMarkerMaps()
             tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
             angle = yaw;
           }
+          else
+          {
+            //marker pose is already with respect to the map frame, just need to discretize it
+            xGrid = round(markers->markers[i].pose.pose.position.x - mapLayers[mapId]->map->info.origin.position.x,
+                          globalResolution) / globalResolution;
+            yGrid = round(markers->markers[i].pose.pose.position.y - mapLayers[mapId]->map->info.origin.position.y,
+                          globalResolution) / globalResolution;
+            //extract the rotation angle
+            tf::Quaternion q(markers->markers[i].pose.pose.orientation.x, markers->markers[i].pose.pose.orientation.y,
+                             markers->markers[i].pose.pose.orientation.z, markers->markers[i].pose.pose.orientation.w);
+            double roll, pitch, yaw;
+            tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+            angle = yaw;
+          }
           float rotCenterX = bundles[bundleIndex]->getMarkerX();
           float rotCenterY = bundles[bundleIndex]->getMarkerY();
           angle = angle + bundles[bundleIndex]->getMarkerYaw();
-          /*
-           int xGrid = round(transform.getOrigin().x() - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
-           / globalResolution;
-           int yGrid = round(transform.getOrigin().y() - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
-           / globalResolution;
-           //extract the rotation angle
-           tf::Quaternion q(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(),
-           transform.getRotation().w());
-           double roll, pitch, yaw;
-           tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-           float angle = yaw;
-
-           */
 
           //iterate over every polygon in this layer
           for (int poly = 0; poly < bundles[bundleIndex]->getLayers()->at(layerId)->footprint.size(); poly++)

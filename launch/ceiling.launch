@@ -15,6 +15,11 @@
 	<arg name="cam_info_topic_1" default="/cameraNode_1/camera_info" />	
 	<!--<arg name="output_frame_1" value="/head_camera_1" />-->
 	<arg name="output_frame_1" value="/map" />
+	
+	<arg name="cam_image_topic_2" default="/cameraNode_2/image_raw" />
+	<arg name="cam_info_topic_2" default="/cameraNode_2/camera_info" />	
+	<!--<arg name="output_frame_2" value="/head_camera_2" />-->
+	<arg name="output_frame_2" value="/map" />
 
 	<group ns="cam0">
 		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_0) $(arg cam_info_topic_0) $(arg output_frame_0) $(arg bundle_files)" />
@@ -22,18 +27,20 @@
 	<group ns="cam1">
 		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_1) $(arg cam_info_topic_1) $(arg output_frame_1) $(arg bundle_files)" />
 	</group>
+ 	<group ns="cam2">
+		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_2) $(arg cam_info_topic_2) $(arg output_frame_2) $(arg bundle_files)" />
+	</group>
+
+
 
 	<!--CAMERAS -->
-	
-	
-	<!--TODO, check camera frame ids -->
 	<node pkg="usb_cam" name="cameraNode_0" type="usb_cam_node" output = "screen" respawn="true">
 		<param name="pixel_format" value="yuyv" />
 		<param name="image_width" value="1920" />
 		<param name="image_height" value="1080" />
 		<param name="io_method" value="mmap"/>
 		<param name="video_device" value="/dev/video0" />
-		<param name="camera_frame_id" value="head_camera_1" />
+		<param name="camera_frame_id" value="head_camera_0" />
 	</node>
 	<node pkg="usb_cam" name="cameraNode_1" type="usb_cam_node" output = "screen" respawn="true">
 		<param name="pixel_format" value="yuyv" />
@@ -41,9 +48,8 @@
 		<param name="image_height" value="1080" />
 		<param name="io_method" value="mmap"/>
 		<param name="video_device" value="/dev/video1" />
-		<param name="camera_frame_id" value="head_camera_0" />
+		<param name="camera_frame_id" value="head_camera_1" />
 	</node>
-	<!--
 	<node pkg="usb_cam" name="cameraNode_2" type="usb_cam_node" output = "screen" respawn="true">
 		<param name="pixel_format" value="yuyv" />
 		<param name="image_width" value="1920" />
@@ -52,27 +58,18 @@
 		<param name="video_device" value="/dev/video2" />
 		<param name="camera_frame_id" value="head_camera_2" />
 	</node>
-	<node pkg="usb_cam" name="cameraNode_3" type="usb_cam_node" output = "screen" respawn="true">
-		<param name="pixel_format" value="yuyv" />
-		<param name="image_width" value="1920" />
-		<param name="image_height" value="1080" />
-		<param name="io_method" value="mmap"/>
-		<param name="video_device" value="/dev/video3" />
-		<param name="camera_frame_id" value="head_camera_3" />
-
-	</node>
-	-->
 	<node pkg="rail_ceiling" name="configure_cameras" type="configure_cameras.bash" />
 
 	<!--TRANSFORMS-->
-	<!-- TODO: MAKE URDF FOR 'ENVIRONMENT' -->
-	<node pkg="tf" type="static_transform_publisher" name="map_to_camera_0" args=".9 -1.2 2.5 0.8 3.14159265 0 map head_camera_0 5" />
-	<node pkg="tf" type="static_transform_publisher" name="map_to_camera_1" args="-0.4 -1.5 2.5 0.8 3.14159265 0 map head_camera_1 5" />
-
-
-	<!--OBSTACLE CONVERTER-->
+  	<arg name="ceiling_urdf_file" default="$(find xacro)/xacro.py '$(find rail_ceiling)/urdf/ceiling.urdf.xacro'" />
+  	<param name="ceiling_description" command="$(arg ceiling_urdf_file)" />
+  	<node pkg="robot_state_publisher" type="robot_state_publisher" name="ceiling_tf_publisher" respawn="true">
+  	  <remap from="robot_description" to="ceiling_description" />
+      <param name="publish_frequency" type="double" value="5.0" />
+  	</node>
+  
+  <!--OBSTACLE CONVERTER-->
 	<node pkg="rail_ceiling" type="markers_to_map" name="markers_to_map" output="screen" respawn="true" args=" $(arg bundle_files)">
-		<param name="camera_count" type="int" value="2" />
 	  	<param name="update_rate" type="double" value="5" />
 	  	<param name="match_size_publish_period" type="double" value="0.5" />
 	  	<param name="match_data_publish_period" type="double" value="5.0" />
@@ -82,10 +79,14 @@
 	 	<param name="base_frame_id" type="string" value="base_footprint" />
 	  	<param name="odom_frame_id" type="string" value="odom_combined" />
 		<remap from="/markers_to_map/map" to="/map" />
+		
+		<param name="camera_count" type="int" value="3" />
 		<remap from="/markers_to_map/ar_pose_marker_0" to="/cam0/ar_pose_marker" />	
-		<remap from="/markers_to_map/ar_pose_marker_1" to="/cam1/ar_pose_marker" />			
+		<remap from="/markers_to_map/ar_pose_marker_1" to="/cam1/ar_pose_marker" />	
+		<remap from="/markers_to_map/ar_pose_marker_2" to="/cam2/ar_pose_marker" />		
 		<remap from="/markers_to_map/ar_vis_marker_0" to="/cam0/visualization_marker" />	
-		<remap from="/markers_to_map/ar_vis_marker_1" to="/cam1/visualization_marker" />			
+		<remap from="/markers_to_map/ar_vis_marker_1" to="/cam1/visualization_marker" />	
+		<remap from="/markers_to_map/ar_vis_marker_2" to="/cam2/visualization_marker" />
 	</node>
 
 </launch>
