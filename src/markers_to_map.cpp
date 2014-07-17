@@ -75,8 +75,11 @@ ar_track_alvar::AlvarMarkers* markers_to_map::mergeMarkerData()
   //merge the marker data from all the cameras
   ar_track_alvar::AlvarMarkers* markers = new ar_track_alvar::AlvarMarkers();
   vector < ar_track_alvar::AlvarMarker > markerData;
-  for (unsigned int camera = 0; camera < markerDataIn.size(); camera++)
+  for (unsigned int camera = 0; camera < cameraCount; camera++)
   {
+    if (markerDataIn[camera] == NULL) {
+      continue; //No data from this camera yet. Skip it and move on.
+    }
     for (unsigned int j = 0; j < markerDataIn[camera]->markers.size(); j++)
     {
       bool contains = false;
@@ -172,15 +175,7 @@ void markers_to_map::updateMarkerMaps()
 {
   if (globalMapReceived)
   {
-    //ensure every camera is publishing before trying to access the data
-    for (unsigned int camera = 0; camera < markerDataIn.size(); camera++)
-    {
-      if (markerDataIn[camera] == NULL)
-      {
-        return;
-      }
-    }
-
+    //prepare the marker data and maps
     ar_track_alvar::AlvarMarkers* markers = mergeMarkerData();
     initializeMaps();
     float globalResolution = globalMap.info.resolution;
@@ -464,6 +459,9 @@ int main(int argc, char **argv)
 
   //create the output map topics for each map layer
   converter.initializeLayers();
+
+  //short delay for cleaner startup
+  ros::Duration(1.0).sleep();
 
   while (ros::ok())
   {

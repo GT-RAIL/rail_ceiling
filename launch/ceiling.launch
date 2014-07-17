@@ -19,15 +19,14 @@
 	<arg name="output_frame_2" value="/head_camera_2" />
 
 	<group ns="cam0">
-		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_0) $(arg cam_info_topic_0) $(arg output_frame_0) $(arg bundle_files)" />
+		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_0) $(arg cam_info_topic_0) $(arg output_frame_0) $(arg bundle_files)" />
 	</group>
 	<group ns="cam1">
-		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_1) $(arg cam_info_topic_1) $(arg output_frame_1) $(arg bundle_files)" />
+		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_1) $(arg cam_info_topic_1) $(arg output_frame_1) $(arg bundle_files)" />
 	</group>
  	<group ns="cam2">
-		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_2) $(arg cam_info_topic_2) $(arg output_frame_2) $(arg bundle_files)" />
+		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_2) $(arg cam_info_topic_2) $(arg output_frame_2) $(arg bundle_files)" />
 	</group>
-
 
 
 	<!--CAMERAS -->
@@ -69,18 +68,21 @@
 	<node pkg="rail_ceiling" type="markers_to_map" name="markers_to_map" output="screen" respawn="true" args=" $(arg bundle_files)">
 	  	<param name="update_rate" type="double" value="5" />
 	  	<param name="match_size_publish_period" type="double" value="1.0" />
-	  	<param name="match_data_publish_period" type="double" value="5.0" />
+	  	<param name="match_data_publish_period" type="double" value="20.0" />
 	  	<param name="rolling_publish_period" type="double" value="1.0" />	  	
 	  	<param name="rolling_map_width" type="double" value="6" />
 	  	<param name="rolling_map_height" type="double" value="6" />
 	 	<param name="base_frame_id" type="string" value="base_footprint" />
-	  	<param name="odom_frame_id" type="string" value="odom_combined" />
+	 	<!-- if using visual odometry (vo), set odom_frame_id to odom_combined -->
+	  	<!--<param name="odom_frame_id" type="string" value="odom_combined" />-->
+	  	<param name="odom_frame_id" type="string" value="odom" />
 		<remap from="/markers_to_map/map" to="/map" />
 		
-		<param name="camera_count" type="int" value="3" />
+		<param name="camera_count" type="int" value="4" />
 		<remap from="/markers_to_map/ar_pose_marker_0" to="/cam0/ar_pose_marker" />	
 		<remap from="/markers_to_map/ar_pose_marker_1" to="/cam1/ar_pose_marker" />	
-		<remap from="/markers_to_map/ar_pose_marker_2" to="/cam2/ar_pose_marker" />		
+		<remap from="/markers_to_map/ar_pose_marker_2" to="/cam2/ar_pose_marker" />
+		<remap from="/markers_to_map/ar_pose_marker_3" to="/robot/ar_pose_marker" />				
 	</node>
 
 </launch>
