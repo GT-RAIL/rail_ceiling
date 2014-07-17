@@ -1,0 +1,17 @@
+<launch>
+	<!--AR TRACKER-->
+	<arg name="marker_size" default="10.6" />
+	<arg name="max_new_marker_error" default="0.03" /> 
+	<arg name="max_track_error" default="0.2" />
+	<arg name="med_filt_size" default="10" />
+	<arg name="bundle_files" default="$(find rail_ceiling)/bundles/table.xml $(find rail_ceiling)/bundles/chair.xml $(find rail_ceiling)/bundles/sofa_chair_1.xml $(find rail_ceiling)/bundles/sofa_chair_2.xml $(find rail_ceiling)/bundles/stool.xml $(find rail_ceiling)/bundles/couch.xml" />
+	
+	<arg name="cam_image_topic_robot" default="/camera/depth_registered/points" />
+	<arg name="cam_info_topic_robot" default="/camera/depth_registered/camera_info" />	
+	<arg name="output_frame_robot" value="/camera_rgb_optical_frame" />
+   
+	<group ns="robot">
+	       <node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundles" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_robot) $(arg cam_info_topic_robot) $(arg output_frame_robot) $(arg med_filt_size) $(arg bundle_files)" />
+     	</group>
+
+</launch>
