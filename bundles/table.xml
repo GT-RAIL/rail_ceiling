@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<multimarker markers="2">
+<multimarker markers="1">
 	<!-- used by ar_track_avlar for building multimarker bundles to be robust against occlusion -->
-    <marker index="15" status="1">
+    <marker index="15" status="2">
         <corner x="-5.3" y="-5.3" z="0.0" />
         <corner x="5.3" y="-5.3" z="0.0" />
         <corner x="5.3" y="5.3" z="0.0" />
         <corner x="-5.3" y="5.3" z="0.0" />
     </marker>
     <marker index="1" status="1">
-        <corner x="-116.6" y="34.8" z="0.0" />
-        <corner x="-106" y="34.8" z="0.0" />
-        <corner x="-106" y="45.4" z="0.0" />
-        <corner x="-116.6" y="45.4" z="0.0" />
+        <corner x="-122.1" y="33.2" z="0.0" />
+        <corner x="-111.6" y="33.2" z="0.0" />
+        <corner x="-111.5" y="43.8" z="0.0" />
+        <corner x="-122.1" y="43.8" z="0.0" />
     </marker>
     
     <!-- Used by rail_ceiling/markers_to_map to project a footprint of the bundle onto a map -->
@@ -20,10 +20,10 @@
        	<marker index="15" x="-0.5565" y="0.2005" yaw="0"/>
     	<layer name="global_cost" maptype="match_size">
     		<polygon>
-    			<point x="-0.6095" y="-0.2535"/>
-    			<point x="-0.6095" y="0.2535"/>
-    			<point x="0.6095" y="0.2535"/>
-    			<point x="0.6095" y="-0.2535"/>
+    			<point x="-0.62" y="-0.2535"/>
+    			<point x="-0.62" y="0.2535"/>
+    			<point x="0.62" y="0.2535"/>
+    			<point x="0.62" y="-0.2535"/>
     		</polygon>
     	</layer>  	    
     	<layer name="local_cost" maptype="rolling">

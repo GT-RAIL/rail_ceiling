@@ -13,12 +13,20 @@
 		<param name="image_width" value="1920" />
 		<param name="image_height" value="1080" />
 		<param name="io_method" value="mmap"/>
-		<param name="video_device" value="/dev/video2" />
+		<param name="video_device" value="/dev/video2" /> 
 		<param name="camera_frame_id" value="head_camera_2" />
 	</node>
 	
 	<node pkg="rail_ceiling" name="configure_cameras" type="configure_cameras.bash" />
 
-	<node pkg="tf" type="static_transform_publisher" name="map_to_camera" args=".9 -1.4 2.5 0.8 3.14159265 0 map head_camera 5" />
+	<!--TRANSFORMS-->
+  	<arg name="ceiling_urdf_file" default="$(find xacro)/xacro.py '$(find rail_ceiling)/urdf/ceiling.urdf.xacro'" />
+  	<param name="ceiling_description" command="$(arg ceiling_urdf_file)" />
+  	<node pkg="robot_state_publisher" type="robot_state_publisher" name="ceiling_tf_publisher" respawn="true">
+  	  <remap from="robot_description" to="ceiling_description" />
+      <param name="publish_frequency" type="double" value="5.0" />
+  	</node>
+  	
+
 </launch>
 
