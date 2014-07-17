@@ -15,16 +15,7 @@
     			<point x="0.165" y="0.165"/>
     			<point x="0.165" y="-0.165"/>
      		</polygon>
-    	</layer>  
-    	
-    	 <layer name="local_cost" maptype="rolling">
-    		<polygon>
-    			<point x="-0.165" y="-0.165"/>
-	    		<point x="-0.165" y="0.165"/>
-    			<point x="0.165" y="0.165"/>
-    			<point x="0.165" y="-0.165"/>
-     		</polygon>
-    	</layer>  
-    	 			
+    	</layer>   	
+    	<layer name="local_cost" maptype="rolling" copyfrom="global_cost"/>  	 			
     </footprint>
 </multimarker>

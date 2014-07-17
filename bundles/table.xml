@@ -26,14 +26,7 @@
     			<point x="0.62" y="-0.2535"/>
     		</polygon>
     	</layer>  	    
-    	<layer name="local_cost" maptype="rolling">
-        	<polygon>
-    			<point x="-0.6095" y="-0.2535"/>
-    			<point x="-0.6095" y="0.2535"/>
-    			<point x="0.6095" y="0.2535"/>
-    			<point x="0.6095" y="-0.2535"/>
-    		</polygon>
-    	</layer>	 
+    	<layer name="local_cost" maptype="rolling" copyfrom="global_cost"/>
     	<layer name="localization" maptype="match_data">
     		<polygon>
     	    	<point x="-0.6095" y="-0.2535"/>

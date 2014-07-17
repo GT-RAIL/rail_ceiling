@@ -72,11 +72,26 @@ layer_t* Bundle::parseLayer(TiXmlElement* layerElement)
     ROS_ERROR("Invalid map type in bundle xml");
   }
 
-  //parse polygons
-  TiXmlElement* polygonElement = layerElement->FirstChildElement("polygon");
-  for (polygonElement; polygonElement; polygonElement = polygonElement->NextSiblingElement())
-  {
-    layer->footprint.push_back(parsePolygon(polygonElement));
+  if (layerElement->QueryStringAttribute("copyfrom", &temp) == TIXML_SUCCESS) {
+    //look for layer
+    bool layerFound = false;
+    for (unsigned int i = 0; i < layers.size(); i++) {
+      if (layers[i]->name == temp) {
+        layerFound = true;
+        layer->footprint = layers[i]->footprint;
+        break;
+      }
+    }
+    if (!layerFound) {
+      ROS_ERROR("Cannot copy layer footprint. Layer \"%s\" not defined before layer \"%s\".", temp.c_str(), layer->name.c_str());
+    }
+  } else {
+    //parse polygons
+    TiXmlElement* polygonElement = layerElement->FirstChildElement("polygon");
+    for (polygonElement; polygonElement; polygonElement = polygonElement->NextSiblingElement())
+    {
+      layer->footprint.push_back(parsePolygon(polygonElement));
+    }
   }
 
   return layer;

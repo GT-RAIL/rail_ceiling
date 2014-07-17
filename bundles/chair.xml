@@ -12,10 +12,8 @@
         <corner x="-20.0" y="32.6" z="3.0" />
         <corner x="-30.6" y="32.6" z="3.0" />
     </marker>
-    
-    
-    <!--todo: fix footprint-->
-     <footprint>
+
+    <footprint>
     	<marker index="2" x="0.122" y="-0.161" yaw="3.14159265358979"/>
         <layer name="global_cost" maptype="match_data">
     		<polygon>
@@ -24,17 +22,8 @@
     			<point x="0.180" y="0.214"/>
     			<point x="0.215" y="-0.214"/>
      		</polygon>
-    	</layer>  
-    	
-    	 <layer name="local_cost" maptype="rolling">
-    		<polygon>
-    			<point x="-0.215" y="-0.214"/>
-	    		<point x="-0.180" y="0.214"/>
-    			<point x="0.180" y="0.214"/>
-    			<point x="0.215" y="-0.214"/>
-     		</polygon>
-    	</layer>  
-    	 			
+    	</layer>     	
+    	 <layer name="local_cost" maptype="rolling" copyfrom="global_cost"/>
     </footprint>
     
 </multimarker>

@@ -26,8 +26,7 @@
     </marker>
 
     <footprint>
-    	<marker index="10" x="0.832" y="0.3562" yaw="0"/>
-        <!--<marker index="10" x="-0.892" y="-0.3562" yaw="0"/>-->        
+    	<marker index="10" x="0.832" y="0.3562" yaw="0"/>   
     	<layer name="localization" maptype="match_data">
     		<polygon>
     			<point x="-0.995" y="-0.4092"/>
