@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<multimarker markers="4">
+<multimarker markers="8">
+	<!--horizontal surfaces-->
     <marker index="10" status="1">
         <corner x="-5.3" y="-5.3" z="0.0" />
         <corner x="5.3" y="-5.3" z="0.0" />
@@ -23,6 +24,32 @@
         <corner x="168.3" y="45.5" z="0.0" />
         <corner x="168.3" y="56.1" z="0.0" />
         <corner x="157.7" y="56.1" z="0.0" />
+    </marker>
+
+	<!--vertical surfaces -->
+    <marker index="16" status="1">
+        <corner x="-5.3" y="-57.3" z="36.0" />
+        <corner x="5.3" y="-57.3" z="36.0" />
+        <corner x="5.3" y="-65.3" z="45.0" />
+        <corner x="-5.3" y="-65.3" z="45.0" />
+    </marker>    
+    <marker index="17" status="1">
+        <corner x="48.9" y="-57.3" z="36.0" />
+        <corner x="59.5" y="-57.3" z="36.0" />
+        <corner x="59.5" y="-65.3" z="45.0" />
+        <corner x="48.9" y="-65.3" z="45.0" />
+    </marker>  
+    <marker index="18" status="1">
+        <corner x="98.4" y="-57.3" z="36.0" />
+        <corner x="114.3" y="-57.3" z="36.0" />
+        <corner x="114.3" y="-65.3" z="45.0" />
+        <corner x="98.4" y="-65.3" z="45.0" />
+    </marker>    
+    <marker index="19" status="1">
+        <corner x="157.7" y="-57.3" z="36.0" />
+        <corner x="168.3" y="-57.3" z="36.0" />
+        <corner x="168.3" y="-65.3" z="45.0" />
+        <corner x="157.7" y="-65.3" z="45.0" />
     </marker>
 
     <footprint>

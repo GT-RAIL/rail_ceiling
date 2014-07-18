@@ -15,23 +15,23 @@
   </joint>
 
   <xacro:ar_camera parent="ceiling" suffix="0">
-    <origin xyz="-3.81 -5.01 0" rpy="0 0 ${PI}" />
+    <origin xyz="-3.82 -4.97 0" rpy="0 0 ${PI}" />
   </xacro:ar_camera>
 
   <xacro:ar_camera parent="ceiling" suffix="1">
-    <origin xyz="-2.70 -5.01 0" rpy="0 0 ${PI}" />
+    <origin xyz="-2.60 -4.97 0" rpy="0 0 ${PI}" />
   </xacro:ar_camera>
 
   <xacro:ar_camera parent="ceiling" suffix="2">
-    <origin xyz="-3.81 -3.79 0" rpy="0 0 ${PI}" />
+    <origin xyz="-3.82 -3.75 0" rpy="0 0 ${PI}" />
   </xacro:ar_camera>
 
   <xacro:ar_camera parent="ceiling" suffix="3">
-    <origin xyz="-2.70 -3.79 0" rpy="0 0 ${PI}" />
+    <origin xyz="-2.60 -3.75 0" rpy="0 0 ${PI}" />
   </xacro:ar_camera>
 
   <xacro:ar_camera parent="ceiling" suffix="4">
-    <origin xyz="-3.81 -2.57 0" rpy="0 0 ${PI}" />
+    <origin xyz="-3.82 -2.53 0" rpy="0 0 ${PI}" />
   </xacro:ar_camera>
 
 
