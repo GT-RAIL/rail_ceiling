@@ -81,6 +81,12 @@ public:
    */
   float getMarkerYaw();
 
+  /*!
+   * Returns true if the bundle should be kept on the map if it was completely occluded. Returns false otherwise.
+   * \returns True if the bundle should be kept on the map if it was completely occluded. False otherwise.
+   */
+  bool getKeepOnOcclusion();
+
 private:
   layer_t* parseLayer(TiXmlElement* layerElement); /*! <Parses a footprint layer section of a bundle xml file */
   geometry_msgs::PolygonStamped* parsePolygon(TiXmlElement* polygonElement); /*! <Parses a polygon section of a bundle xml file */
@@ -89,7 +95,8 @@ private:
   std::vector<layer_t*> layers; /*!< All the layers associated with this bundle */
   float markerX; /*! <The x position of the marker origin with respect to the footprint origin */
   float markerY; /*! <The y position of the marker origin with respect to the footprint origin  */
-  float markerYaw; /*! <The rotation of the marker with respect to it's own origin in radians*/
+  float markerYaw; /*! <The rotation of the marker with respect to it's own origin in radians */
+  bool keepOnOcclusion; /*! <Should this marker be drawn on the map if it was completely occluded? */
 };
 
 #endif //BUNDLE_H

@@ -195,8 +195,22 @@ void markers_to_map::updateMarkerMaps()
         }
         if (!contains)
         {
-          //the marker was completely occluded, add it back in its last known position
-          newMarkers->markers.push_back(markers->markers[i]);
+          //The marker was completely occluded, keep it on the map?
+
+          //find the relevant bundle
+          int bundleIndex = -1;
+          for (unsigned int j = 0; j < bundles.size(); j++)
+          {
+            if (bundles[j]->getId() == markers->markers[i].id)
+            {
+              bundleIndex = j;
+            }
+          }
+          if (bundleIndex == -1 || bundles[bundleIndex]->getKeepOnOcclusion())
+          {
+            //The marker was completely occluded and should be kept. Add it back to the list of markers in it's last known state.
+            newMarkers->markers.push_back(markers->markers[i]);
+          }
         }
       }
     }

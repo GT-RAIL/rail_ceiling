@@ -21,8 +21,10 @@ Bundle::Bundle()
 
 Bundle::~Bundle()
 {
-  for (unsigned int i; i < layers.size(); i++){
-    for (unsigned int j; j < layers[i]->footprint.size(); j++) {
+  for (unsigned int i; i < layers.size(); i++)
+  {
+    for (unsigned int j; j < layers[i]->footprint.size(); j++)
+    {
       delete layers[i]->footprint[j];
     }
     delete layers[i];
@@ -72,20 +74,27 @@ layer_t* Bundle::parseLayer(TiXmlElement* layerElement)
     ROS_ERROR("Invalid map type in bundle xml");
   }
 
-  if (layerElement->QueryStringAttribute("copyfrom", &temp) == TIXML_SUCCESS) {
+  if (layerElement->QueryStringAttribute("copyfrom", &temp) == TIXML_SUCCESS)
+  {
     //look for layer
     bool layerFound = false;
-    for (unsigned int i = 0; i < layers.size(); i++) {
-      if (layers[i]->name == temp) {
+    for (unsigned int i = 0; i < layers.size(); i++)
+    {
+      if (layers[i]->name == temp)
+      {
         layerFound = true;
         layer->footprint = layers[i]->footprint;
         break;
       }
     }
-    if (!layerFound) {
-      ROS_ERROR("Cannot copy layer footprint. Layer \"%s\" not defined before layer \"%s\".", temp.c_str(), layer->name.c_str());
+    if (!layerFound)
+    {
+      ROS_ERROR("Cannot copy layer footprint. Layer \"%s\" not defined before layer \"%s\".", temp.c_str(),
+                layer->name.c_str());
     }
-  } else {
+  }
+  else
+  {
     //parse polygons
     TiXmlElement* polygonElement = layerElement->FirstChildElement("polygon");
     for (polygonElement; polygonElement; polygonElement = polygonElement->NextSiblingElement())
@@ -129,6 +138,10 @@ bool Bundle::parseBundleFootprint(char* filepath)
       pFootprintNode->QueryFloatAttribute("x", &markerX);
       pFootprintNode->QueryFloatAttribute("y", &markerY);
       pFootprintNode->QueryFloatAttribute("yaw", &markerYaw);
+      if (pFootprintNode->QueryBoolAttribute("keepOnOcclusion", &keepOnOcclusion) != TIXML_SUCCESS)
+      {
+        keepOnOcclusion = true;
+      }
     }
 
     if (boost::iequals(pFootprintNode->Value(), "layer"))
@@ -164,4 +177,9 @@ float Bundle::getMarkerY()
 float Bundle::getMarkerYaw()
 {
   return markerYaw;
+}
+
+bool Bundle::getKeepOnOcclusion()
+{
+  return keepOnOcclusion;
 }

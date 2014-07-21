@@ -17,7 +17,7 @@
     <!-- Used by rail_ceiling/markers_to_map to project a footprint of the bundle onto a map -->
     <!-- Units are in meters or radians. All defined with respect to the origin of the footprint-->
     <footprint>
-       	<marker index="15" x="-0.5565" y="0.2005" yaw="0"/>
+       	<marker index="15" x="-0.5565" y="0.2005" yaw="0" keepOnOcclusion="true"/>
     	<layer name="global_cost" maptype="match_size">
     		<polygon>
     			<point x="-0.62" y="-0.2535"/>
