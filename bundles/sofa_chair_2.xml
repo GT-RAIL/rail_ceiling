@@ -26,7 +26,8 @@
         <corner x="41.9" y="-62.7" z="30.0" />
         <corner x="31.3" y="-62.7" z="30.0" />
     </marker>    
-    
+
+   
     <footprint>
        <marker index="8" x="0.2195" y="0.3613" yaw="0"/>
        <layer name="localization" maptype="match_data">

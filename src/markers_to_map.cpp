@@ -77,7 +77,8 @@ ar_track_alvar::AlvarMarkers* markers_to_map::mergeMarkerData()
   vector < ar_track_alvar::AlvarMarker > markerData;
   for (unsigned int camera = 0; camera < cameraCount; camera++)
   {
-    if (markerDataIn[camera] == NULL) {
+    if (markerDataIn[camera] == NULL)
+    {
       continue; //No data from this camera yet. Skip it and move on.
     }
     for (unsigned int j = 0; j < markerDataIn[camera]->markers.size(); j++)
@@ -98,7 +99,7 @@ ar_track_alvar::AlvarMarkers* markers_to_map::mergeMarkerData()
       }
       else
       {
-        //this marker was seen by more than 1 camera. Use information from whichever camera is closest to the marker.
+        //This marker was seen by more than 1 camera. Use information from whichever camera is closest to the marker.
         double distance = sqrt(
             pow(markerDataIn[camera]->markers[j].pose.pose.position.x, 2)
                 + pow(markerDataIn[camera]->markers[j].pose.pose.position.y, 2)
@@ -135,7 +136,7 @@ void markers_to_map::initializeMaps()
     delete mapLayers[mapId]->mapData;
 
     mapLayers[mapId]->map = new nav_msgs::OccupancyGrid();
-    mapLayers[mapId]->map->header.frame_id = "map";
+    mapLayers[mapId]->map->header.frame_id = globalMap.header.frame_id;
     mapLayers[mapId]->map->header.stamp = ros::Time::now();
     mapLayers[mapId]->map->info = globalMap.info;
     if (mapLayers[mapId]->mapType == MATCH_SIZE)
@@ -173,19 +174,45 @@ void markers_to_map::initializeMaps()
 
 void markers_to_map::updateMarkerMaps()
 {
+  static ar_track_alvar::AlvarMarkers* markers;
   if (globalMapReceived)
   {
-    //prepare the marker data and maps
-    ar_track_alvar::AlvarMarkers* markers = mergeMarkerData();
+    //prepare the marker data
+    ar_track_alvar::AlvarMarkers* newMarkers = mergeMarkerData();
+    if (markers != NULL)
+    {
+      //check the incoming marker data against the old set of marker data for markers which were entirely occluded
+      for (unsigned int i = 0; i < markers->markers.size(); i++)
+      {
+        bool contains = false;
+        for (unsigned int j = 0; j < newMarkers->markers.size(); j++)
+        {
+          if (markers->markers[i].id == newMarkers->markers[j].id)
+          {
+            contains = true;
+            break;
+          }
+        }
+        if (!contains)
+        {
+          //the marker was completely occluded, add it back in its last known position
+          newMarkers->markers.push_back(markers->markers[i]);
+        }
+      }
+    }
+    delete markers;
+    markers = newMarkers;
+
+    //prepare the maps
     initializeMaps();
     float globalResolution = globalMap.info.resolution;
 
     //Iterate over the detected marker bundles
-    for (int i = 0; i < markers->markers.size(); i++)
+    for (unsigned int i = 0; i < markers->markers.size(); i++)
     {
       //find the relevant bundle
       int bundleIndex = -1;
-      for (int j = 0; j < bundles.size(); j++)
+      for (unsigned int j = 0; j < bundles.size(); j++)
       {
         if (bundles[j]->getId() == markers->markers[i].id)
         {
@@ -228,7 +255,7 @@ void markers_to_map::updateMarkerMaps()
           {
             //transform marker pose into map frame
             markers->markers[i].pose.header.frame_id = markers->markers[i].header.frame_id;
-            listener.transformPose("map", ros::Time(0), markers->markers[i].pose,
+            listener.transformPose(mapLayers[mapId]->map->header.frame_id, ros::Time(0), markers->markers[i].pose,
                                    markers->markers[i].pose.header.frame_id, poseOut);
           }
           //discretize to grid
@@ -355,7 +382,7 @@ void markers_to_map::updateMarkerMaps()
     }
 
     //free used memory
-    delete markers;
+    //delete markers;
   }
 }
 
