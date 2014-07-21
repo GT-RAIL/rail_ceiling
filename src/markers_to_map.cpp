@@ -394,9 +394,6 @@ void markers_to_map::updateMarkerMaps()
       rollingTimer.start();
       publishTimersStarted = true;
     }
-
-    //free used memory
-    //delete markers;
   }
 }
 
