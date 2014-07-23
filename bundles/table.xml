@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<multimarker markers="1">
+<multimarker markers="2">
 	<!-- used by ar_track_avlar for building multimarker bundles to be robust against occlusion -->
     <marker index="15" status="2">
         <corner x="-5.3" y="-5.3" z="0.0" />

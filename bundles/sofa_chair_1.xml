@@ -11,22 +11,7 @@
         <corner x="40.8" y="41.5" z="0.0" />
         <corner x="40.8" y="52.1" z="0.0" />
         <corner x="30.2" y="52.1" z="0.0" />
-    </marker>
-            
-	<!--vertical surfaces -->
-    <marker index="20" status="1">
-        <corner x="-5.3" y="-54.7" z="39.0" />
-        <corner x="5.3" y="-54.7" z="39.0" />
-        <corner x="5.3" y="-62.7" z="30.0" />
-        <corner x="-5.3" y="-62.7" z="30.0" />
-    </marker>
-    <marker index="21" status="1">
-        <corner x="30.2" y="-54.7" z="39.0" />
-        <corner x="40.8" y="-54.7" z="39.0" />
-        <corner x="40.8" y="-62.7" z="30.0" />
-        <corner x="30.2" y="-62.7" z="30.0" />
-    </marker>    
-
+    </marker>          
     
     <footprint>
        	<marker index="14" x="0.2195" y="0.3613" yaw="0"/>

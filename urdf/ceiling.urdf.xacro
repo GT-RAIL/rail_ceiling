@@ -11,7 +11,8 @@
   <joint name="map_ceiling_joint" type="fixed">
     <parent link="map"/>
     <child link="ceiling"/>
-    <origin xyz="6.225 6.625 2.692" rpy="${PI} 0 ${PI_OVER_2}" />
+    <!--<origin xyz="6.225 6.625 2.692" rpy="${PI} 0 ${PI_OVER_2}" />-->
+    <origin xyz="6.1 6.5 2.692" rpy="${PI} 0 ${PI_OVER_2}" />
   </joint>
 
   <xacro:ar_camera parent="ceiling" suffix="0">
