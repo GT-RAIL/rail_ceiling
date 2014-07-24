@@ -6,12 +6,14 @@
 	<arg name="med_filt_size" default="10" />
 	<arg name="bundle_files" default="$(find rail_ceiling)/bundles/table.xml $(find rail_ceiling)/bundles/chair.xml $(find rail_ceiling)/bundles/sofa_chair_1.xml $(find rail_ceiling)/bundles/sofa_chair_2.xml $(find rail_ceiling)/bundles/stool.xml $(find rail_ceiling)/bundles/couch.xml" />
 	
-	<arg name="cam_image_topic_robot" default="/camera/depth_registered/points" />
-	<arg name="cam_info_topic_robot" default="/camera/depth_registered/camera_info" />	
-	<arg name="output_frame_robot" value="/camera_rgb_optical_frame" />
+	<arg name="cam_image_topic_robot" default="/camera/rgb/image_raw" />
+	<arg name="cam_info_topic_robot" default="/camera/rgb/camera_info" />	
+	<arg name="output_frame_robot" value="/camera_depth_optical_frame" />
    
-	<group ns="robot">
+	<group ns="robot"> <!--
 	       <node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundles" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_robot) $(arg cam_info_topic_robot) $(arg output_frame_robot) $(arg med_filt_size) $(arg bundle_files)" />
+-->
+		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_robot) $(arg cam_info_topic_robot) $(arg output_frame_robot) $(arg bundle_files)" />
      	</group>
 
 </launch>
