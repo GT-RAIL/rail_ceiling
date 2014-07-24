@@ -26,11 +26,13 @@ markers_to_map::markers_to_map()
   node.param<double>("rolling_publish_period", rollingPublishPeriod, 0.5);
   node.param<double>("rolling_map_width", rollingMapWidth, 6.0);
   node.param<double>("rolling_map_height", rollingMapHeight, 6.0);
+  node.param<bool>("dont_publish_while_navigating", dontPublishWhileNavigating, false);
   node.param < string > ("odom_frame_id", odomFrameId, "/odom");
   node.param < string > ("base_frame_id", baseFrameId, "/base_link");
 
   //initialize variables
   globalMapReceived = false;
+  navigating = false;
   markerDataIn = *(new vector<ar_track_alvar::AlvarMarkers::ConstPtr>(cameraCount));
 
   // create the ROS topics
@@ -42,6 +44,11 @@ markers_to_map::markers_to_map()
             > ("ar_pose_marker_" + (boost::lexical_cast < string > (i)), 1, *marker_cback));
   }
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
+  if (dontPublishWhileNavigating) {
+    nav_goal_in = node.subscribe < geometry_msgs::PoseStamped > ("nav_goal", 10, &markers_to_map::nav_goal_cback, this);
+    nav_goal_result = node.subscribe < move_base_msgs::MoveBaseActionResult > ("nav_goal_result", 10, &markers_to_map::nav_goal_result_cback, this);
+  }
+
 
   //create timers to publish different map layer types at different rates
   matchSizeTimer = node.createTimer(ros::Duration(matchSizePublishPeriod),
@@ -426,6 +433,15 @@ void markers_to_map::initializeLayers()
   }
 }
 
+void markers_to_map::nav_goal_cback(const geometry_msgs::PoseStamped::ConstPtr& nav_goal)
+{
+  navigating = true;
+}
+
+void markers_to_map::nav_goal_result_cback(const move_base_msgs::MoveBaseActionResult::ConstPtr& result_in) {
+  navigating = false;
+}
+
 void markers_to_map::publishMatchSizeTimerCallback(const ros::TimerEvent&)
 {
   for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
@@ -444,6 +460,11 @@ void markers_to_map::publishMatchDataTimerCallback(const ros::TimerEvent&)
   {
     if (mapLayers[mapId]->mapType == MATCH_DATA)
     {
+      if (dontPublishWhileNavigating) {
+        while (navigating) {
+          ros::spinOnce(); //wait for navigating to finish
+        }
+      }
       mapLayers[mapId]->map->data = *(mapLayers[mapId]->mapData);
       mapLayers[mapId]->publisher.publish(*(mapLayers[mapId]->map));
     }
@@ -499,7 +520,7 @@ int main(int argc, char **argv)
   converter.initializeLayers();
 
   //short delay for cleaner startup
-  ros::Duration(1.0).sleep();
+  ros::Duration(3.0).sleep();
 
   while (ros::ok())
   {

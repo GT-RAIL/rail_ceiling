@@ -22,6 +22,7 @@
 #include <rail_ceiling/bundle.h>
 #include <rail_ceiling/marker_callback_functor.h>
 #include "opencv2/core/core.hpp"
+#include <move_base_msgs/MoveBaseAction.h>
 
 #define PI 3.14159265358979323846  /* pi */
 
@@ -77,11 +78,14 @@ private:
   tf::TransformListener listener; /*!< transform listener */
   std::vector<ros::Subscriber> markers_in; /*!< list of input marker topics */
   ros::Subscriber map_in; /*!< map_in topic */
+  ros::Subscriber nav_goal_in; /*!< the nav_goal_in topic */
+  ros::Subscriber nav_goal_result; /*!< the nav_goal_out topic */
   nav_msgs::OccupancyGrid globalMap; /*!< the incoming static map of the area */
   bool globalMapReceived; /*!< true when a map has been received */
   std::vector<layer_info_t*> mapLayers; /*< A global list of all the map layers which will be published */
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
   std::vector<ar_track_alvar::AlvarMarkers::ConstPtr> markerDataIn; /*! < Incoming marker data from each camera. Poses are with respect to map. Contains only master markers. */
+  bool navigating; /*! < is the robot currently navigating */
 
   //parameters
   int cameraCount; /*!< the number of cameras */
@@ -91,6 +95,7 @@ private:
   double rollingPublishPeriod; /*!< time (in seconds) between publications of layers of the rolling type */
   double rollingMapWidth; /*! <width of the rolling map in meters */
   double rollingMapHeight; /*!< height of the rolling map in meters */
+  bool dontPublishWhileNavigating; /*!< Setting to true will cancel navigation goals before transmitting the match_data maps, preventing loss of localization. */
   std::string odomFrameId; /*! < robot's odometry frame (used for rolling map) */
   std::string baseFrameId; /*! < robot's base frame (used for rolling map) */
 
@@ -131,6 +136,18 @@ private:
    * \param map The map
    */
   void map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map);
+
+  /*!
+   * navigation goal callback function
+   * \param nav_goal The navigation goal received
+   */
+  void nav_goal_cback(const geometry_msgs::PoseStamped::ConstPtr& nav_goal);
+
+  /*!
+   * navigation result callback
+   * \param The navigation result
+   */
+  void nav_goal_result_cback(const move_base_msgs::MoveBaseActionResult::ConstPtr& result);
 
   /*!
    * Rounds a floating point number to a specified precision, used for discretizing continuous values into grid cells

@@ -70,13 +70,17 @@
 	  	<param name="match_size_publish_period" type="double" value="1.0" />
 	  	<param name="match_data_publish_period" type="double" value="20.0" />
 	  	<param name="rolling_publish_period" type="double" value="1.0" />	  	
-	  	<param name="rolling_map_width" type="double" value="6" />
-	  	<param name="rolling_map_height" type="double" value="6" />
+	  	<param name="rolling_map_width" type="double" value="4.0" />
+	  	<param name="rolling_map_height" type="double" value="4.0" />
 	 	<param name="base_frame_id" type="string" value="base_footprint" />
 	 	<!-- if using visual odometry (vo), set odom_frame_id to odom_combined -->
 	  	<!--<param name="odom_frame_id" type="string" value="odom_combined" />-->
 	  	<param name="odom_frame_id" type="string" value="odom" />
 		<remap from="/markers_to_map/map" to="/map" />
+		
+		<param name="dont_publish_while_navigating" type="bool" value="true" />
+		<remap from="/markers_to_map/nav_goal" to="/move_base_simple/goal" />
+		<remap from="/markers_to_map/nav_goal_result" to="/move_base/result" />
 		
 		<param name="camera_count" type="int" value="4" />
 		<remap from="/markers_to_map/ar_pose_marker_0" to="/cam0/ar_pose_marker" />	
