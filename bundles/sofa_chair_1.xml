@@ -15,7 +15,7 @@
     
     <footprint>
        	<marker index="14" x="0.2195" y="0.3613" yaw="0"/>
-        <layer name="localization" maptype="match_data">
+        <layer name="localization" maptype="match_data" fillpoly="false">
     		<polygon>
     			<point x="-0.4125" y="-0.4143"/>
     			<point x="-0.365" y="0.4143"/>

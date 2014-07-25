@@ -29,6 +29,7 @@ struct layer_t
   std::string name; /*! <The name of this layer */
   std::vector<geometry_msgs::PolygonStamped*> footprint; /*! <The footprint of the obstacle bundle to be drawn on this layer of the map */
   map_type_t mapType; /*! < The type of this map */
+  bool fillPolygon;
 };
 
 class Bundle

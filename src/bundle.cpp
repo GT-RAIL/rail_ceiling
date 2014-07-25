@@ -55,6 +55,9 @@ layer_t* Bundle::parseLayer(TiXmlElement* layerElement)
 
   //set layer name and type
   layerElement->QueryStringAttribute("name", &(layer->name));
+  if (layerElement->QueryBoolAttribute("fillpoly",&(layer->fillPolygon)) != TIXML_SUCCESS) {
+    layer->fillPolygon = true;
+  }
   string temp;
   layerElement->QueryStringAttribute("maptype", &temp);
   if (boost::iequals(temp, "rolling"))

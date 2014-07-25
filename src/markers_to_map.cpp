@@ -346,7 +346,7 @@ void markers_to_map::updateMarkerMaps()
             int height = abs(maxY) - minY;
 
             //rasterize polygon footprint
-            cv::Mat obsMat = cv::Mat::zeros(height, width, CV_8U);
+            cv::Mat obsMat = cv::Mat::zeros(height+2, width+2, CV_8U); //have to extend the width and height a little to prevent line trimming
             int lineType = 8; // 8-connected line
             cv::Point obsPoints[transformedFootprint.polygon.points.size()];
             for (unsigned int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++)
@@ -359,7 +359,12 @@ void markers_to_map::updateMarkerMaps()
             }
             const cv::Point* ppt[1] = {obsPoints};
             int npt[] = {transformedFootprint.polygon.points.size()};
-            cv::fillPoly(obsMat, ppt, npt, 1, 255, lineType);
+
+            if (bundles[bundleIndex]->getLayers()->at(layerId)->fillPolygon) {
+              cv::fillPoly(obsMat, ppt, npt, 1, 255, lineType);
+            } else {
+              cv::polylines(obsMat, ppt, npt, 1, true, 255, 1, lineType);
+            }
 
             //draw obstacle on map
             int xOffset = minX + round(rotCenterX, globalResolution) / globalResolution;
@@ -438,8 +443,10 @@ void markers_to_map::nav_goal_cback(const geometry_msgs::PoseStamped::ConstPtr& 
   navigating = true;
 }
 
-void markers_to_map::nav_goal_result_cback(const move_base_msgs::MoveBaseActionResult::ConstPtr& result_in) {
-  navigating = false;
+void markers_to_map::nav_goal_result_cback(const move_base_msgs::MoveBaseActionResult::ConstPtr& result) {
+  if (result->status.text != "This goal was canceled because another goal was recieved by the simple action server") {
+    navigating = false;
+  }
 }
 
 void markers_to_map::publishMatchSizeTimerCallback(const ros::TimerEvent&)
@@ -461,8 +468,11 @@ void markers_to_map::publishMatchDataTimerCallback(const ros::TimerEvent&)
     if (mapLayers[mapId]->mapType == MATCH_DATA)
     {
       if (dontPublishWhileNavigating) {
-        while (navigating) {
-          ros::spinOnce(); //wait for navigating to finish
+        ros::Rate loop_rate(getUpdateRate());
+        while (navigating && ros::ok()) {
+          ros::spinOnce(); //wait for navigation to finish before publishing localization map
+          updateMarkerMaps();
+          loop_rate.sleep();
         }
       }
       mapLayers[mapId]->map->data = *(mapLayers[mapId]->mapData);
