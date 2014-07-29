@@ -30,7 +30,7 @@
 		<param name="image_height" value="1080" />
 		<param name="io_method" value="mmap"/>
 		<param name="video_device" value="/dev/video0" />
-		<param name="camera_frame_id" value="head_camera_0" />
+		<param name="camera_frame_id" value="head_camera_3" />
 	</node>
 	<node pkg="usb_cam" name="cameraNode_4" type="usb_cam_node" output = "screen" respawn="true">
 		<param name="pixel_format" value="yuyv" />
@@ -38,7 +38,7 @@
 		<param name="image_height" value="1080" />
 		<param name="io_method" value="mmap"/>
 		<param name="video_device" value="/dev/video1" />
-		<param name="camera_frame_id" value="head_camera_1" />
+		<param name="camera_frame_id" value="head_camera_4" />
 	</node>
 	
 </launch>
