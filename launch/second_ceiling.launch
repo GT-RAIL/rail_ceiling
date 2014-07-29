@@ -1,0 +1,44 @@
+<launch>
+
+	<!--AR TRACKERS-->
+	<arg name="marker_size" default="10.6" />
+	<arg name="max_new_marker_error" default="0.03" /> 
+	<arg name="max_track_error" default="0.2" />
+	<arg name="bundle_files" default="$(find rail_ceiling)/bundles/table.xml $(find rail_ceiling)/bundles/chair.xml $(find rail_ceiling)/bundles/sofa_chair_1.xml $(find rail_ceiling)/bundles/sofa_chair_2.xml $(find rail_ceiling)/bundles/stool.xml $(find rail_ceiling)/bundles/couch.xml" />
+	
+	<arg name="cam_image_topic_3" default="/cameraNode_3/image_raw" />
+	<arg name="cam_info_topic_3" default="/cameraNode_3/camera_info" />	
+	<arg name="output_frame_3" value="/head_camera_3" />
+	
+	<arg name="cam_image_topic_4" default="/cameraNode_4/image_raw" />
+	<arg name="cam_info_topic_4" default="/cameraNode_4/camera_info" />	
+	<arg name="output_frame_4" value="/head_camera_4" />
+	
+
+	<group ns="cam3">
+		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_3) $(arg cam_info_topic_3) $(arg output_frame_3) $(arg bundle_files)" />
+	</group>
+	<group ns="cam4">
+		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_4) $(arg cam_info_topic_4) $(arg output_frame_4) $(arg bundle_files)" />
+	</group>
+
+	<!--CAMERAS -->
+	<node pkg="rail_ceiling" name="configure_cameras" type="configure_cameras.bash" />
+	<node pkg="usb_cam" name="cameraNode_3" type="usb_cam_node" output = "screen" respawn="true">
+		<param name="pixel_format" value="yuyv" />
+		<param name="image_width" value="1920" />
+		<param name="image_height" value="1080" />
+		<param name="io_method" value="mmap"/>
+		<param name="video_device" value="/dev/video0" />
+		<param name="camera_frame_id" value="head_camera_0" />
+	</node>
+	<node pkg="usb_cam" name="cameraNode_4" type="usb_cam_node" output = "screen" respawn="true">
+		<param name="pixel_format" value="yuyv" />
+		<param name="image_width" value="1920" />
+		<param name="image_height" value="1080" />
+		<param name="io_method" value="mmap"/>
+		<param name="video_device" value="/dev/video1" />
+		<param name="camera_frame_id" value="head_camera_1" />
+	</node>
+	
+</launch>

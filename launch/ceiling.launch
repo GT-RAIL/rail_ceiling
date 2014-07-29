@@ -28,8 +28,8 @@
 		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_2) $(arg cam_info_topic_2) $(arg output_frame_2) $(arg bundle_files)" />
 	</group>
 
-
 	<!--CAMERAS -->
+	<node pkg="rail_ceiling" name="configure_cameras" type="configure_cameras.bash" />
 	<node pkg="usb_cam" name="cameraNode_0" type="usb_cam_node" output = "screen" respawn="true">
 		<param name="pixel_format" value="yuyv" />
 		<param name="image_width" value="1920" />
@@ -54,7 +54,6 @@
 		<param name="video_device" value="/dev/video2" />
 		<param name="camera_frame_id" value="head_camera_2" />
 	</node>
-	<node pkg="rail_ceiling" name="configure_cameras" type="configure_cameras.bash" />
 
 	<!--TRANSFORMS-->
   	<arg name="ceiling_urdf_file" default="$(find xacro)/xacro.py '$(find rail_ceiling)/urdf/ceiling.urdf.xacro'" />
@@ -82,11 +81,13 @@
 		<remap from="/markers_to_map/nav_goal" to="/move_base_simple/goal" />
 		<remap from="/markers_to_map/nav_goal_result" to="/move_base/result" />
 		
-		<param name="camera_count" type="int" value="4" />
+		<param name="camera_count" type="int" value="6" />
 		<remap from="/markers_to_map/ar_pose_marker_0" to="/cam0/ar_pose_marker" />	
 		<remap from="/markers_to_map/ar_pose_marker_1" to="/cam1/ar_pose_marker" />	
 		<remap from="/markers_to_map/ar_pose_marker_2" to="/cam2/ar_pose_marker" />
-		<remap from="/markers_to_map/ar_pose_marker_3" to="/robot/ar_pose_marker" />				
+		<remap from="/markers_to_map/ar_pose_marker_3" to="/cam3/ar_pose_marker" />
+		<remap from="/markers_to_map/ar_pose_marker_4" to="/cam4/ar_pose_marker" />
+		<remap from="/markers_to_map/ar_pose_marker_5" to="/robot/ar_pose_marker" />				
 	</node>
 
 </launch>
