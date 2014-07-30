@@ -1,4 +1,6 @@
 <launch>
+	<!--STATIC MAP SERVER-->
+	<node pkg="map_server" name="map_server" type="map_server" args="$(find rail_maps)/maps/rail_lab.yaml"/>
 
 	<!--AR TRACKERS-->
 	<arg name="marker_size" default="10.6" />
