@@ -7,10 +7,10 @@
         <corner x="-5.3" y="5.3" z="0.0" />
     </marker>
     <marker index="4" status="1">
-        <corner x="-30.6" y="22.0" z="3.0" />
-        <corner x="-20.0" y="22.0" z="3.0" />
-        <corner x="-20.0" y="32.6" z="3.0" />
-        <corner x="-30.6" y="32.6" z="3.0" />
+        <corner x="-29.2" y="21.8" z="0.0" />
+        <corner x="-18.6" y="21.8" z="0.0" />
+        <corner x="-18.6" y="32.4" z="0.0" />
+        <corner x="-29.2" y="32.4" z="0.0" />
     </marker>
 
     <footprint>

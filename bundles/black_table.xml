@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<multimarker markers="1">
+	<!-- used by ar_track_avlar for building multimarker bundles to be robust against occlusion -->
+    <marker index="24" status="1">
+        <corner x="-5.3" y="-5.3" z="0.0" />
+        <corner x="5.3" y="-5.3" z="0.0" />
+        <corner x="5.3" y="5.3" z="0.0" />
+        <corner x="-5.3" y="5.3" z="0.0" />
+    </marker>
+    <marker index="25" status="1">
+        <corner x="86.7" y="72" z="0.0" />
+        <corner x="76.1" y="72" z="0.0" />
+        <corner x="76.1" y="82.6" z="0.0" />
+        <corner x="86.7" y="82.6" z="0.0" />
+    </marker>
+    
+    <!--<marker index="25" status="1">
+        <corner x="86.1" y="71.9" z="0.0" />
+        <corner x="75.5" y="71.9" z="0.0" />
+        <corner x="75.5" y="82.5" z="0.0" />
+        <corner x="86.1" y="82.5" z="0.0" />
+    </marker>-->
+    
+    
+    <!-- Used by rail_ceiling/markers_to_map to project a footprint of the bundle onto a map -->
+    <!-- Units are in meters or radians. All defined with respect to the origin of the footprint-->
+    <footprint>
+       	<marker index="24" x="-0.39" y="0.3775" yaw="-1.5708" keepOnOcclusion="true"/>
+    	<layer name="global_cost" maptype="match_size">
+    		<polygon>
+    			<point x="-0.45" y="-0.4425"/>
+    			<point x="-0.45" y="0.4425"/>
+    			<point x="0.45" y="0.4425"/>
+    			<point x="0.45" y="-0.4425"/>
+    		</polygon>
+    	</layer>  	    
+    	<layer name="local_cost" maptype="rolling" copyfrom="global_cost"/>
+    	<layer name="localization" maptype="match_data">
+    		<polygon>
+    	    	<point x="-0.45" y="0.185"/>
+    			<point x="-0.39" y="0.185"/>
+    			<point x="-0.39" y="0.24"/>
+    			<point x="-0.45" y="0.24"/>
+    		</polygon>  
+    		<polygon>
+    	    	<point x="0.45" y="0.185"/>
+    			<point x="0.39" y="0.185"/>
+    			<point x="0.39" y="0.24"/>
+    			<point x="0.45" y="0.24"/>
+    		</polygon>  
+    		<polygon>
+    	    	<point x="0.45" y="-0.185"/>
+    			<point x="0.39" y="-0.185"/>
+    			<point x="0.39" y="-0.24"/>
+    			<point x="0.45" y="-0.24"/>
+    		</polygon>  
+    		<polygon>
+    	    	<point x="-0.45" y="-0.185"/>
+    			<point x="-0.39" y="-0.185"/>
+    			<point x="-0.39" y="-0.24"/>
+    			<point x="-0.45" y="-0.24"/>
+    		</polygon>    		
+
+    	</layer>
+
+    </footprint>
+</multimarker>
