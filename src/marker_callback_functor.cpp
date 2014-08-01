@@ -10,14 +10,14 @@
 
 #include <rail_ceiling/marker_callback_functor.h>
 
-MarkerCallbackFunctor::MarkerCallbackFunctor(std::vector<ar_track_alvar::AlvarMarkers::ConstPtr>* markerDataIn,
+MarkerCallbackFunctor::MarkerCallbackFunctor(std::vector<ar_track_alvar_msgs::AlvarMarkers::ConstPtr>* markerDataIn,
                                              int cameraNumber)
 {
   this->markerDataIn = markerDataIn;
   this->cameraNumber = cameraNumber;
 }
 
-void MarkerCallbackFunctor::operator()(const ar_track_alvar::AlvarMarkers::ConstPtr& markers)
+void MarkerCallbackFunctor::operator()(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr& markers)
 {
   markerDataIn->at(cameraNumber) = markers;
 }

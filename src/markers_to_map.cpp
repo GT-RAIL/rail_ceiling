@@ -27,38 +27,35 @@ markers_to_map::markers_to_map()
   node.param<double>("rolling_map_width", rollingMapWidth, 6.0);
   node.param<double>("rolling_map_height", rollingMapHeight, 6.0);
   node.param<bool>("dont_publish_while_navigating", dontPublishWhileNavigating, false);
-  node.param < string > ("odom_frame_id", odomFrameId, "/odom");
-  node.param < string > ("base_frame_id", baseFrameId, "/base_link");
+  node.param<string>("odom_frame_id", odomFrameId, "/odom");
+  node.param<string>("base_frame_id", baseFrameId, "/base_link");
 
   //initialize variables
   globalMapReceived = false;
   navigating = false;
-  markerDataIn = *(new vector<ar_track_alvar::AlvarMarkers::ConstPtr>(cameraCount));
+  markerDataIn = *(new vector<ar_track_alvar_msgs::AlvarMarkers::ConstPtr>(cameraCount));
 
   // create the ROS topics
   for (unsigned int i = 0; i < cameraCount; i++)
   {
     MarkerCallbackFunctor* marker_cback = new MarkerCallbackFunctor(&markerDataIn, i);
     markers_in.push_back(
-        node.subscribe < ar_track_alvar::AlvarMarkers
+        node.subscribe < ar_track_alvar_msgs::AlvarMarkers
             > ("ar_pose_marker_" + (boost::lexical_cast < string > (i)), 1, *marker_cback));
   }
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
-  if (dontPublishWhileNavigating) {
-    nav_goal_in = node.subscribe < geometry_msgs::PoseStamped > ("nav_goal", 10, &markers_to_map::nav_goal_cback, this);
-    nav_goal_result = node.subscribe < move_base_msgs::MoveBaseActionResult > ("nav_goal_result", 10, &markers_to_map::nav_goal_result_cback, this);
+  if (dontPublishWhileNavigating)
+  {
+    nav_goal_in = node.subscribe<geometry_msgs::PoseStamped>("nav_goal", 10, &markers_to_map::nav_goal_cback, this);
+    nav_goal_result = node.subscribe<move_base_msgs::MoveBaseActionResult>("nav_goal_result", 10, &markers_to_map::nav_goal_result_cback, this);
   }
 
-
   //create timers to publish different map layer types at different rates
-  matchSizeTimer = node.createTimer(ros::Duration(matchSizePublishPeriod),
-                                    &markers_to_map::publishMatchSizeTimerCallback, this);
+  matchSizeTimer = node.createTimer(ros::Duration(matchSizePublishPeriod), &markers_to_map::publishMatchSizeTimerCallback, this);
   matchSizeTimer.stop();
-  matchDataTimer = node.createTimer(ros::Duration(matchDataPublishPeriod),
-                                    &markers_to_map::publishMatchDataTimerCallback, this);
+  matchDataTimer = node.createTimer(ros::Duration(matchDataPublishPeriod), &markers_to_map::publishMatchDataTimerCallback, this);
   matchDataTimer.stop();
-  rollingTimer = node.createTimer(ros::Duration(rollingPublishPeriod), &markers_to_map::publishRollingTimerCallback,
-                                  this);
+  rollingTimer = node.createTimer(ros::Duration(rollingPublishPeriod), &markers_to_map::publishRollingTimerCallback, this);
   rollingTimer.stop();
   publishTimersStarted = false;
 
@@ -77,22 +74,22 @@ void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
   ROS_INFO("Map Received");
 }
 
-ar_track_alvar::AlvarMarkers* markers_to_map::mergeMarkerData()
+ar_track_alvar_msgs::AlvarMarkers* markers_to_map::mergeMarkerData()
 {
   //merge the marker data from all the cameras
-  ar_track_alvar::AlvarMarkers* markers = new ar_track_alvar::AlvarMarkers();
-  vector < ar_track_alvar::AlvarMarker > markerData;
-  for (unsigned int camera = 0; camera < cameraCount; camera++)
+  ar_track_alvar_msgs::AlvarMarkers* markers = new ar_track_alvar_msgs::AlvarMarkers();
+  vector<ar_track_alvar_msgs::AlvarMarker> markerData;
+  for (unsigned int camera = 0; camera < cameraCount; camera ++)
   {
     if (markerDataIn[camera] == NULL)
     {
       continue; //No data from this camera yet. Skip it and move on.
     }
-    for (unsigned int j = 0; j < markerDataIn[camera]->markers.size(); j++)
+    for (unsigned int j = 0; j < markerDataIn[camera]->markers.size(); j ++)
     {
       bool contains = false;
       unsigned int k;
-      for (k = 0; k < markerData.size(); k++)
+      for (k = 0; k < markerData.size(); k ++)
       {
         if (markerData[k].id == markerDataIn[camera]->markers[j].id)
         {
@@ -113,7 +110,8 @@ ar_track_alvar::AlvarMarkers* markers_to_map::mergeMarkerData()
                 + pow(markerDataIn[camera]->markers[j].pose.pose.position.z, 2));
 
         double oldDistance = sqrt(
-            pow(markerData[k].pose.pose.position.x, 2) + pow(markerData[k].pose.pose.position.y, 2)
+            pow(markerData[k].pose.pose.position.x, 2)
+                + pow(markerData[k].pose.pose.position.y, 2)
                 + pow(markerData[k].pose.pose.position.z, 2));
         if (distance < oldDistance)
         {
@@ -181,11 +179,11 @@ void markers_to_map::initializeMaps()
 
 void markers_to_map::updateMarkerMaps()
 {
-  static ar_track_alvar::AlvarMarkers* markers;
+  static ar_track_alvar_msgs::AlvarMarkers* markers;
   if (globalMapReceived)
   {
     //prepare the marker data
-    ar_track_alvar::AlvarMarkers* newMarkers = mergeMarkerData();
+    ar_track_alvar_msgs::AlvarMarkers* newMarkers = mergeMarkerData();
     if (markers != NULL)
     {
       //check the incoming marker data against the old set of marker data for markers which were entirely occluded
@@ -269,24 +267,19 @@ void markers_to_map::updateMarkerMaps()
           {
             //transform marker pose into odometry frame
             markers->markers[i].pose.header.frame_id = markers->markers[i].header.frame_id;
-            listener.transformPose(odomFrameId, ros::Time(0), markers->markers[i].pose,
-                                   markers->markers[i].header.frame_id, poseOut);
+            listener.transformPose(odomFrameId, ros::Time(0), markers->markers[i].pose, markers->markers[i].header.frame_id, poseOut);
           }
           else
           {
             //transform marker pose into map frame
             markers->markers[i].pose.header.frame_id = markers->markers[i].header.frame_id;
-            listener.transformPose(mapLayers[mapId]->map->header.frame_id, ros::Time(0), markers->markers[i].pose,
-                                   markers->markers[i].pose.header.frame_id, poseOut);
+            listener.transformPose(mapLayers[mapId]->map->header.frame_id, ros::Time(0), markers->markers[i].pose, markers->markers[i].pose.header.frame_id, poseOut);
           }
           //discretize to grid
-          xGrid = round(poseOut.pose.position.x - mapLayers[mapId]->map->info.origin.position.x, globalResolution)
-              / globalResolution;
-          yGrid = round(poseOut.pose.position.y - mapLayers[mapId]->map->info.origin.position.y, globalResolution)
-              / globalResolution;
+          xGrid = round(poseOut.pose.position.x - mapLayers[mapId]->map->info.origin.position.x, globalResolution) / globalResolution;
+          yGrid = round(poseOut.pose.position.y - mapLayers[mapId]->map->info.origin.position.y, globalResolution) / globalResolution;
           //extract the rotation angle
-          tf::Quaternion q(poseOut.pose.orientation.x, poseOut.pose.orientation.y, poseOut.pose.orientation.z,
-                           poseOut.pose.orientation.w);
+          tf::Quaternion q(poseOut.pose.orientation.x, poseOut.pose.orientation.y, poseOut.pose.orientation.z, poseOut.pose.orientation.w);
           double roll, pitch, yaw;
           tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
           angle = yaw;
@@ -299,13 +292,10 @@ void markers_to_map::updateMarkerMaps()
           {
             //transform the polygon footprint
             geometry_msgs::PolygonStamped transformedFootprint;
-            transformedFootprint.header.frame_id =
-                bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->header.frame_id;
-            for (int pt = 0;
-                pt < bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->polygon.points.size(); pt++)
+            transformedFootprint.header.frame_id = bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->header.frame_id;
+            for (int pt = 0; pt < bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->polygon.points.size(); pt++)
             {
-              geometry_msgs::Point32 point =
-                  bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->polygon.points[pt];
+              geometry_msgs::Point32 point = bundles[bundleIndex]->getLayers()->at(layerId)->footprint[poly]->polygon.points[pt];
               //translate by center of rotation
               point.x += rotCenterX;
               point.y += rotCenterY;
