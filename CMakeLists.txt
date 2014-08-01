@@ -5,6 +5,7 @@ project(rail_ceiling)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED cmake_modules roscpp tf costmap_2d)
+find_package(ar_track_alvar_msgs)
 find_package(TinyXML REQUIRED)
 find_package(OpenCV REQUIRED)
 

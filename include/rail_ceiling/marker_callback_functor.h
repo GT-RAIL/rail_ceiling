@@ -12,15 +12,15 @@
 #define MARKER_CALLBACK_FUNCTOR_H_
 
 #include <ros/ros.h>
-#include <ar_track_alvar/AlvarMarkers.h>
+#include <ar_track_alvar_msgs/AlvarMarkers.h>
 
 class MarkerCallbackFunctor
 {
 public:
-  MarkerCallbackFunctor(std::vector<ar_track_alvar::AlvarMarkers::ConstPtr>* markerDataIn, int cameraNumber);
-  void operator()(const ar_track_alvar::AlvarMarkers::ConstPtr& markers);
+  MarkerCallbackFunctor(std::vector<ar_track_alvar_msgs::AlvarMarkers::ConstPtr>* markerDataIn, int cameraNumber);
+  void operator()(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr& markers);
 private:
   int cameraNumber;
-  std::vector<ar_track_alvar::AlvarMarkers::ConstPtr>* markerDataIn;
+  std::vector<ar_track_alvar_msgs::AlvarMarkers::ConstPtr>* markerDataIn;
 };
 #endif //MARKER_CALLBACK_FUNCTOR_H_
