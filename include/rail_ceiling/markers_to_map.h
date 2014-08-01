@@ -15,7 +15,7 @@
 #include <tinyxml.h>
 #include <boost/lexical_cast.hpp>
 #include <ros/ros.h>
-#include <ar_track_alvar/AlvarMarkers.h>
+#include <ar_track_alvar_msgs/AlvarMarkers.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
@@ -84,7 +84,7 @@ private:
   bool globalMapReceived; /*!< true when a map has been received */
   std::vector<layer_info_t*> mapLayers; /*< A global list of all the map layers which will be published */
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
-  std::vector<ar_track_alvar::AlvarMarkers::ConstPtr> markerDataIn; /*! < Incoming marker data from each camera. Poses are with respect to map. Contains only master markers. */
+  std::vector<ar_track_alvar_msgs::AlvarMarkers::ConstPtr> markerDataIn; /*! < Incoming marker data from each camera. Poses are with respect to map. Contains only master markers. */
   bool navigating; /*! < is the robot currently navigating */
 
   //parameters
@@ -109,7 +109,7 @@ private:
    * Combines the markers from multiple cameras into a single list of markers
    *\returns The list of markers from all the cameras
    */
-  ar_track_alvar::AlvarMarkers* mergeMarkerData();
+  ar_track_alvar_msgs::AlvarMarkers* mergeMarkerData();
 
   /*
    * Initializes the various maps

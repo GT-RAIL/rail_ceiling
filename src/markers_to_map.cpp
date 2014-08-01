@@ -33,14 +33,14 @@ markers_to_map::markers_to_map()
   //initialize variables
   globalMapReceived = false;
   navigating = false;
-  markerDataIn = *(new vector<ar_track_alvar::AlvarMarkers::ConstPtr>(cameraCount));
+  markerDataIn = *(new vector<ar_track_alvar_msgs::AlvarMarkers::ConstPtr>(cameraCount));
 
   // create the ROS topics
   for (unsigned int i = 0; i < cameraCount; i++)
   {
     MarkerCallbackFunctor* marker_cback = new MarkerCallbackFunctor(&markerDataIn, i);
     markers_in.push_back(
-        node.subscribe < ar_track_alvar::AlvarMarkers
+        node.subscribe < ar_track_alvar_msgs::AlvarMarkers
             > ("ar_pose_marker_" + (boost::lexical_cast < string > (i)), 1, *marker_cback));
   }
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
@@ -77,11 +77,11 @@ void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
   ROS_INFO("Map Received");
 }
 
-ar_track_alvar::AlvarMarkers* markers_to_map::mergeMarkerData()
+ar_track_alvar_msgs::AlvarMarkers* markers_to_map::mergeMarkerData()
 {
   //merge the marker data from all the cameras
-  ar_track_alvar::AlvarMarkers* markers = new ar_track_alvar::AlvarMarkers();
-  vector < ar_track_alvar::AlvarMarker > markerData;
+  ar_track_alvar_msgs::AlvarMarkers* markers = new ar_track_alvar_msgs::AlvarMarkers();
+  vector < ar_track_alvar_msgs::AlvarMarker > markerData;
   for (unsigned int camera = 0; camera < cameraCount; camera++)
   {
     if (markerDataIn[camera] == NULL)
@@ -181,11 +181,11 @@ void markers_to_map::initializeMaps()
 
 void markers_to_map::updateMarkerMaps()
 {
-  static ar_track_alvar::AlvarMarkers* markers;
+  static ar_track_alvar_msgs::AlvarMarkers* markers;
   if (globalMapReceived)
   {
     //prepare the marker data
-    ar_track_alvar::AlvarMarkers* newMarkers = mergeMarkerData();
+    ar_track_alvar_msgs::AlvarMarkers* newMarkers = mergeMarkerData();
     if (markers != NULL)
     {
       //check the incoming marker data against the old set of marker data for markers which were entirely occluded
