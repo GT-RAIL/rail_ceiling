@@ -44,7 +44,6 @@
 		<node name="ar_track_alvar" pkg="ar_track_alvar" type="findMarkerBundlesNoKinect" respawn="true" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic_4) $(arg cam_info_topic_4) $(arg output_frame_4) $(arg bundle_files)" />
 	</group>
 
-
 	<!--CAMERAS -->
 	<node pkg="rail_ceiling" name="configure_cameras" type="configure_cameras.bash" />
 	<node pkg="usb_cam" name="cameraNode_0" type="usb_cam_node" output = "screen" respawn="true">
@@ -71,7 +70,6 @@
 		<param name="video_device" value="/dev/video2" />
 		<param name="camera_frame_id" value="head_camera_2" />
 	</node>
-	<!-- TODO: UNCOMMENT AFTER CONNECTING CAMERAS 3 AND 4. ALSO FIX "scripts/configure_cameras.bash"
 	<node pkg="usb_cam" name="cameraNode_3" type="usb_cam_node" output = "screen" respawn="true">
 		<param name="pixel_format" value="yuyv" />
 		<param name="image_width" value="1920" />
@@ -88,8 +86,6 @@
 		<param name="video_device" value="/dev/video4" />
 		<param name="camera_frame_id" value="head_camera_4" />
 	</node>
-	-->
-
 
 	<!--TRANSFORMS-->
   	<arg name="ceiling_urdf_file" default="$(find xacro)/xacro.py '$(find rail_ceiling)/urdf/ceiling.urdf.xacro'" />
@@ -99,12 +95,11 @@
       <param name="publish_frequency" type="double" value="5.0" />
   	</node>
   
-  
   	<!--MAP PUBLISHER-->
 	<node pkg="rail_ceiling" type="markers_to_map" name="markers_to_map" respawn="true" args=" $(arg bundle_files)">
 	  	<param name="update_rate" type="double" value="40.0" /> 	          <!--hz-->
 	  	<param name="match_size_publish_period" type="double" value="1.0" />  <!--seconds-->
-	  	<param name="match_data_publish_period" type="double" value="40.0" /> <!--seconds-->
+	  	<param name="match_data_publish_period" type="double" value="20.0" /> <!--seconds-->
 	  	<param name="rolling_publish_period" type="double" value="0.02" />	  <!--seconds-->
 	  	<param name="rolling_map_width" type="double" value="3.0" />          <!--meters-->
 	  	<param name="rolling_map_height" type="double" value="3.0" />         <!--meters-->
