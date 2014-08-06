@@ -28,11 +28,11 @@
   </xacro:ar_camera>
 
   <xacro:ar_camera parent="ceiling" suffix="3">
-    <origin xyz="-2.90 -2.25 0" rpy="0 0 -${PI_OVER_2}" />
+    <origin xyz="-2.80 -2.30 0" rpy="0 0 -${PI_OVER_2}" />
   </xacro:ar_camera>
 
   <xacro:ar_camera parent="ceiling" suffix="4">
-    <origin xyz="-3.70 -0.84 0" rpy="0 0 0" />
+    <origin xyz="-3.80 -0.90 0" rpy="0 0 0" />
   </xacro:ar_camera>
 
 
