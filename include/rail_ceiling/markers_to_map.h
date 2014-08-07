@@ -78,6 +78,7 @@ private:
   tf::TransformListener listener; /*!< transform listener */
   std::vector<ros::Subscriber> markers_in; /*!< list of input marker topics */
   ros::Subscriber map_in; /*!< map_in topic */
+  ros::Subscriber cmd_vel_in; /*!< the cmd_vel_in topic */
   ros::Subscriber nav_goal_in; /*!< the nav_goal_in topic */
   ros::Subscriber nav_goal_result; /*!< the nav_goal_out topic */
   nav_msgs::OccupancyGrid globalMap; /*!< the incoming static map of the area */
@@ -86,6 +87,7 @@ private:
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
   std::vector<ar_track_alvar_msgs::AlvarMarkers::ConstPtr> markerDataIn; /*! < Incoming marker data from each camera. Poses are with respect to map. Contains only master markers. */
   bool navigating; /*! < is the robot currently navigating */
+  bool driving; /* < is the robot currently driving */
 
   //parameters
   int cameraCount; /*!< the number of cameras */
@@ -95,7 +97,9 @@ private:
   double rollingPublishPeriod; /*!< time (in seconds) between publications of layers of the rolling type */
   double rollingMapWidth; /*! <width of the rolling map in meters */
   double rollingMapHeight; /*!< height of the rolling map in meters */
-  bool dontPublishWhileNavigating; /*!< Setting to true will cancel navigation goals before transmitting the match_data maps, preventing loss of localization. */
+  bool dontPublishWhileNavigating; /*!< Setting to true will prevent the node from publishing new maps of the match_data layer type while the robot is navigating, possibly preventing localization issues */
+  bool dontPublishWhileDriving; /*!< Setting to true will prevent the node from publishing new maps of the match_data layer type while the robot is driving, possibly preventing localization issues */
+  double drivingTimeout; /*! <Time after receiving last command velocity to allow the publication of match_data maps again */
   std::string odomFrameId; /*! < robot's odometry frame (used for rolling map) */
   std::string baseFrameId; /*! < robot's base frame (used for rolling map) */
 
@@ -104,6 +108,7 @@ private:
   ros::Timer matchSizeTimer; /*!< timer for determining when to publish match size maps */
   ros::Timer matchDataTimer; /*!< timer for determining when to publish match data maps */
   ros::Timer rollingTimer; /*!< timer for determining when to publish rolling maps */
+  ros::Timer cmdVelTimer; /*!< timer for determining when to allow publishing of match data maps after recieving comand velocities */
 
   /*
    * Combines the markers from multiple cameras into a single list of markers
@@ -132,10 +137,22 @@ private:
   void publishRollingTimerCallback(const ros::TimerEvent&);
 
   /*!
+   * Callback for cmd vel timer
+   */
+  void cmdVelTimerCallback(const ros::TimerEvent&);
+
+  /*!
    * callback for receiving the static environment map
    * \param map The map
    */
   void map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map);
+
+
+  /*!
+   * callback for receiving command velocities
+   * \param vel The cmd_vel
+   */
+  void cmd_vel_cback(const geometry_msgs::Twist::ConstPtr& vel);
 
   /*!
    * navigation goal callback function

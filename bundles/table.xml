@@ -12,10 +12,9 @@
         <corner x="-111.6" y="33.2" z="0.0" />
         <corner x="-111.5" y="43.8" z="0.0" />
         <corner x="-122.1" y="43.8" z="0.0" />
-    </marker>
-    
+    </marker>    
     <!-- Used by rail_ceiling/markers_to_map to project a footprint of the bundle onto a map -->
-    <!-- Units are in meters or radians. All defined with respect to the origin of the footprint-->
+    <!-- Units are in meters or radians, all defined with respect to the origin of the footprint-->
     <footprint>
        	<marker index="15" x="-0.5565" y="0.2005" yaw="0" keepOnOcclusion="true"/>
     	<layer name="global_cost" maptype="match_size">
@@ -53,9 +52,5 @@
     			<point x="0.587" y="0.2535"/>
     		</polygon>
     	</layer>
-
-    	
-    
-
     </footprint>
 </multimarker>

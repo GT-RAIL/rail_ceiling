@@ -27,12 +27,15 @@ markers_to_map::markers_to_map()
   node.param<double>("rolling_map_width", rollingMapWidth, 6.0);
   node.param<double>("rolling_map_height", rollingMapHeight, 6.0);
   node.param<bool>("dont_publish_while_navigating", dontPublishWhileNavigating, false);
+  node.param<bool>("dont_publish_while_driving", dontPublishWhileDriving, false);
+  node.param<double>("driving_timeout", drivingTimeout, 3.0);
   node.param < string > ("odom_frame_id", odomFrameId, "/odom");
   node.param < string > ("base_frame_id", baseFrameId, "/base_link");
 
   //initialize variables
   globalMapReceived = false;
   navigating = false;
+  driving = false;
   markerDataIn = *(new vector<ar_track_alvar_msgs::AlvarMarkers::ConstPtr>(cameraCount));
 
   // create the ROS topics
@@ -44,11 +47,17 @@ markers_to_map::markers_to_map()
             > ("ar_pose_marker_" + (boost::lexical_cast < string > (i)), 1, *marker_cback));
   }
   map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
-  if (dontPublishWhileNavigating) {
+  if (dontPublishWhileNavigating)
+  {
     nav_goal_in = node.subscribe < geometry_msgs::PoseStamped > ("nav_goal", 10, &markers_to_map::nav_goal_cback, this);
-    nav_goal_result = node.subscribe < move_base_msgs::MoveBaseActionResult > ("nav_goal_result", 10, &markers_to_map::nav_goal_result_cback, this);
+    nav_goal_result = node.subscribe < move_base_msgs::MoveBaseActionResult
+        > ("nav_goal_result", 10, &markers_to_map::nav_goal_result_cback, this);
   }
-
+  if (dontPublishWhileDriving) {
+    cmdVelTimer = node.createTimer(ros::Duration(drivingTimeout), &markers_to_map::cmdVelTimerCallback, this);
+    cmdVelTimer.stop();
+    cmd_vel_in = node.subscribe < geometry_msgs::Twist > ("cmd_vel", 1, &markers_to_map::cmd_vel_cback, this);
+  }
 
   //create timers to publish different map layer types at different rates
   matchSizeTimer = node.createTimer(ros::Duration(matchSizePublishPeriod),
@@ -75,6 +84,13 @@ void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
   globalMap = *map;
   globalMapReceived = true;
   ROS_INFO("Map Received");
+}
+
+void markers_to_map::cmd_vel_cback(const geometry_msgs::Twist::ConstPtr& vel)
+{
+  cmdVelTimer.stop();
+  driving = true;
+  cmdVelTimer.start();
 }
 
 ar_track_alvar_msgs::AlvarMarkers* markers_to_map::mergeMarkerData()
@@ -346,7 +362,7 @@ void markers_to_map::updateMarkerMaps()
             int height = abs(maxY) - minY;
 
             //rasterize polygon footprint
-            cv::Mat obsMat = cv::Mat::zeros(height+2, width+2, CV_8U); //have to extend the width and height a little to prevent line trimming
+            cv::Mat obsMat = cv::Mat::zeros(height + 2, width + 2, CV_8U); //have to extend the width and height a little to prevent line trimming
             int lineType = 8; // 8-connected line
             cv::Point obsPoints[transformedFootprint.polygon.points.size()];
             for (unsigned int pt = 0; pt < transformedFootprint.polygon.points.size(); pt++)
@@ -360,9 +376,12 @@ void markers_to_map::updateMarkerMaps()
             const cv::Point* ppt[1] = {obsPoints};
             int npt[] = {transformedFootprint.polygon.points.size()};
 
-            if (bundles[bundleIndex]->getLayers()->at(layerId)->fillPolygon) {
+            if (bundles[bundleIndex]->getLayers()->at(layerId)->fillPolygon)
+            {
               cv::fillPoly(obsMat, ppt, npt, 1, 255, lineType);
-            } else {
+            }
+            else
+            {
               cv::polylines(obsMat, ppt, npt, 1, true, 255, 1, lineType);
             }
 
@@ -443,8 +462,10 @@ void markers_to_map::nav_goal_cback(const geometry_msgs::PoseStamped::ConstPtr& 
   navigating = true;
 }
 
-void markers_to_map::nav_goal_result_cback(const move_base_msgs::MoveBaseActionResult::ConstPtr& result) {
-  if (result->status.text != "This goal was canceled because another goal was recieved by the simple action server") {
+void markers_to_map::nav_goal_result_cback(const move_base_msgs::MoveBaseActionResult::ConstPtr& result)
+{
+  if (result->status.text != "This goal was canceled because another goal was recieved by the simple action server")
+  {
     navigating = false;
   }
 }
@@ -467,10 +488,22 @@ void markers_to_map::publishMatchDataTimerCallback(const ros::TimerEvent&)
   {
     if (mapLayers[mapId]->mapType == MATCH_DATA)
     {
-      if (dontPublishWhileNavigating) {
+      if (dontPublishWhileNavigating)
+      {
         ros::Rate loop_rate(getUpdateRate());
-        while (navigating && ros::ok()) {
+        while (navigating && ros::ok())
+        {
           ros::spinOnce(); //wait for navigation to finish before publishing localization map
+          updateMarkerMaps();
+          loop_rate.sleep();
+        }
+      }
+      if (dontPublishWhileDriving)
+      {
+        ros::Rate loop_rate(getUpdateRate());
+        while (driving && ros::ok())
+        {
+          ros::spinOnce(); //wait for driving to finish before publishing localization map
           updateMarkerMaps();
           loop_rate.sleep();
         }
@@ -491,6 +524,12 @@ void markers_to_map::publishRollingTimerCallback(const ros::TimerEvent&)
       mapLayers[mapId]->publisher.publish(*(mapLayers[mapId]->map));
     }
   }
+}
+
+void markers_to_map::cmdVelTimerCallback(const ros::TimerEvent&)
+{
+  driving = false;
+  cmdVelTimer.stop();
 }
 
 void markers_to_map::addBundle(Bundle* bundle)
@@ -528,9 +567,6 @@ int main(int argc, char **argv)
 
   //create the output map topics for each map layer
   converter.initializeLayers();
-
-  //short delay for cleaner startup
-  ros::Duration(3.0).sleep();
 
   while (ros::ok())
   {
