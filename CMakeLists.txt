@@ -4,10 +4,16 @@ project(rail_ceiling)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED cmake_modules roscpp tf costmap_2d)
+find_package(catkin REQUIRED cmake_modules roscpp tf costmap_2d map_server)
 find_package(ar_track_alvar_msgs)
 find_package(TinyXML REQUIRED)
 find_package(OpenCV REQUIRED)
+
+find_package(PkgConfig)
+pkg_check_modules(NEW_YAMLCPP yaml-cpp>=0.5)
+if(NEW_YAMLCPP_FOUND)
+add_definitions(-DHAVE_NEW_YAMLCPP)
+endif(NEW_YAMLCPP_FOUND)
 
 ###################################
 ## catkin specific configuration ##
@@ -20,7 +26,7 @@ find_package(OpenCV REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES rail_ceiling
+# LIBRARIES rail_ceiling
 #  CATKIN_DEPENDS other_catkin_pkg
   DEPENDS TinyXML
 )
@@ -48,7 +54,7 @@ add_library(ceiling_layer src/ceiling_layer.cpp)
 add_executable(markers_to_map src/markers_to_map.cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(markers_to_map rail_ceiling ${catkin_LIBRARIES} ${TinyXML_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(markers_to_map rail_ceiling yaml-cpp ${catkin_LIBRARIES} ${TinyXML_LIBRARIES} ${OpenCV_LIBS})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

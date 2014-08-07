@@ -15,16 +15,30 @@
 #include <tinyxml.h>
 #include <boost/lexical_cast.hpp>
 #include <ros/ros.h>
+#include <libgen.h>
+#include <fstream>
+#include <map_server/image_loader.h>
+#include <yaml-cpp/yaml.h>
 #include <ar_track_alvar_msgs/AlvarMarkers.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 #include <rail_ceiling/bundle.h>
 #include <rail_ceiling/marker_callback_functor.h>
-#include "opencv2/core/core.hpp"
+#include <opencv2/core/core.hpp>
 #include <move_base_msgs/MoveBaseAction.h>
 
 #define PI 3.14159265358979323846  /* pi */
+
+#ifdef HAVE_NEW_YAMLCPP
+// The >> operator disappeared in yaml-cpp 0.5, so this function is
+// added to provide support for code written under the yaml-cpp 0.3 API.
+template<typename T>
+void operator >> (const YAML::Node& node, T& i)
+{
+  i = node.as<T>();
+}
+#endif
 
 struct layer_info_t
 {
@@ -97,6 +111,8 @@ private:
   double rollingPublishPeriod; /*!< time (in seconds) between publications of layers of the rolling type */
   double rollingMapWidth; /*! <width of the rolling map in meters */
   double rollingMapHeight; /*!< height of the rolling map in meters */
+  bool loadStaticMapFromFile; /*! < if true, node will load the map from a file rather than getting it from a topic */
+  std::string staticMapYamlFile; /*! < path to the map file to load if loading the map from a file */
   bool dontPublishWhileNavigating; /*!< Setting to true will prevent the node from publishing new maps of the match_data layer type while the robot is navigating, possibly preventing localization issues */
   bool dontPublishWhileDriving; /*!< Setting to true will prevent the node from publishing new maps of the match_data layer type while the robot is driving, possibly preventing localization issues */
   double drivingTimeout; /*! <Time after receiving last command velocity to allow the publication of match_data maps again */
@@ -120,6 +136,11 @@ private:
    * Initializes the various maps
    */
   void initializeMaps();
+
+  /*
+   * Loads a map from a yaml file
+   */
+  nav_msgs::OccupancyGrid loadMapFromFile(const std::string& fname);
 
   /*!
    * Callback for the match size map publishing timer
@@ -146,7 +167,6 @@ private:
    * \param map The map
    */
   void map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map);
-
 
   /*!
    * callback for receiving command velocities

@@ -26,6 +26,8 @@ markers_to_map::markers_to_map()
   node.param<double>("rolling_publish_period", rollingPublishPeriod, 0.5);
   node.param<double>("rolling_map_width", rollingMapWidth, 6.0);
   node.param<double>("rolling_map_height", rollingMapHeight, 6.0);
+  node.param<bool>("load_static_map_from_file", loadStaticMapFromFile, false);
+  node.param < string > ("static_map_yaml_file", staticMapYamlFile, "/");
   node.param<bool>("dont_publish_while_navigating", dontPublishWhileNavigating, false);
   node.param<bool>("dont_publish_while_driving", dontPublishWhileDriving, false);
   node.param<double>("driving_timeout", drivingTimeout, 3.0);
@@ -46,14 +48,23 @@ markers_to_map::markers_to_map()
         node.subscribe < ar_track_alvar_msgs::AlvarMarkers
             > ("ar_pose_marker_" + (boost::lexical_cast < string > (i)), 1, *marker_cback));
   }
-  map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
+  if (loadStaticMapFromFile)
+  {
+    globalMap = loadMapFromFile(staticMapYamlFile);
+    globalMapReceived = true;
+  }
+  else
+  {
+    map_in = node.subscribe < nav_msgs::OccupancyGrid > ("map", 1, &markers_to_map::map_in_cback, this);
+  }
   if (dontPublishWhileNavigating)
   {
     nav_goal_in = node.subscribe < geometry_msgs::PoseStamped > ("nav_goal", 10, &markers_to_map::nav_goal_cback, this);
     nav_goal_result = node.subscribe < move_base_msgs::MoveBaseActionResult
         > ("nav_goal_result", 10, &markers_to_map::nav_goal_result_cback, this);
   }
-  if (dontPublishWhileDriving) {
+  if (dontPublishWhileDriving)
+  {
     cmdVelTimer = node.createTimer(ros::Duration(drivingTimeout), &markers_to_map::cmdVelTimerCallback, this);
     cmdVelTimer.stop();
     cmd_vel_in = node.subscribe < geometry_msgs::Twist > ("cmd_vel", 1, &markers_to_map::cmd_vel_cback, this);
@@ -74,9 +85,119 @@ markers_to_map::markers_to_map()
   ROS_INFO("Markers To Map Started");
 }
 
-float markers_to_map::round(float f, float prec)
+nav_msgs::OccupancyGrid markers_to_map::loadMapFromFile(const std::string& fname)
 {
-  return (float)(floor(f * (1.0f / prec) + 0.5) / (1.0f / prec));
+  std::string mapfname = "";
+  double res;
+  double origin[3];
+  int negate;
+  double occ_th, free_th;
+  bool trinary = true;
+  std::string frame_id = "map";
+  nav_msgs::GetMap::Response map_resp_;
+  std::ifstream fin(fname.c_str());
+  if (fin.fail())
+  {
+    ROS_ERROR("markers_to_map could not open %s.", fname.c_str());
+    exit(-1);
+  }
+
+#ifdef HAVE_NEW_YAMLCPP
+  //The document loading process changed in yaml-cpp 0.5.
+  YAML::Node doc = YAML::Load(fin);
+#else
+  YAML::Parser parser(fin);
+  YAML::Node doc;
+  parser.GetNextDocument(doc);
+#endif
+
+  try
+  {
+    doc["resolution"] >> res;
+  }
+  catch (YAML::InvalidScalar)
+  {
+    ROS_ERROR("The map does not contain a resolution tag or it is invalid.");
+    exit(-1);
+  }
+  try
+  {
+    doc["negate"] >> negate;
+  }
+  catch (YAML::InvalidScalar)
+  {
+    ROS_ERROR("The map does not contain a negate tag or it is invalid.");
+    exit(-1);
+  }
+  try
+  {
+    doc["occupied_thresh"] >> occ_th;
+  }
+  catch (YAML::InvalidScalar)
+  {
+    ROS_ERROR("The map does not contain an occupied_thresh tag or it is invalid.");
+    exit(-1);
+  }
+  try
+  {
+    doc["free_thresh"] >> free_th;
+  }
+  catch (YAML::InvalidScalar)
+  {
+    ROS_ERROR("The map does not contain a free_thresh tag or it is invalid.");
+    exit(-1);
+  }
+  try
+  {
+    doc["trinary"] >> trinary;
+  }
+  catch (YAML::Exception)
+  {
+    ROS_DEBUG("The map does not contain a trinary tag or it is invalid... assuming true");
+    trinary = true;
+  }
+  try
+  {
+    doc["origin"][0] >> origin[0];
+    doc["origin"][1] >> origin[1];
+    doc["origin"][2] >> origin[2];
+  }
+  catch (YAML::InvalidScalar)
+  {
+    ROS_ERROR("The map does not contain an origin tag or it is invalid.");
+    exit(-1);
+  }
+  try
+  {
+    doc["image"] >> mapfname;
+    // TODO: make this path-handling more robust
+    if (mapfname.size() == 0)
+    {
+      ROS_ERROR("The image tag cannot be an empty string.");
+      exit(-1);
+    }
+    if (mapfname[0] != '/')
+    {
+      // dirname can modify what you pass it
+      char* fname_copy = strdup(fname.c_str());
+      mapfname = std::string(dirname(fname_copy)) + '/' + mapfname;
+      free(fname_copy);
+    }
+  }
+  catch (YAML::InvalidScalar)
+  {
+    ROS_ERROR("The map does not contain an image tag or it is invalid.");
+    exit(-1);
+  }
+  ROS_INFO("Loading map from image \"%s\"", mapfname.c_str());
+  map_server::loadMapFromFile(&map_resp_, mapfname.c_str(), res, negate, occ_th, free_th, origin, trinary);
+  map_resp_.map.info.map_load_time = ros::Time::now();
+  map_resp_.map.header.frame_id = frame_id;
+  map_resp_.map.header.stamp = ros::Time::now();
+  ROS_INFO("Read a %d X %d map @ %.3lf m/cell", map_resp_.map.info.width, map_resp_.map.info.height,
+           map_resp_.map.info.resolution);
+
+  return map_resp_.map;
 }
 
 void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
@@ -84,6 +205,11 @@ void markers_to_map::map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map)
   globalMap = *map;
   globalMapReceived = true;
   ROS_INFO("Map Received");
+}
+
+float markers_to_map::round(float f, float prec)
+{
+  return (float)(floor(f * (1.0f / prec) + 0.5) / (1.0f / prec));
 }
 
 void markers_to_map::cmd_vel_cback(const geometry_msgs::Twist::ConstPtr& vel)
@@ -95,7 +221,7 @@ void markers_to_map::cmd_vel_cback(const geometry_msgs::Twist::ConstPtr& vel)
 
 ar_track_alvar_msgs::AlvarMarkers* markers_to_map::mergeMarkerData()
 {
-  //merge the marker data from all the cameras
+//merge the marker data from all the cameras
   ar_track_alvar_msgs::AlvarMarkers* markers = new ar_track_alvar_msgs::AlvarMarkers();
   vector < ar_track_alvar_msgs::AlvarMarker > markerData;
   for (unsigned int camera = 0; camera < cameraCount; camera++)
@@ -144,7 +270,7 @@ ar_track_alvar_msgs::AlvarMarkers* markers_to_map::mergeMarkerData()
 
 void markers_to_map::initializeMaps()
 {
-  //Initialize maps
+//Initialize maps
   float globalOriginX = globalMap.info.origin.position.x;
   float globalOriginY = globalMap.info.origin.position.y;
   float globalWidth = globalMap.info.width;
@@ -549,15 +675,15 @@ double markers_to_map::getUpdateRate()
 
 int main(int argc, char **argv)
 {
-  // initialize ROS and the node
+// initialize ROS and the node
   ros::init(argc, argv, "markers_to_map");
 
-  // initialize the converter
+// initialize the converter
   markers_to_map converter;
 
   ros::Rate loop_rate(converter.getUpdateRate());
 
-  //Parse bundle files provided as input arguments
+//Parse bundle files provided as input arguments
   for (int arg = 1; arg < argc; arg++)
   {
     Bundle* bundle = new Bundle();
@@ -565,7 +691,7 @@ int main(int argc, char **argv)
       converter.addBundle(bundle);
   }
 
-  //create the output map topics for each map layer
+//create the output map topics for each map layer
   converter.initializeLayers();
 
   while (ros::ok())
