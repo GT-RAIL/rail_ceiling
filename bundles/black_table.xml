@@ -27,6 +27,7 @@
     		</polygon>
     	</layer>  	    
     	<layer name="local_cost" maptype="rolling" copyfrom="global_cost"/>
+    	<!-- Legs of localization layer
     	<layer name="localization" maptype="match_data">
     		<polygon>
     	    	<point x="-0.45" y="0.185"/>
@@ -53,6 +54,7 @@
     			<point x="-0.45" y="-0.24"/>
     		</polygon>    		
     	</layer>
+    	-->
 
     </footprint>
 </multimarker>
