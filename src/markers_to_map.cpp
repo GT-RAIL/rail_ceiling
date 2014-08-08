@@ -28,6 +28,8 @@ markers_to_map::markers_to_map()
   node.param<double>("rolling_map_height", rollingMapHeight, 6.0);
   node.param<bool>("load_static_map_from_file", loadStaticMapFromFile, false);
   node.param < string > ("static_map_yaml_file", staticMapYamlFile, "/");
+  node.param<bool>("get_map_with_service", getMapWithService, false);
+  node.param < string > ("layer_to_send_on_service_call", layerToSendOnServiceCall, "localization");
   node.param<bool>("dont_publish_while_navigating", dontPublishWhileNavigating, false);
   node.param<bool>("dont_publish_while_driving", dontPublishWhileDriving, false);
   node.param<double>("driving_timeout", drivingTimeout, 3.0);
@@ -71,18 +73,49 @@ markers_to_map::markers_to_map()
   }
 
   //create timers to publish different map layer types at different rates
-  matchSizeTimer = node.createTimer(ros::Duration(matchSizePublishPeriod),
-                                    &markers_to_map::publishMatchSizeTimerCallback, this);
-  matchSizeTimer.stop();
-  matchDataTimer = node.createTimer(ros::Duration(matchDataPublishPeriod),
-                                    &markers_to_map::publishMatchDataTimerCallback, this);
-  matchDataTimer.stop();
-  rollingTimer = node.createTimer(ros::Duration(rollingPublishPeriod), &markers_to_map::publishRollingTimerCallback,
-                                  this);
-  rollingTimer.stop();
+  if (matchSizePublishPeriod)
+  {
+    matchSizeTimer = node.createTimer(ros::Duration(matchSizePublishPeriod),
+                                      &markers_to_map::publishMatchSizeTimerCallback, this);
+    matchSizeTimer.stop();
+  }
+  if (matchDataPublishPeriod)
+  {
+    matchDataTimer = node.createTimer(ros::Duration(matchDataPublishPeriod),
+                                      &markers_to_map::publishMatchDataTimerCallback, this);
+    matchDataTimer.stop();
+  }
+  if (rollingPublishPeriod)
+  {
+    rollingTimer = node.createTimer(ros::Duration(rollingPublishPeriod), &markers_to_map::publishRollingTimerCallback,
+                                    this);
+    rollingTimer.stop();
+  }
   publishTimersStarted = false;
 
+  if (getMapWithService)
+  {
+    static_map_service = node.advertiseService("static_map", &markers_to_map::staticMapServiceCallback, this);
+  }
+
   ROS_INFO("Markers To Map Started");
+}
+
+bool markers_to_map::staticMapServiceCallback(nav_msgs::GetMap::Request &req, nav_msgs::GetMap::Response &res)
+{
+  for (unsigned int mapId = 0; mapId < mapLayers.size(); mapId++)
+  {
+    if (globalMapReceived && mapLayers[mapId]->mapData != NULL)
+    {
+      if (mapLayers[mapId]->name == layerToSendOnServiceCall)
+      {
+        mapLayers[mapId]->map->data = *(mapLayers[mapId]->mapData);
+        res.map = *(mapLayers[mapId]->map);
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 nav_msgs::OccupancyGrid markers_to_map::loadMapFromFile(const std::string& fname)
@@ -103,7 +136,7 @@ nav_msgs::OccupancyGrid markers_to_map::loadMapFromFile(const std::string& fname
   }
 
 #ifdef HAVE_NEW_YAMLCPP
-  //The document loading process changed in yaml-cpp 0.5.
+//The document loading process changed in yaml-cpp 0.5.
   YAML::Node doc = YAML::Load(fin);
 #else
   YAML::Parser parser(fin);
@@ -541,14 +574,22 @@ void markers_to_map::updateMarkerMaps()
     }
     if (!publishTimersStarted)
     {
-      //Publish the maps immediately
+      //Publish the maps immediately and start the timers for regular publishing
       publishMatchSizeTimerCallback(*(new ros::TimerEvent));
       publishMatchDataTimerCallback(*(new ros::TimerEvent));
       publishRollingTimerCallback(*(new ros::TimerEvent));
-      //start the timers to publish at interval times from now on
-      matchSizeTimer.start();
-      matchDataTimer.start();
-      rollingTimer.start();
+      if (matchSizePublishPeriod)
+      {
+        matchSizeTimer.start();
+      }
+      if (matchDataPublishPeriod)
+      {
+        matchDataTimer.start();
+      }
+      if (rollingPublishPeriod)
+      {
+        rollingTimer.start();
+      }
       publishTimersStarted = true;
     }
   }
@@ -675,10 +716,10 @@ double markers_to_map::getUpdateRate()
 
 int main(int argc, char **argv)
 {
-// initialize ROS and the node
+//initialize ROS and the node
   ros::init(argc, argv, "markers_to_map");
 
-// initialize the converter
+//initialize the converter
   markers_to_map converter;
 
   ros::Rate loop_rate(converter.getUpdateRate());
@@ -693,6 +734,9 @@ int main(int argc, char **argv)
 
 //create the output map topics for each map layer
   converter.initializeLayers();
+
+//short delay for cleaner startup
+  ros::Duration(3.0).sleep();
 
   while (ros::ok())
   {

@@ -95,6 +95,7 @@ private:
   ros::Subscriber cmd_vel_in; /*!< the cmd_vel_in topic */
   ros::Subscriber nav_goal_in; /*!< the nav_goal_in topic */
   ros::Subscriber nav_goal_result; /*!< the nav_goal_out topic */
+  ros::ServiceServer static_map_service; /*!< service for sending the static map */
   nav_msgs::OccupancyGrid globalMap; /*!< the incoming static map of the area */
   bool globalMapReceived; /*!< true when a map has been received */
   std::vector<layer_info_t*> mapLayers; /*< A global list of all the map layers which will be published */
@@ -113,6 +114,8 @@ private:
   double rollingMapHeight; /*!< height of the rolling map in meters */
   bool loadStaticMapFromFile; /*! < if true, node will load the map from a file rather than getting it from a topic */
   std::string staticMapYamlFile; /*! < path to the map file to load if loading the map from a file */
+  bool getMapWithService; /*! <if true, node will respond to service calls to "static_map" by sending the map layer specified by the "layer_to_send_on_service_call" parameter */
+  std::string layerToSendOnServiceCall; /*< name of the layer to send on service calls to "static_map" */
   bool dontPublishWhileNavigating; /*!< Setting to true will prevent the node from publishing new maps of the match_data layer type while the robot is navigating, possibly preventing localization issues */
   bool dontPublishWhileDriving; /*!< Setting to true will prevent the node from publishing new maps of the match_data layer type while the robot is driving, possibly preventing localization issues */
   double drivingTimeout; /*! <Time after receiving last command velocity to allow the publication of match_data maps again */
@@ -141,6 +144,11 @@ private:
    * Loads a map from a yaml file
    */
   nav_msgs::OccupancyGrid loadMapFromFile(const std::string& fname);
+
+  /*
+   * Sends the map specified by the layer_to_send_on_service_call parameter
+   */
+  bool staticMapServiceCallback(nav_msgs::GetMap::Request &req, nav_msgs::GetMap::Response &res);
 
   /*!
    * Callback for the match size map publishing timer
