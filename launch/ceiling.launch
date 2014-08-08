@@ -129,8 +129,7 @@
 		<remap from="/markers_to_map/ar_pose_marker_2" to="/cam2/ar_pose_marker" />
 		<remap from="/markers_to_map/ar_pose_marker_3" to="/cam3/ar_pose_marker" />
 		<remap from="/markers_to_map/ar_pose_marker_4" to="/cam4/ar_pose_marker" />
-		<!--<remap from="/markers_to_map/ar_pose_marker_5" to="/robot/ar_pose_marker" />-->		
-			
+		<!--<remap from="/markers_to_map/ar_pose_marker_5" to="/robot/ar_pose_marker" />-->			
 	</node>
 
 </launch>

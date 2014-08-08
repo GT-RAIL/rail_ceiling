@@ -54,7 +54,6 @@ markers_to_map::markers_to_map()
   {
     globalMap = loadMapFromFile(staticMapYamlFile);
     globalMapReceived = true;
-
     //publish map meta data
     static_metadata_pub = node.advertise < nav_msgs::MapMetaData > ("map_metadata", 1, true);
     static_metadata_pub.publish(globalMap.info);
@@ -207,7 +206,6 @@ nav_msgs::OccupancyGrid markers_to_map::loadMapFromFile(const std::string& fname
   try
   {
     doc["image"] >> mapfname;
-    // TODO: make this path-handling more robust
     if (mapfname.size() == 0)
     {
       ROS_ERROR("The image tag cannot be an empty string.");
@@ -215,7 +213,6 @@ nav_msgs::OccupancyGrid markers_to_map::loadMapFromFile(const std::string& fname
     }
     if (mapfname[0] != '/')
     {
-      // dirname can modify what you pass it
       char* fname_copy = strdup(fname.c_str());
       mapfname = std::string(dirname(fname_copy)) + '/' + mapfname;
       free(fname_copy);
