@@ -112,7 +112,8 @@
 					 	
 	 	<param name="get_map_with_service" type="bool" value="true" />
 		<param name="layer_to_send_on_service_call" type="string" value="localization" />
-		<remap from="/markers_to_map/static_map" to="/static_map" />		
+		<remap from="/markers_to_map/static_map" to="/static_map" />
+		<remap from="/markers_to_map/map_metadata" to="/map_metadata" />		
 		<remap from="/markers_to_map/ar_localization_map" to="/map" />	
 		
 		<!-- misc remappings needed if loading map from topic, dont_publish_while_navigating, or dont_publish_while_driving

@@ -54,6 +54,10 @@ markers_to_map::markers_to_map()
   {
     globalMap = loadMapFromFile(staticMapYamlFile);
     globalMapReceived = true;
+
+    //publish map meta data
+    static_metadata_pub = node.advertise < nav_msgs::MapMetaData > ("map_metadata", 1, true);
+    static_metadata_pub.publish(globalMap.info);
   }
   else
   {

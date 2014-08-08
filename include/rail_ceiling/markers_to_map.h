@@ -95,6 +95,7 @@ private:
   ros::Subscriber cmd_vel_in; /*!< the cmd_vel_in topic */
   ros::Subscriber nav_goal_in; /*!< the nav_goal_in topic */
   ros::Subscriber nav_goal_result; /*!< the nav_goal_out topic */
+  ros::Publisher static_metadata_pub; /*< publish meta data of static map */
   ros::ServiceServer static_map_service; /*!< service for sending the static map */
   nav_msgs::OccupancyGrid globalMap; /*!< the incoming static map of the area */
   bool globalMapReceived; /*!< true when a map has been received */
