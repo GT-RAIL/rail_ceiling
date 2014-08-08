@@ -11,22 +11,23 @@
 #ifndef MARKERS_TO_MAP_H_
 #define MARKERS_TO_MAP_H_
 
-#include <vector>
-#include <tinyxml.h>
-#include <boost/lexical_cast.hpp>
 #include <ros/ros.h>
+
 #include <libgen.h>
 #include <fstream>
 #include <map_server/image_loader.h>
 #include <yaml-cpp/yaml.h>
 #include <ar_track_alvar_msgs/AlvarMarkers.h>
+#include <boost/lexical_cast.hpp>
+#include <move_base_msgs/MoveBaseAction.h>
 #include <nav_msgs/OccupancyGrid.h>
-#include <tf/transform_listener.h>
-#include <tf/transform_datatypes.h>
 #include <rail_ceiling/bundle.h>
 #include <rail_ceiling/marker_callback_functor.h>
 #include <opencv2/core/core.hpp>
 #include <move_base_msgs/MoveBaseAction.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_datatypes.h>
+#include <tinyxml.h>
 
 #define PI 3.14159265358979323846  /* pi */
 
@@ -44,7 +45,7 @@ struct layer_info_t
 {
   std::string name; /*! <The name of this layer */
   map_type_t mapType; /*! <The layer type */
-  ros::Publisher publisher; /*! <Ros publisher for publishing the map */
+  ros::Publisher publisher; /*! <ROS publisher for publishing the map */
   nav_msgs::OccupancyGrid* map; /*! <The map */
   std::vector<signed char>* mapData; /*<The map data */
 };
@@ -53,7 +54,8 @@ class markers_to_map
 {
 public:
   /*!
-   * Creates a markers_to_map object which creates a map with obstacles with locations determined by ar markers. ROS nodes, services, and publishers
+   * Creates a markers_to_map object which creates a map with obstacles with
+   * locations determined by ar markers. ROS nodes, services, and publishers
    * are created and maintained within this object.
    */
   markers_to_map();
@@ -196,7 +198,8 @@ private:
   void nav_goal_result_cback(const move_base_msgs::MoveBaseActionResult::ConstPtr& result);
 
   /*!
-   * Rounds a floating point number to a specified precision, used for discretizing continuous values into grid cells
+   * Rounds a floating point number to a specified precision, used for discretizing 
+   * continuous values into grid cells
    * \param f The number to round
    * \param prec The precision to round the number to
    * \returns The input value rounded to the specified precision

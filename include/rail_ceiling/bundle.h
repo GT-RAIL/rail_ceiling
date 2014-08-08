@@ -15,10 +15,10 @@
 #define BUNDLE_H_
 
 #include <ros/ros.h>
-#include <tinyxml.h>
+#include <boost/algorithm/string.hpp>
 #include <geometry_msgs/PolygonStamped.h>
 #include <geometry_msgs/Point.h>
-#include <boost/algorithm/string.hpp>
+#include <tinyxml.h>
 
 enum map_type_t
 {
@@ -46,7 +46,8 @@ public:
   ~Bundle();
 
   /*!
-   * Attempts to parse an xml bundle file containing the bundle footprint at the given file location
+   * Attempts to parse an xml bundle file containing the bundle footprint at the 
+   * given file location
    *\param filepath The location of the xml file
    *\returns True is parse is successful. False is parse fails.
    */

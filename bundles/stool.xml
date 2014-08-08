@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <multimarker markers="1">
-    <marker index="9" status="1">
-        <corner x="-5.3" y="-5.3" z="0.0" />
-        <corner x="5.3" y="-5.3" z="0.0" />
-        <corner x="5.3" y="5.3" z="0.0" />
-        <corner x="-5.3" y="5.3" z="0.0" />
-    </marker>
-    <footprint>
-    	<marker index="9" x="0" y="0" yaw="0" keepOnOcclusion="true"/>
-        <layer name="global_cost" maptype="match_data">
-    		<polygon>
-    			<point x="-0.165" y="-0.165"/>
-	    		<point x="-0.165" y="0.165"/>
-    			<point x="0.165" y="0.165"/>
-    			<point x="0.165" y="-0.165"/>
-     		</polygon>
-    	</layer>   	
-    	<layer name="local_cost" maptype="rolling" copyfrom="global_cost"/>  	 			
-    </footprint>
+  <marker index="9" status="1">
+    <corner x="-5.3" y="-5.3" z="0.0" />
+    <corner x="5.3" y="-5.3" z="0.0" />
+    <corner x="5.3" y="5.3" z="0.0" />
+    <corner x="-5.3" y="5.3" z="0.0" />
+  </marker>
+  
+  <footprint>
+    <marker index="9" x="0" y="0" yaw="0" keepOnOcclusion="true"/>
+      <layer name="global_cost" maptype="match_data">
+      <polygon>
+        <point x="-0.165" y="-0.165"/>
+        <point x="-0.165" y="0.165"/>
+        <point x="0.165" y="0.165"/>
+        <point x="0.165" y="-0.165"/>
+      </polygon>
+    </layer>
+    <layer name="local_cost" maptype="rolling" copyfrom="global_cost"/>           
+  </footprint>
+  
 </multimarker>
