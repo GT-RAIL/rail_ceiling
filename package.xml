@@ -19,6 +19,8 @@
   <build_depend>costmap_2d</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>opencv</build_depend>
+  <build_depend>yaml-cpp</build_depend>
+  <build_depend>map_server</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>tinyxml</build_depend>
 
@@ -26,10 +28,13 @@
   <run_depend>costmap_2d</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>opencv</run_depend>
+  <run_depend>yaml-cpp</run_depend>
+  <run_depend>map_server</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>tinyxml</run_depend>
   <run_depend>usb_cam</run_depend>
-  
+
+ 
   <export>
     <costmap_2d plugin="${prefix}/config/costmap_plugins.xml" />
   </export>

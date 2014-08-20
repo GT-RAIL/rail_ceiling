@@ -12,19 +12,34 @@
 #define MARKERS_TO_MAP_H_
 
 #include <ros/ros.h>
+
+#include <libgen.h>
+#include <fstream>
+#include <map_server/image_loader.h>
+#include <yaml-cpp/yaml.h>
 #include <ar_track_alvar_msgs/AlvarMarkers.h>
 #include <boost/lexical_cast.hpp>
 #include <move_base_msgs/MoveBaseAction.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <rail_ceiling/bundle.h>
 #include <rail_ceiling/marker_callback_functor.h>
+#include <opencv2/core/core.hpp>
+#include <move_base_msgs/MoveBaseAction.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 #include <tinyxml.h>
 
-#include "opencv2/core/core.hpp"
-
 #define PI 3.14159265358979323846  /* pi */
+
+#ifdef HAVE_NEW_YAMLCPP
+// The >> operator disappeared in yaml-cpp 0.5, so this function is
+// added to provide support for code written under the yaml-cpp 0.3 API.
+template<typename T>
+void operator >> (const YAML::Node& node, T& i)
+{
+  i = node.as<T>();
+}
+#endif
 
 struct layer_info_t
 {
@@ -79,14 +94,18 @@ private:
   tf::TransformListener listener; /*!< transform listener */
   std::vector<ros::Subscriber> markers_in; /*!< list of input marker topics */
   ros::Subscriber map_in; /*!< map_in topic */
+  ros::Subscriber cmd_vel_in; /*!< the cmd_vel_in topic */
   ros::Subscriber nav_goal_in; /*!< the nav_goal_in topic */
   ros::Subscriber nav_goal_result; /*!< the nav_goal_out topic */
+  ros::Publisher static_metadata_pub; /*< publish meta data of static map */
+  ros::ServiceServer static_map_service; /*!< service for sending the static map */
   nav_msgs::OccupancyGrid globalMap; /*!< the incoming static map of the area */
   bool globalMapReceived; /*!< true when a map has been received */
   std::vector<layer_info_t*> mapLayers; /*< A global list of all the map layers which will be published */
   std::vector<Bundle*> bundles; /*!< a list of all the obstacle bundles */
   std::vector<ar_track_alvar_msgs::AlvarMarkers::ConstPtr> markerDataIn; /*! < Incoming marker data from each camera. Poses are with respect to map. Contains only master markers. */
   bool navigating; /*! < is the robot currently navigating */
+  bool driving; /* < is the robot currently driving */
 
   //parameters
   int cameraCount; /*!< the number of cameras */
@@ -96,7 +115,13 @@ private:
   double rollingPublishPeriod; /*!< time (in seconds) between publications of layers of the rolling type */
   double rollingMapWidth; /*! <width of the rolling map in meters */
   double rollingMapHeight; /*!< height of the rolling map in meters */
-  bool dontPublishWhileNavigating; /*!< Setting to true will cancel navigation goals before transmitting the match_data maps, preventing loss of localization. */
+  bool loadStaticMapFromFile; /*! < if true, node will load the map from a file rather than getting it from a topic */
+  std::string staticMapYamlFile; /*! < path to the map file to load if loading the map from a file */
+  bool getMapWithService; /*! <if true, node will respond to service calls to "static_map" by sending the map layer specified by the "layer_to_send_on_service_call" parameter */
+  std::string layerToSendOnServiceCall; /*< name of the layer to send on service calls to "static_map" */
+  bool dontPublishWhileNavigating; /*!< Setting to true will prevent the node from publishing new maps of the match_data layer type while the robot is navigating, possibly preventing localization issues */
+  bool dontPublishWhileDriving; /*!< Setting to true will prevent the node from publishing new maps of the match_data layer type while the robot is driving, possibly preventing localization issues */
+  double drivingTimeout; /*! <Time after receiving last command velocity to allow the publication of match_data maps again */
   std::string odomFrameId; /*! < robot's odometry frame (used for rolling map) */
   std::string baseFrameId; /*! < robot's base frame (used for rolling map) */
 
@@ -105,6 +130,7 @@ private:
   ros::Timer matchSizeTimer; /*!< timer for determining when to publish match size maps */
   ros::Timer matchDataTimer; /*!< timer for determining when to publish match data maps */
   ros::Timer rollingTimer; /*!< timer for determining when to publish rolling maps */
+  ros::Timer cmdVelTimer; /*!< timer for determining when to allow publishing of match data maps after recieving comand velocities */
 
   /*
    * Combines the markers from multiple cameras into a single list of markers
@@ -116,6 +142,16 @@ private:
    * Initializes the various maps
    */
   void initializeMaps();
+
+  /*
+   * Loads a map from a yaml file
+   */
+  nav_msgs::OccupancyGrid loadMapFromFile(const std::string& fname);
+
+  /*
+   * Sends the map specified by the layer_to_send_on_service_call parameter
+   */
+  bool staticMapServiceCallback(nav_msgs::GetMap::Request &req, nav_msgs::GetMap::Response &res);
 
   /*!
    * Callback for the match size map publishing timer
@@ -133,10 +169,21 @@ private:
   void publishRollingTimerCallback(const ros::TimerEvent&);
 
   /*!
+   * Callback for cmd vel timer
+   */
+  void cmdVelTimerCallback(const ros::TimerEvent&);
+
+  /*!
    * callback for receiving the static environment map
    * \param map The map
    */
   void map_in_cback(const nav_msgs::OccupancyGrid::ConstPtr& map);
+
+  /*!
+   * callback for receiving command velocities
+   * \param vel The cmd_vel
+   */
+  void cmd_vel_cback(const geometry_msgs::Twist::ConstPtr& vel);
 
   /*!
    * navigation goal callback function

@@ -11,28 +11,28 @@
   <joint name="map_ceiling_joint" type="fixed">
     <parent link="map"/>
     <child link="ceiling"/>
-    <!--<origin xyz="6.225 6.625 2.692" rpy="${PI} 0 ${PI_OVER_2}" />-->
-    <origin xyz="6.1 6.5 2.692" rpy="${PI} 0 ${PI_OVER_2}" />
+    <!--<origin xyz="0.55 6.34 2.692" rpy="${PI} 0 -${PI}" />-->
+    <origin xyz="0.35 6.36 2.692" rpy="${PI} 0 -${PI}" />
   </joint>
 
   <xacro:ar_camera parent="ceiling" suffix="0">
-    <origin xyz="-2.96 -5.05 0" rpy="0 0 0" />
+    <origin xyz="-3.10 -5.17 0" rpy="0 0 0" />
   </xacro:ar_camera>
 
   <xacro:ar_camera parent="ceiling" suffix="1">
-    <origin xyz="-3.37 -3.83 0" rpy="0 0 ${PI_OVER_2}" />
+    <origin xyz="-3.55 -3.83 0" rpy="0 0 ${PI_OVER_2}" />
   </xacro:ar_camera>
 
   <xacro:ar_camera parent="ceiling" suffix="2">
-    <origin xyz="-3.82 -3.01 0" rpy="0 0 -${PI_OVER_2}" />
+    <origin xyz="-3.98 -3.08 0" rpy="0 0 -${PI_OVER_2}" />
   </xacro:ar_camera>
 
   <xacro:ar_camera parent="ceiling" suffix="3">
-    <origin xyz="-2.90 -2.25 0" rpy="0 0 -${PI_OVER_2}" />
+    <origin xyz="-2.95 -2.28 0" rpy="0 0 -${PI_OVER_2}" />
   </xacro:ar_camera>
 
   <xacro:ar_camera parent="ceiling" suffix="4">
-    <origin xyz="-3.70 -0.84 0" rpy="0 0 0" />
+    <origin xyz="-3.80 -0.90 0" rpy="0 0 0" />
   </xacro:ar_camera>
 
 
