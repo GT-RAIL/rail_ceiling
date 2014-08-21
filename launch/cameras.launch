@@ -15,6 +15,8 @@
   <arg name="camera_name_prefix" default="$(arg camera_frame_id_prefix)" />
   <arg name="framerate" default="5" />
   <arg name="autofocus" default="true" />
+  <arg name="autoexposure" default="false" />
+  <arg name="exposure" default="75" />
 
   <!-- Assumes 5 Cameras -->
   <node pkg="usb_cam" name="$(arg node_name_prefix)0" type="usb_cam_node" output="screen">
@@ -27,6 +29,8 @@
     <param name="camera_name" value="$(arg camera_frame_id_prefix)0" />
     <param name="framerate" value="$(arg framerate)" />
     <param name="autofocus" value="$(arg autofocus)" />
+    <param name="autoexposure" value="$(arg autoexposure)" />
+    <param name="exposure" value="$(arg exposure)" />
   </node>
   <node pkg="usb_cam" name="$(arg node_name_prefix)1" type="usb_cam_node" output="screen">
     <param name="video_device" value="$(arg video_device_prefix)1" />
@@ -38,6 +42,8 @@
     <param name="camera_name" value="$(arg camera_frame_id_prefix)1" />
     <param name="framerate" value="$(arg framerate)" />
     <param name="autofocus" value="$(arg autofocus)" />
+    <param name="autoexposure" value="$(arg autoexposure)" />
+    <param name="exposure" value="$(arg exposure)" />
   </node>
   <node pkg="usb_cam" name="$(arg node_name_prefix)2" type="usb_cam_node" output="screen">
     <param name="video_device" value="$(arg video_device_prefix)2" />
@@ -49,6 +55,8 @@
     <param name="camera_name" value="$(arg camera_frame_id_prefix)2" />
     <param name="framerate" value="$(arg framerate)" />
     <param name="autofocus" value="$(arg autofocus)" />
+    <param name="autoexposure" value="$(arg autoexposure)" />
+    <param name="exposure" value="$(arg exposure)" />
   </node>
   <node pkg="usb_cam" name="$(arg node_name_prefix)3" type="usb_cam_node" output="screen">
     <param name="video_device" value="$(arg video_device_prefix)3" />
@@ -60,6 +68,8 @@
     <param name="camera_name" value="$(arg camera_frame_id_prefix)3" />
     <param name="framerate" value="$(arg framerate)" />
     <param name="autofocus" value="$(arg autofocus)" />
+    <param name="autoexposure" value="$(arg autoexposure)" />
+    <param name="exposure" value="$(arg exposure)" />
   </node>
   <node pkg="usb_cam" name="$(arg node_name_prefix)4" type="usb_cam_node" output="screen">
     <param name="video_device" value="$(arg video_device_prefix)4" />
@@ -71,5 +81,7 @@
     <param name="camera_name" value="$(arg camera_frame_id_prefix)4" />
     <param name="framerate" value="$(arg framerate)" />
     <param name="autofocus" value="$(arg autofocus)" />
+    <param name="autoexposure" value="$(arg autoexposure)" />
+    <param name="exposure" value="$(arg exposure)" />
   </node>
 </launch>
