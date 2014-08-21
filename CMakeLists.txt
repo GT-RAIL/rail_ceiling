@@ -28,3 +28,8 @@ install(DIRECTORY launch/
 install(DIRECTORY config/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
 )
+
+## Copy marker files
+install(DIRECTORY markers/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/markers
+)

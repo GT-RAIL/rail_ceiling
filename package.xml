@@ -17,4 +17,5 @@
 
   <run_depend>usb_cam</run_depend>
   <run_depend>image_view</run_depend>
+  <run_depend>ar_track_alvar</run_depend>
 </package>

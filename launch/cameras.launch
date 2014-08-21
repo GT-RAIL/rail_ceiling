@@ -11,7 +11,7 @@
   <arg name="image_height" default="1080" />
   <arg name="pixel_format" default="yuyv" />
   <arg name="io_method" default="mmap" />
-  <arg name="camera_info_url_prefix" default=" file://$(find rail_ceiling)/config/camera_info/ceiling_cam_" />
+  <arg name="camera_info_url_prefix" default="file://$(find rail_ceiling)/config/camera_info/ceiling_cam_" />
   <arg name="camera_frame_id_prefix" default="$(arg node_name_prefix)" />
   <arg name="camera_name_prefix" default="$(arg camera_frame_id_prefix)" />
   <arg name="framerate" default="5" />
