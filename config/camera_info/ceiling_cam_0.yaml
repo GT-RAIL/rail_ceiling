@@ -1,0 +1,20 @@
+image_width: 1920
+image_height: 1080
+camera_name: ceiling_cam_0
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [1473.734924252419, 0, 802.713553257894, 0, 1452.192533050086, 442.7298026481031, 0, 0, 1]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.0126807086657715, 0.01746534273339464, -0.006207080462998868, -0.004753894375541379, 0]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [1471.830078125, 0, 793.7993170516565, 0, 0, 1451.633544921875, 436.2616161970363, 0, 0, 0, 1, 0]
