@@ -1,3 +1,0 @@
-<launch> 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rail_ceiling)/rviz/view.rviz" required="true" />
-</launch>

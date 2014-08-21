@@ -2,10 +2,11 @@
 <package>
   <name>rail_ceiling</name>
   <version>0.0.0</version>
-  <description>Controls the overhead cameras for the ceiling of the RAIL lab.</description>
+  <description>Overhead Camera System for Tracking AR Tags</description>
   
-  <maintainer email="spkordell@wpi.edu">Steven Kordell</maintainer>
-  <author email="spkordell@wpi.edu">Steven Kordell</author>
+  <maintainer email="rctoris@wpi.edu">Russell Toris</maintainer>
+  <author email="rctoris@wpi.edu">Russell Toris</author>
+
   <license>BSD</license>
 
   <url type="website">http://ros.org/wiki/rail_ceiling</url>
@@ -13,29 +14,7 @@
   <url type="repository">https://github.com/WPI-RAIL/rail_ceiling</url>
  
   <buildtool_depend>catkin</buildtool_depend>
-  
-  <build_depend>ar_track_alvar_msgs</build_depend>
-  <build_depend>cmake_modules</build_depend>
-  <build_depend>costmap_2d</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>
-  <build_depend>opencv</build_depend>
-  <build_depend>yaml-cpp</build_depend>
-  <build_depend>map_server</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>tinyxml</build_depend>
 
-  <run_depend>ar_track_alvar_msgs</run_depend>
-  <run_depend>costmap_2d</run_depend>
-  <run_depend>dynamic_reconfigure</run_depend>
-  <run_depend>opencv</run_depend>
-  <run_depend>yaml-cpp</run_depend>
-  <run_depend>map_server</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>tinyxml</run_depend>
   <run_depend>usb_cam</run_depend>
-
- 
-  <export>
-    <costmap_2d plugin="${prefix}/config/costmap_plugins.xml" />
-  </export>
+  <run_depend>image_view</run_depend>
 </package>

@@ -1,0 +1,28 @@
+<!--
+   Author: Russell Toris, Worcester Polytechnic Institute
+  Version: August 21, 2014
+-->
+
+<launch>
+  <!-- Topic Parameters -->
+  <arg name="node_name_prefix" default="ceiling_cam_viwer_" />
+  <arg name="topic_prefix" default="/ceiling_cam_" />
+  <arg name="image_topic" default="/image_raw" />
+
+  <!-- Assumes 5 Cameras -->
+  <node pkg="image_view" name="$(arg node_name_prefix)0" type="image_view" output="screen">
+    <remap from="image" to="$(arg topic_prefix)0$(arg image_topic)" />
+  </node>
+  <node pkg="image_view" name="$(arg node_name_prefix)1" type="image_view" output="screen">
+    <remap from="image" to="$(arg topic_prefix)1$(arg image_topic)" />
+  </node>
+  <node pkg="image_view" name="$(arg node_name_prefix)2" type="image_view" output="screen">
+    <remap from="image" to="$(arg topic_prefix)2$(arg image_topic)" />
+  </node>
+  <node pkg="image_view" name="$(arg node_name_prefix)3" type="image_view" output="screen">
+    <remap from="image" to="$(arg topic_prefix)3$(arg image_topic)" />
+  </node>
+  <node pkg="image_view" name="$(arg node_name_prefix)4" type="image_view" output="screen">
+    <remap from="image" to="$(arg topic_prefix)4$(arg image_topic)" />
+  </node>
+</launch>

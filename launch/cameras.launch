@@ -1,0 +1,75 @@
+<!--
+   Author: Russell Toris, Worcester Polytechnic Institute
+  Version: August 21, 2014
+-->
+
+<launch>
+  <!-- Camera Parameters -->
+  <arg name="node_name_prefix" default="ceiling_cam_" />
+  <arg name="video_device_prefix" default="/dev/video" />
+  <arg name="image_width" default="1920" />
+  <arg name="image_height" default="1080" />
+  <arg name="pixel_format" default="yuyv" />
+  <arg name="io_method" default="mmap" />
+  <arg name="camera_frame_id_prefix" default="$(arg node_name_prefix)" />
+  <arg name="camera_name_prefix" default="$(arg camera_frame_id_prefix)" />
+  <arg name="framerate" default="5" />
+  <arg name="autofocus" default="true" />
+
+  <!-- Assumes 5 Cameras -->
+  <node pkg="usb_cam" name="$(arg node_name_prefix)0" type="usb_cam_node" output="screen">
+    <param name="video_device" value="$(arg video_device_prefix)0" />
+    <param name="image_width" value="$(arg image_width)" />
+    <param name="image_height" value="$(arg image_height)" />
+    <param name="pixel_format" value="$(arg pixel_format)"/>
+    <param name="io_method" value="$(arg io_method)" />
+    <param name="camera_frame_id" value="$(arg camera_frame_id_prefix)0" />
+    <param name="camera_name" value="$(arg camera_frame_id_prefix)0" />
+    <param name="framerate" value="$(arg framerate)" />
+    <param name="autofocus" value="$(arg autofocus)" />
+  </node>
+  <node pkg="usb_cam" name="$(arg node_name_prefix)1" type="usb_cam_node" output="screen">
+    <param name="video_device" value="$(arg video_device_prefix)1" />
+    <param name="image_width" value="$(arg image_width)" />
+    <param name="image_height" value="$(arg image_height)" />
+    <param name="pixel_format" value="$(arg pixel_format)"/>
+    <param name="io_method" value="$(arg io_method)" />
+    <param name="camera_frame_id" value="$(arg camera_frame_id_prefix)1" />
+    <param name="camera_name" value="$(arg camera_frame_id_prefix)1" />
+    <param name="framerate" value="$(arg framerate)" />
+    <param name="autofocus" value="$(arg autofocus)" />
+  </node>
+  <node pkg="usb_cam" name="$(arg node_name_prefix)2" type="usb_cam_node" output="screen">
+    <param name="video_device" value="$(arg video_device_prefix)2" />
+    <param name="image_width" value="$(arg image_width)" />
+    <param name="image_height" value="$(arg image_height)" />
+    <param name="pixel_format" value="$(arg pixel_format)"/>
+    <param name="io_method" value="$(arg io_method)" />
+    <param name="camera_frame_id" value="$(arg camera_frame_id_prefix)2" />
+    <param name="camera_name" value="$(arg camera_frame_id_prefix)2" />
+    <param name="framerate" value="$(arg framerate)" />
+    <param name="autofocus" value="$(arg autofocus)" />
+  </node>
+  <node pkg="usb_cam" name="$(arg node_name_prefix)3" type="usb_cam_node" output="screen">
+    <param name="video_device" value="$(arg video_device_prefix)3" />
+    <param name="image_width" value="$(arg image_width)" />
+    <param name="image_height" value="$(arg image_height)" />
+    <param name="pixel_format" value="$(arg pixel_format)"/>
+    <param name="io_method" value="$(arg io_method)" />
+    <param name="camera_frame_id" value="$(arg camera_frame_id_prefix)3" />
+    <param name="camera_name" value="$(arg camera_frame_id_prefix)3" />
+    <param name="framerate" value="$(arg framerate)" />
+    <param name="autofocus" value="$(arg autofocus)" />
+  </node>
+  <node pkg="usb_cam" name="$(arg node_name_prefix)4" type="usb_cam_node" output="screen">
+    <param name="video_device" value="$(arg video_device_prefix)4" />
+    <param name="image_width" value="$(arg image_width)" />
+    <param name="image_height" value="$(arg image_height)" />
+    <param name="pixel_format" value="$(arg pixel_format)"/>
+    <param name="io_method" value="$(arg io_method)" />
+    <param name="camera_frame_id" value="$(arg camera_frame_id_prefix)4" />
+    <param name="camera_name" value="$(arg camera_frame_id_prefix)4" />
+    <param name="framerate" value="$(arg framerate)" />
+    <param name="autofocus" value="$(arg autofocus)" />
+  </node>
+</launch>
