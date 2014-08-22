@@ -17,6 +17,8 @@
 #include <ar_track_alvar_msgs/AlvarMarkers.h>
 #include <geometry_msgs/Pose.h>
 #include <vector>
+#include <string>
+#include <tf/transform_broadcaster.h>
 
 /*!
  * \class calibration
@@ -36,9 +38,17 @@ public:
   calibration();
 
   /*!
+   * \brief Publish known fixed frames of the markers to a global frame and the averages from the AR tracker.
+   *
+   * Publish known fixed frames of the markers to a global frame and the averages from the AR tracker. This will allow
+   * later calculations to these frames.
+   */
+  void publish_tf();
+
+  /*!
    * \brief Attempt to calibrate the cameras.
    *
-   * Attempt to calibrate the camares. Cameras will calibrate once enough samples have come in.
+   * Attempt to calibrate the cameras. Cameras will calibrate once enough samples have come in.
    */
   void attempt_calibration();
 
@@ -53,11 +63,17 @@ private:
    */
   void marker_cback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr& msg, int camera);
 
+  bool calibrated_; /*!< a flag to check if the calibration is complete */
+
+  tf::TransformBroadcaster br; /*!< main transform broadcaster */
+
   ros::NodeHandle nh_, pnh_; /*!< a handle for this ROS node and the private node handle */
 
   int num_cameras_, num_samples_; /*!< the number of ceiling cameras and samples to take */
+  std::string fixed_frame_; /*!< the fixed frame of the markers and frame of the cameras */
 
   std::vector<ros::Subscriber> marker_subs_; /*!< the subscriptions to the marker topic */
+  std::vector<geometry_msgs::Pose> fixed_poses_, average_poses_; /*!< the known fixed pose of each marker and average from the AR tracker */
   std::vector<std::vector<geometry_msgs::Pose> > samples_; /*!< the positions saved from the cameras */
 };
 

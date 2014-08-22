@@ -1,0 +1,104 @@
+<!--
+   Author: Russell Toris, Worcester Polytechnic Institute
+  Version: August 22, 2014
+-->
+
+<launch>
+  <!-- Calibration Parameters -->
+  <arg name="num_cameras" default="5" />
+  <arg name="num_samples" default="25" />
+  <arg name="fixed_frame" default="map" />
+  <arg name="camera_frame_prefix" default="ceiling_cam_" />
+
+  <!-- Camera0 -->
+  <arg name="ceiling_cam_0_pos_x" default="4.0" />
+  <arg name="ceiling_cam_0_pos_y" default="0.5" />
+  <arg name="ceiling_cam_0_pos_z" default="0.0" />
+  <arg name="ceiling_cam_0_rot_x" default="0.0" />
+  <arg name="ceiling_cam_0_rot_y" default="0.0" />
+  <arg name="ceiling_cam_0_rot_z" default="0.0" />
+  <arg name="ceiling_cam_0_rot_w" default="1.0" />
+
+  <!-- Camera1 -->
+  <arg name="ceiling_cam_1_pos_x" default="3" />
+  <arg name="ceiling_cam_1_pos_y" default="1" />
+  <arg name="ceiling_cam_1_pos_z" default="0.0" />
+  <arg name="ceiling_cam_1_rot_x" default="0.0" />
+  <arg name="ceiling_cam_1_rot_y" default="0.0" />
+  <arg name="ceiling_cam_1_rot_z" default="0.0" />
+  <arg name="ceiling_cam_1_rot_w" default="1.0" />
+
+  <!-- Camera2 -->
+  <arg name="ceiling_cam_2_pos_x" default="4.3" />
+  <arg name="ceiling_cam_2_pos_y" default="2" />
+  <arg name="ceiling_cam_2_pos_z" default="0.0" />
+  <arg name="ceiling_cam_2_rot_x" default="0.0" />
+  <arg name="ceiling_cam_2_rot_y" default="0.0" />
+  <arg name="ceiling_cam_2_rot_z" default="0.0" />
+  <arg name="ceiling_cam_2_rot_w" default="1.0" />
+
+  <!-- Camera3 -->
+  <arg name="ceiling_cam_3_pos_x" default="2.8" />
+  <arg name="ceiling_cam_3_pos_y" default="2.3" />
+  <arg name="ceiling_cam_3_pos_z" default="0.0" />
+  <arg name="ceiling_cam_3_rot_x" default="0.0" />
+  <arg name="ceiling_cam_3_rot_y" default="0.0" />
+  <arg name="ceiling_cam_3_rot_z" default="0.0" />
+  <arg name="ceiling_cam_3_rot_w" default="1.0" />
+
+  <!-- Camera4 -->
+  <arg name="ceiling_cam_4_pos_x" default="4.2" />
+  <arg name="ceiling_cam_4_pos_y" default="3" />
+  <arg name="ceiling_cam_4_pos_z" default="0.0" />
+  <arg name="ceiling_cam_4_rot_x" default="0.0" />
+  <arg name="ceiling_cam_4_rot_y" default="0.0" />
+  <arg name="ceiling_cam_4_rot_z" default="0.0" />
+  <arg name="ceiling_cam_4_rot_w" default="1.0" />
+  
+  <node pkg="rail_ceiling" name="calibration" type="calibration" output="screen">
+    <!-- Calibration Parameters -->
+    <param name="num_cameras" value="$(arg num_cameras)" />
+    <param name="num_samples" value="$(arg num_samples)" />
+    <param name="fixed_frame" value="$(arg fixed_frame)" />
+    <!-- Camera0 -->
+    <param name="ceiling_cam_0_pos_x" value="$(arg ceiling_cam_0_pos_x)" />
+    <param name="ceiling_cam_0_pos_y" value="$(arg ceiling_cam_0_pos_y)" />
+    <param name="ceiling_cam_0_pos_z" value="$(arg ceiling_cam_0_pos_z)" />
+    <param name="ceiling_cam_0_rot_x" value="$(arg ceiling_cam_0_rot_x)" />
+    <param name="ceiling_cam_0_rot_y" value="$(arg ceiling_cam_0_rot_y)" />
+    <param name="ceiling_cam_0_rot_z" value="$(arg ceiling_cam_0_rot_z)" />
+    <param name="ceiling_cam_0_rot_w" value="$(arg ceiling_cam_0_rot_w)" />
+    <!-- Camera1 -->
+    <param name="ceiling_cam_1_pos_x" value="$(arg ceiling_cam_1_pos_x)" />
+    <param name="ceiling_cam_1_pos_y" value="$(arg ceiling_cam_1_pos_y)" />
+    <param name="ceiling_cam_1_pos_z" value="$(arg ceiling_cam_1_pos_z)" />
+    <param name="ceiling_cam_1_rot_x" value="$(arg ceiling_cam_1_rot_x)" />
+    <param name="ceiling_cam_1_rot_y" value="$(arg ceiling_cam_1_rot_y)" />
+    <param name="ceiling_cam_1_rot_z" value="$(arg ceiling_cam_1_rot_z)" />
+    <param name="ceiling_cam_1_rot_w" value="$(arg ceiling_cam_1_rot_w)" />
+    <!-- Camera2 -->    
+    <param name="ceiling_cam_2_pos_x" value="$(arg ceiling_cam_2_pos_x)" />
+    <param name="ceiling_cam_2_pos_y" value="$(arg ceiling_cam_2_pos_y)" />
+    <param name="ceiling_cam_2_pos_z" value="$(arg ceiling_cam_2_pos_z)" />
+    <param name="ceiling_cam_2_rot_x" value="$(arg ceiling_cam_2_rot_x)" />
+    <param name="ceiling_cam_2_rot_y" value="$(arg ceiling_cam_2_rot_y)" />
+    <param name="ceiling_cam_2_rot_z" value="$(arg ceiling_cam_2_rot_z)" />
+    <param name="ceiling_cam_2_rot_w" value="$(arg ceiling_cam_2_rot_w)" />
+    <!-- Camera3 -->    
+    <param name="ceiling_cam_3_pos_x" value="$(arg ceiling_cam_3_pos_x)" />
+    <param name="ceiling_cam_3_pos_y" value="$(arg ceiling_cam_3_pos_y)" />
+    <param name="ceiling_cam_3_pos_z" value="$(arg ceiling_cam_3_pos_z)" />
+    <param name="ceiling_cam_3_rot_x" value="$(arg ceiling_cam_3_rot_x)" />
+    <param name="ceiling_cam_3_rot_y" value="$(arg ceiling_cam_3_rot_y)" />
+    <param name="ceiling_cam_3_rot_z" value="$(arg ceiling_cam_3_rot_z)" />
+    <param name="ceiling_cam_3_rot_w" value="$(arg ceiling_cam_3_rot_w)" />
+    <!-- Camera4 -->
+    <param name="ceiling_cam_4_pos_x" value="$(arg ceiling_cam_4_pos_x)" />
+    <param name="ceiling_cam_4_pos_y" value="$(arg ceiling_cam_4_pos_y)" />
+    <param name="ceiling_cam_4_pos_z" value="$(arg ceiling_cam_4_pos_z)" />
+    <param name="ceiling_cam_4_rot_x" value="$(arg ceiling_cam_4_rot_x)" />
+    <param name="ceiling_cam_4_rot_y" value="$(arg ceiling_cam_4_rot_y)" />
+    <param name="ceiling_cam_4_rot_z" value="$(arg ceiling_cam_4_rot_z)" />
+    <param name="ceiling_cam_4_rot_w" value="$(arg ceiling_cam_4_rot_w)" />
+  </node>
+</launch>

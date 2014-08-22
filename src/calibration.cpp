@@ -18,26 +18,47 @@ using namespace std;
 calibration::calibration() :
     pnh_("~")
 {
-  // grab the number of cameras and samples to take
-  pnh_.param("num_cameras", this->num_cameras_, 1);
-  pnh_.param("num_samples", this->num_samples_, 25);
+  this->calibrated_ = false;
 
-  // subscribe to each marker topic
+  // grab the number of cameras and samples to take
+  pnh_.param("fixed_frame", this->fixed_frame_, string("map"));
+  //pnh_.param("camera_frame_prefix", this->camera_frame_prefix_, string("ceiling_cam_"));
+  pnh_.param("num_cameras", this->num_cameras_, 1);
+  pnh_.param("num_samples", this->num_samples_, 10);
+
+  // subscribe to each marker topic and grab the parameters
   for (int i = 0; i < this->num_cameras_; i++)
   {
-    // construct the topic name
-    stringstream ss;
-    ss << "ceiling_cam_tracker_" << i << "/ar_pose_marker";
-    string topic = ss.str();
+    // construct the topic and parameter names
+    stringstream topic_ss, x_pos_ss, y_pos_ss, z_pos_ss, x_rot_ss, y_rot_ss, z_rot_ss, w_rot_ss;
+    topic_ss << "ceiling_cam_tracker_" << i << "/ar_pose_marker";
+    x_pos_ss << "ceiling_cam_" << i << "_pos_x";
+    y_pos_ss << "ceiling_cam_" << i << "_pos_y";
+    z_pos_ss << "ceiling_cam_" << i << "_pos_z";
+    x_rot_ss << "ceiling_cam_" << i << "_rot_x";
+    y_rot_ss << "ceiling_cam_" << i << "_rot_y";
+    z_rot_ss << "ceiling_cam_" << i << "_rot_z";
+    w_rot_ss << "ceiling_cam_" << i << "_rot_w";
 
     // create the subscription
     ros::Subscriber sub = this->nh_.subscribe<ar_track_alvar_msgs::AlvarMarkers>(
-        topic, 1, boost::bind(&calibration::marker_cback, this, _1, i));
+        topic_ss.str(), 1, boost::bind(&calibration::marker_cback, this, _1, i));
     // add it to the list
     this->marker_subs_.push_back(sub);
     // add a samples vector
     vector<geometry_msgs::Pose> samples;
     this->samples_.push_back(samples);
+
+    // search for parameters
+    geometry_msgs::Pose pose;
+    pnh_.param(x_pos_ss.str(), pose.position.x, 0.0);
+    pnh_.param(y_pos_ss.str(), pose.position.y, 0.0);
+    pnh_.param(z_pos_ss.str(), pose.position.z, 0.0);
+    pnh_.param(x_rot_ss.str(), pose.orientation.x, 0.0);
+    pnh_.param(y_rot_ss.str(), pose.orientation.y, 0.0);
+    pnh_.param(z_rot_ss.str(), pose.orientation.z, 0.0);
+    pnh_.param(w_rot_ss.str(), pose.orientation.w, 1.0);
+    this->fixed_poses_.push_back(pose);
   }
 
   ROS_INFO("Waiting to find %i samples of the calibration markers for each camera...", this->num_samples_);
@@ -61,60 +82,107 @@ void calibration::marker_cback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr
   }
 }
 
+void calibration::publish_tf()
+{
+  // go through each marker
+  for (int i = 0; i < this->num_cameras_; i++)
+  {
+    // publish the fixed pose
+    geometry_msgs::Pose &fixed_pose = this->fixed_poses_.at(i);
+    // create a TF
+    tf::Transform tf_fixed;
+    tf_fixed.setOrigin(tf::Vector3(fixed_pose.position.x, fixed_pose.position.y, fixed_pose.position.z));
+    tf_fixed.setRotation(
+        tf::Quaternion(fixed_pose.orientation.x, fixed_pose.orientation.y, fixed_pose.orientation.z,
+                       fixed_pose.orientation.w));
+    // publish the fixed pose TF
+    stringstream ss_fixed;
+    ss_fixed << "fixed_calibration_marker_" << i;
+    br.sendTransform(tf::StampedTransform(tf_fixed, ros::Time::now(), this->fixed_frame_, ss_fixed.str()));
+
+    // publish the average pose from the camera if ready
+    if (this->average_poses_.size() > i)
+    {
+      // publish the average pose
+      geometry_msgs::Pose &average_pose = this->average_poses_.at(i);
+      // create a TF
+      tf::Transform tf_average;
+      tf_average.setRotation(tf::Quaternion(0, 0, 0, 1));
+      tf_average.setOrigin(tf::Vector3(average_pose.position.x, average_pose.position.y, average_pose.position.z));
+      tf_average.setRotation(
+          tf::Quaternion(average_pose.orientation.x, average_pose.orientation.y, average_pose.orientation.z,
+                         average_pose.orientation.w));
+      // now invert it
+      tf::Transform tf_average_inverse = tf_average.inverse();
+      stringstream ss_camera;
+      ss_camera << "calibration_ceiling_camera_" << i;
+      br.sendTransform(tf::StampedTransform(tf_average_inverse, ros::Time::now(), ss_fixed.str(), ss_camera.str()));
+    }
+  }
+}
+
 void calibration::attempt_calibration()
 {
-  // check for all the samples
-  bool ready = true;
-  for (int i = 0; i < this->num_cameras_; i++)
-    ready &= this->samples_.at(i).size() >= this->num_samples_;
-
-  if (ready)
+  // check if we finished
+  if (!this->calibrated_)
   {
-    ROS_INFO("Sample collection complete!");
-
-    // unsubscribe
+    // check for all the samples
+    bool ready = true;
     for (int i = 0; i < this->num_cameras_; i++)
-      this->marker_subs_.at(i).shutdown();
+      ready &= this->samples_.at(i).size() >= this->num_samples_;
 
-    // calculate the average pose
-    geometry_msgs::Pose poses[this->num_cameras_];
-    for (int i = 0; i < this->num_cameras_; i++)
+    if (ready)
     {
-      geometry_msgs::Pose &pose = poses[i];
-      vector<geometry_msgs::Pose> &samples = this->samples_.at(i);
-      for (int j = 0; j < this->num_samples_; j++)
-      {
-        // calculate the average as we go
-        geometry_msgs::Pose &sample = samples.at(j);
-        int n = j + 1;
-        pose.position.x = (((n - 1) * pose.position.x + sample.position.x) / (float)n);
-        pose.position.y = (((n - 1) * pose.position.y + sample.position.y) / (float)n);
-        pose.position.z = (((n - 1) * pose.position.z + sample.position.z) / (float)n);
-        pose.orientation.w = (((n - 1) * pose.orientation.w + sample.orientation.w) / (float)n);
-        pose.orientation.x = (((n - 1) * pose.orientation.x + sample.orientation.x) / (float)n);
-        pose.orientation.y = (((n - 1) * pose.orientation.y + sample.orientation.y) / (float)n);
-        pose.orientation.z = (((n - 1) * pose.orientation.z + sample.orientation.z) / (float)n);
-      }
-    }
+      ROS_INFO("Sample collection complete.");
 
-    // we are finished
-    this->nh_.shutdown();
-    ros::shutdown();
+      // unsubscribe
+      for (int i = 0; i < this->num_cameras_; i++)
+        this->marker_subs_.at(i).shutdown();
+
+      // calculate the average pose
+      for (int i = 0; i < this->num_cameras_; i++)
+      {
+        geometry_msgs::Pose pose;
+        vector<geometry_msgs::Pose> &samples = this->samples_.at(i);
+        for (int j = 0; j < this->num_samples_; j++)
+        {
+          // calculate the average as we go
+          geometry_msgs::Pose &sample = samples.at(j);
+          int n = j + 1;
+          pose.position.x = (((n - 1) * pose.position.x + sample.position.x) / (float)n);
+          pose.position.y = (((n - 1) * pose.position.y + sample.position.y) / (float)n);
+          pose.position.z = (((n - 1) * pose.position.z + sample.position.z) / (float)n);
+          pose.orientation.w = (((n - 1) * pose.orientation.w + sample.orientation.w) / (float)n);
+          pose.orientation.x = (((n - 1) * pose.orientation.x + sample.orientation.x) / (float)n);
+          pose.orientation.y = (((n - 1) * pose.orientation.y + sample.orientation.y) / (float)n);
+          pose.orientation.z = (((n - 1) * pose.orientation.z + sample.orientation.z) / (float)n);
+        }
+        // save the pose
+        this->average_poses_.push_back(pose);
+      }
+
+      // publish transforms from the marker to the camera
+      this->publish_tf();
+
+      this->calibrated_ = true;
+      ROS_INFO("Calibration complete!");
+    }
   }
 }
 
 int main(int argc, char **argv)
 {
-// initialize ROS and the node
+  // initialize ROS and the node
   ros::init(argc, argv, "calibration");
 
-// initialize the calibration object
+  // initialize the calibration object
   calibration calib;
 
-// continue until a ctrl-c has occurred
+  // continue until a ctrl-c has occurred
   ros::Rate r(120);
   while (ros::ok())
   {
+    calib.publish_tf();
     calib.attempt_calibration();
     ros::spinOnce();
     r.sleep();
