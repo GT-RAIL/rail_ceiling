@@ -5,7 +5,7 @@
 
 <launch>
   <!-- AR Parameters -->
-  <arg name="marker_size" default="20.0" /> <!-- generated with "-s 7.5" -->
+  <arg name="marker_size" default="10.0" /> <!-- generated with "-s 7.5" -->
   <arg name="max_new_marker_error" default="0.08" />
   <arg name="max_track_error" default="0.2" />
   <arg name="node_name_prefix" default="ceiling_cam_tracker_" />
