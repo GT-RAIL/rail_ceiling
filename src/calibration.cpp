@@ -11,7 +11,9 @@
  */
 
 #include <rail_ceiling/calibration.hpp>
+#include <tf/transform_listener.h>
 #include <sstream>
+#include <fstream>
 
 using namespace std;
 
@@ -22,7 +24,7 @@ calibration::calibration() :
 
   // grab the number of cameras and samples to take
   pnh_.param("fixed_frame", this->fixed_frame_, string("map"));
-  //pnh_.param("camera_frame_prefix", this->camera_frame_prefix_, string("ceiling_cam_"));
+  pnh_.param("camera_frame_id_prefix", this->camera_frame_id_prefix_, string("ceiling_cam_"));
   pnh_.param("num_cameras", this->num_cameras_, 1);
   pnh_.param("num_samples", this->num_samples_, 10);
 
@@ -97,7 +99,7 @@ void calibration::publish_tf()
                        fixed_pose.orientation.w));
     // publish the fixed pose TF
     stringstream ss_fixed;
-    ss_fixed << "fixed_calibration_marker_" << i;
+    ss_fixed << FIXED_LINK_NAME << i;
     br.sendTransform(tf::StampedTransform(tf_fixed, ros::Time::now(), this->fixed_frame_, ss_fixed.str()));
 
     // publish the average pose from the camera if ready
@@ -111,11 +113,11 @@ void calibration::publish_tf()
       tf_average.setOrigin(tf::Vector3(average_pose.position.x, average_pose.position.y, average_pose.position.z));
       tf_average.setRotation(
           tf::Quaternion(average_pose.orientation.x, average_pose.orientation.y, average_pose.orientation.z,
-                         average_pose.orientation.w));
+                         average_pose.orientation.w).normalize());
       // now invert it
       tf::Transform tf_average_inverse = tf_average.inverse();
       stringstream ss_camera;
-      ss_camera << "calibration_ceiling_camera_" << i;
+      ss_camera << CAMERA_LINK_NAME << i;
       br.sendTransform(tf::StampedTransform(tf_average_inverse, ros::Time::now(), ss_fixed.str(), ss_camera.str()));
     }
   }
@@ -164,9 +166,88 @@ void calibration::attempt_calibration()
       // publish transforms from the marker to the camera
       this->publish_tf();
 
+      // write the calibration file
+      this->write_calibration();
+
       this->calibrated_ = true;
       ROS_INFO("Calibration complete!");
     }
+  }
+}
+
+void calibration::write_calibration()
+{
+  // get the current TFs
+  tf::TransformListener listener;
+  vector<tf::StampedTransform> tfs;
+
+  for (int i = 0; i < this->num_cameras_; i++)
+  {
+    stringstream ss_frame;
+    ss_frame << CAMERA_LINK_NAME << i;
+
+    // wait for the TF to come back
+    bool found = false;
+    while (!found)
+    {
+      try
+      {
+        // try and get the frame
+        tf::StampedTransform tf;
+        listener.lookupTransform(this->fixed_frame_, ss_frame.str(), ros::Time(0), tf);
+        tfs.push_back(tf);
+        found = true;
+      }
+      catch (tf::TransformException &ex)
+      {
+        // republish the TF
+        this->publish_tf();
+        // sleep and continue
+        ros::Duration(1.0).sleep();
+      }
+    }
+  }
+
+  stringstream ss;
+  ss << getenv("HOME") << "/" << URDF;
+  string file_name = ss.str();
+
+  // open the file for writing
+  ofstream urdf;
+  urdf.open(file_name.c_str());
+  if (!urdf.is_open())
+    ROS_ERROR("Failed to open '~/%s' for writing.", file_name.c_str());
+  else
+  {
+    urdf << "<?xml version=\"1.0\"?>\n";
+    urdf << "<robot xmlns:xacro=\"http://www.ros.org/wiki/xacro\" name=\"ceiling\">\n\n";
+
+    urdf << "  <!-- Auto-Generated from rail_ceiling/calibration Node -->\n\n";
+
+    urdf << "  <xacro:include filename=\"$(find rail_ceiling)/urdf/camera.urdf.xacro\" />\n\n";
+
+    urdf << "  <xacro:property name=\"PARENT\" value=\"" << this->fixed_frame_ << "\" />\n\n";
+
+    urdf << "  <!-- fixed frame -->\n";
+    urdf << "  <link name=\"${PARENT}\" />\n\n";
+
+    urdf << "  <!-- " << this->num_cameras_ << " Camera(s) -->\n";
+    for (int i = 0; i < this->num_cameras_; i++)
+    {
+      // grab the TF info
+      tf::StampedTransform &tf = tfs.at(i);
+      tf::Vector3 &pos = tf.getOrigin();
+      double roll, pitch, yaw;
+      tf.getBasis().getRPY(roll, pitch, yaw);
+      urdf << "  <xacro:ceiling_cam parent=\"${PARENT}\" link=\"" << this->camera_frame_id_prefix_ << i << "\">\n";
+      urdf << "    <origin xyz=\"" << pos.getX() << " " << pos.getY() << " " << pos.getZ() << "\" rpy=\"" << roll << " "
+          << pitch << " " << yaw << "\" />\n";
+      urdf << "  </xacro:ceiling_cam>\n";
+    }
+    urdf << "</robot>\n";
+
+    urdf.close();
+    ROS_INFO("Calibration written to '%s'.", file_name.c_str());
   }
 }
 
@@ -179,7 +260,7 @@ int main(int argc, char **argv)
   calibration calib;
 
   // continue until a ctrl-c has occurred
-  ros::Rate r(120);
+  ros::Rate r(60);
   while (ros::ok())
   {
     calib.publish_tf();

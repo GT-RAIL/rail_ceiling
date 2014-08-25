@@ -21,6 +21,24 @@
 #include <tf/transform_broadcaster.h>
 
 /*!
+ * \def URDF
+ * The URDF file to write.
+ */
+#define URDF "ceiling.urdf.xacro"
+
+/*!
+ * \def FIXED_LINK_NAME
+ * The link name of the AR markers.
+ */
+#define FIXED_LINK_NAME "fixed_calibration_marker_"
+
+/*!
+ * \def FIXED_LINK_NAME
+ * The link name of the cameras.
+ */
+#define CAMERA_LINK_NAME "calibration_ceiling_camera_"
+
+/*!
  * \class calibration
  * \brief The main calibration object.
  *
@@ -63,6 +81,13 @@ private:
    */
   void marker_cback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr& msg, int camera);
 
+  /*!
+   * \brief Write the calibration settings to a URDF file.
+   *
+   * Writes a file called 'ceiling.urdf.xacro' with the calibration settings.
+   */
+  void write_calibration();
+
   bool calibrated_; /*!< a flag to check if the calibration is complete */
 
   tf::TransformBroadcaster br; /*!< main transform broadcaster */
@@ -70,7 +95,7 @@ private:
   ros::NodeHandle nh_, pnh_; /*!< a handle for this ROS node and the private node handle */
 
   int num_cameras_, num_samples_; /*!< the number of ceiling cameras and samples to take */
-  std::string fixed_frame_; /*!< the fixed frame of the markers and frame of the cameras */
+  std::string fixed_frame_, camera_frame_id_prefix_; /*!< the fixed frame of the markers and frame of the cameras */
 
   std::vector<ros::Subscriber> marker_subs_; /*!< the subscriptions to the marker topic */
   std::vector<geometry_msgs::Pose> fixed_poses_, average_poses_; /*!< the known fixed pose of each marker and average from the AR tracker */
