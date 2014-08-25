@@ -1,0 +1,72 @@
+<!--
+   Author: Russell Toris, Worcester Polytechnic Institute
+  Version: August 22, 2014
+-->
+
+<launch>
+  <!-- Calibration Parameters -->
+  <arg name="num_cameras" default="5" />
+  <arg name="num_samples" default="25" />
+  <arg name="fixed_frame" default="map" />
+  <arg name="camera_frame_id_prefix" default="ceiling_cam_" />
+
+  <!-- Camera Parameters -->
+  <arg name="camera_node_name_prefix" default="ceiling_cam_" />
+  <arg name="video_device_prefix" default="/dev/video" />
+  <arg name="image_width" default="1920" />
+  <arg name="image_height" default="1080" />
+  <arg name="pixel_format" default="yuyv" />
+  <arg name="io_method" default="mmap" />
+  <arg name="camera_info_url_prefix" default="file://$(find rail_ceiling)/config/camera_info/ceiling_cam_" />
+  <arg name="camera_name_prefix" default="$(arg camera_frame_id_prefix)" />
+  <arg name="framerate" default="5" />
+  <arg name="autofocus" default="true" />
+  <arg name="autoexposure" default="false" />
+  <arg name="exposure" default="75" />
+    
+  <!-- AR Parameters -->
+  <arg name="marker_size" default="10.0" /> <!-- generated with "-s 7.5" -->
+  <arg name="bundle_files" default="$(find rail_ceiling)/bundles/kitchen_chair.xml $(find rail_ceiling)/bundles/kitchen_chair.xml" />
+  <arg name="max_new_marker_error" default="0.08" />
+  <arg name="max_track_error" default="0.2" />
+  <arg name="ar_node_name_prefix" default="ceiling_cam_tracker_" />
+  <arg name="cam_image_topic_prefix" default="/$(arg camera_name_prefix)" />
+  <arg name="image_topic" default="/image_raw" />
+  <arg name="cam_info_topic_prefix" default="$(arg cam_image_topic_prefix)" /> 
+  <arg name="info_topic" default="/camera_info" />
+  <arg name="output_frame_prefix" default="$(arg cam_image_topic_prefix)" />
+
+  <!-- Cameras -->
+  <include file="$(find rail_ceiling)/launch/cameras.launch">     
+    <arg name="node_name_prefix" value="$(arg camera_node_name_prefix)" />
+    <arg name="video_device_prefix" value="$(arg video_device_prefix)" />
+    <arg name="image_width" value="$(arg image_width)" />
+    <arg name="image_height" value="$(arg image_height)" />
+    <arg name="pixel_format" value="$(arg pixel_format)" />
+    <arg name="io_method" value="$(arg io_method)" />
+    <arg name="camera_info_url_prefix" value="$(arg camera_info_url_prefix)" />
+    <arg name="camera_frame_id_prefix" value="$(arg camera_frame_id_prefix)" />
+    <arg name="camera_name_prefix" value="$(arg camera_name_prefix)" />
+    <arg name="framerate" value="$(arg framerate)" />
+    <arg name="autofocus" value="$(arg autofocus)" />
+    <arg name="autoexposure" value="$(arg autoexposure)" />
+    <arg name="exposure" value="$(arg exposure)" />
+  </include>
+
+  <!-- AR Trackers -->
+  <include file="$(find rail_ceiling)/launch/ar_trackers.launch">
+    <arg name="bundle_files" value="$(arg bundle_files)" />
+    <arg name="node_name_prefix" value="$(arg ar_node_name_prefix)" />
+    <arg name="marker_size" value="$(arg marker_size)" />
+    <arg name="max_new_marker_error" value="$(arg max_new_marker_error)" />
+    <arg name="max_track_error" value="$(arg max_track_error)" />
+    <arg name="cam_image_topic_prefix" value="$(arg cam_image_topic_prefix)" />
+    <arg name="image_topic" value="$(arg image_topic)" />
+    <arg name="cam_info_topic_prefix" value="$(arg cam_info_topic_prefix)" /> 
+    <arg name="info_topic" value="$(arg info_topic)" />
+    <arg name="output_frame_prefix" value="$(arg output_frame_prefix)" />
+  </include>
+
+  <!-- Ceiling Description -->
+  <include file="$(find rail_ceiling)/launch/ceiling_description.launch" />
+</launch>

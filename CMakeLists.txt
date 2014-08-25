@@ -63,6 +63,11 @@ install(DIRECTORY rviz/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz
 )
 
+## Copy urdf files
+install(DIRECTORY urdf/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
+)
+
 ## Copy marker files
 install(DIRECTORY markers/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/markers
