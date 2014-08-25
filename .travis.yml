@@ -30,3 +30,7 @@ script:
   - source /opt/ros/hydro/setup.bash
   - catkin_make
   - catkin_make install
+  - source install/setup.bash
+  - cd src/package
+  - /opt/ros/hydro/share/xacro/xacro.py rail_ceiling/urdf/ceiling.urdf.xacro >> sanity.urdf
+  - diff sanity.urdf rail_ceiling/urdf/ceiling.urdf

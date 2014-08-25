@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+  <root xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="ceiling_cam" params="parent link *origin">
+    <joint name="${parent}_${link}_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent}" />
+      <child link="${link}" />
+    </joint>
+    <link name="${link}"/>
+  </xacro:macro>
+</root>

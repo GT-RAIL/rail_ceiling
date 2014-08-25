@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ceiling">
+
+  <!-- Auto-Generated from rail_ceiling/calibration Node -->
+
+  <xacro:include filename="$(find rail_ceiling)/urdf/camera.urdf.xacro" />
+
+  <xacro:property name="PARENT" value="map" />
+
+  <!-- fixed frame -->
+  <link name="${PARENT}" />
+
+  <!-- 5 Camera(s) -->
+  <xacro:ceiling_cam parent="${PARENT}" link="ceiling_cam_0">
+    <origin xyz="4.81422 0.496356 2.72483" rpy="3.13726 -0.155766 -3.12692" />
+  </xacro:ceiling_cam>
+  <xacro:ceiling_cam parent="${PARENT}" link="ceiling_cam_1">
+    <origin xyz="2.6261 0.83305 2.9213" rpy="2.993 -0.0794397 1.59787" />
+  </xacro:ceiling_cam>
+  <xacro:ceiling_cam parent="${PARENT}" link="ceiling_cam_2">
+    <origin xyz="4.30915 2.07388 2.6934" rpy="-3.12482 0.0176431 -1.59749" />
+  </xacro:ceiling_cam>
+  <xacro:ceiling_cam parent="${PARENT}" link="ceiling_cam_3">
+    <origin xyz="2.40755 2.69795 2.86367" rpy="-3.02988 -0.175625 -1.56704" />
+  </xacro:ceiling_cam>
+  <xacro:ceiling_cam parent="${PARENT}" link="ceiling_cam_4">
+    <origin xyz="4.36106 3.56552 2.88649" rpy="3.12016 0.0540734 3.12856" />
+  </xacro:ceiling_cam>
+</robot>

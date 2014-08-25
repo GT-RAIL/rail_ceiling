@@ -244,7 +244,7 @@ void calibration::write_calibration()
           << pitch << " " << yaw << "\" />\n";
       urdf << "  </xacro:ceiling_cam>\n";
     }
-    urdf << "</robot>\n";
+    urdf << "</robot>\n\n";
 
     urdf.close();
     ROS_INFO("Calibration written to '%s'.", file_name.c_str());
