@@ -32,5 +32,5 @@ script:
   - catkin_make install
   - source install/setup.bash
   - cd src/package
-  - /opt/ros/hydro/share/xacro/xacro.py urdf/ceiling.urdf.xacro >> sanity.urdf
-  - diff sanity.urdf urdf/ceiling.urdf
+  - /opt/ros/hydro/share/xacro/xacro.py /tmp/ws/src/package/urdf/ceiling.urdf.xacro >> sanity.urdf
+  - diff sanity.urdf /tmp/ws/src/package/urdf/ceiling.urdf
