@@ -1,0 +1,13 @@
+<!--
+   Author: Russell Toris, Worcester Polytechnic Institute
+  Version: August 25, 2014
+-->
+
+<launch>  
+  <param name="ceiling_description" command="$(find xacro)/xacro.py '$(find rail_ceiling)/urdf/ceiling.urdf.xacro'" />
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="ceiling_state_publisher" output="screen">
+    <remap from="robot_description" to="ceiling_description" />
+    <param name="publish_frequency" type="double" value="5.0" />
+  </node>
+</launch>
