@@ -1,0 +1,3 @@
+<launch> 
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rail_ceiling)/rviz/calibration.rviz" output="screen" />
+</launch>
