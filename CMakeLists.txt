@@ -67,3 +67,8 @@ install(DIRECTORY rviz/
 install(DIRECTORY markers/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/markers
 )
+
+## Copy bundle files
+install(DIRECTORY bundles/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/bundles
+)
