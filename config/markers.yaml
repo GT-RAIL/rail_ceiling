@@ -1,0 +1,30 @@
+- id: 0
+  type: coffee_table
+  markers:
+    - id: 1
+      x: 1.9
+      y: -3.2
+      theta: 0.0
+    - id: 2
+      x: -1.9
+      y: 3.2
+      theta: 0.0
+- id: 1
+  type: kitchen_table
+  markers:
+    - id: 3
+      x: 12.3
+      y: -5.0
+      theta: 0.0
+    - id: 4
+      x: -12.3
+      y: 5.0
+      theta: 0.0
+    - id: 7
+      x: -12.3
+      y: -5.0
+      theta: 0.0
+    - id: 23
+      x: 12.3
+      y: 5.0
+      theta: 0.0
