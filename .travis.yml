@@ -28,9 +28,23 @@ install:
 
 script:
   - source /opt/ros/hydro/setup.bash
+  - sudo apt-get purge yaml-cpp
+  - mkdir yaml
+  - cd yaml/
+  - wget https://yaml-cpp.googlecode.com/files/yaml-cpp-0.5.1.tar.gz
+  - tar -xvzf yaml-cpp-0.5.1.tar.gz
+  - cd yaml-cpp-0.5.1/
+  - mkdir build
+  - cd build/
+  - cmake ..
+  - make
+  - sudo make install
+  - cd ../../../
+  - rm -rf yaml
   - catkin_make
   - catkin_make install
   - source install/setup.bash
   - cd src/package
   - /opt/ros/hydro/share/xacro/xacro.py urdf/ceiling.urdf.xacro >> sanity.urdf
   - diff sanity.urdf urdf/ceiling.urdf
+  
