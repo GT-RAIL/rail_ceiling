@@ -107,8 +107,7 @@ private:
   *
   * @param index furniture id
   * @param type furniture type
-  * @param localizationObstacles message for obstacle information to be used for localization
-  * @param navigationObstacles message for obstacle information to be used for navigation planning
+  * @param obstacles message for obstacle information to be used for localization and navigation
   */
   void updateMessages(int index, std::string type, carl_navigation::Obstacles *obstacles);
 
@@ -118,6 +117,7 @@ private:
   * @param index furniture id
   * @param footprints furniture footprint information
   * @param obstacles obstacles message in which to store the calculated footprints
+  * @param isLocalization true if this update is for localization footprints, false if it is for navigation footprints
   */
   void fillFootprintInformation(int index, std::vector<geometry_msgs::Polygon> footprints, carl_navigation::Obstacles *obstacles, bool isLocalization);
 
