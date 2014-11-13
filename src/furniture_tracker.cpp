@@ -16,77 +16,304 @@ FurnitureTracker::FurnitureTracker()
   // private node handle
   ros::NodeHandle private_nh("~");
 
-  // grab the config file
+  // get number of marker topics (i.e. number of overhead cameras)
+  int numMarkerTopics;
+  private_nh.param("num_marker_topics", numMarkerTopics, 5);
+
+  // get config files
   stringstream ss;
   ss << ros::package::getPath("rail_ceiling") << "/config/markers.yaml";
-  string file;
-  private_nh.param("markers_config", file, ss.str());
+  string markerConfigFile;
+  private_nh.param("markers_config", markerConfigFile, ss.str());
+  ss.str("");
+  ss << ros::package::getPath("rail_ceiling") << "/config/furniture_footprints.yaml";
+  string furnitureConfigFile;
+  private_nh.param("furniture_footprints_config", furnitureConfigFile, ss.str());
 
-  // parse the configuration file
+  readConfigFiles(markerConfigFile, furnitureConfigFile);
+  furniturePoses.resize(furnitureList.size());
+  lastPublishedPoses.resize(furnitureList.size());
 
-//#ifdef YAMLCPP_GT_0_5_0
-  YAML::Node config = YAML::LoadFile(file);
-  for (size_t i = 0; i < config.size(); i++)
+  furnitureLayerPub = n.advertise<carl_navigation::Obstacles>("/move_base/global_costmap/furniture/update_furniture_layer", 1);
+
+  // subscribe to marker topics
+  markerSubscribers.resize(numMarkerTopics);
+  for (unsigned int i = 0; i < numMarkerTopics; i ++)
   {
-    Furniture f;
+    stringstream topicStream;
+    topicStream << "ceiling_cam_tracker_" << i << "/ar_pose_marker";
+    markerSubscribers[i] = n.subscribe(topicStream.str(), 1, &FurnitureTracker::markerCallback, this);
+  }
 
-    // load the ID and type
-    f.id = config[i]["id"].as<int>();
-    f.type = config[i]["type"].as<std::string>();
+  allPosesServer = n.advertiseService("furniture_tracker/getAllPoses", &FurnitureTracker::getAllPoses, this);
+}
 
-    // load marker information
-    YAML::Node markers = config[i]["markers"];
-    f.markers.resize(markers.size());
-    for (size_t j = 0; j < markers.size(); j ++)
+void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string furnitureConfigFile)
+{
+  // parse the marker configuration file
+    YAML::Node markerConfig = YAML::LoadFile(markerConfigFile);
+    unsigned int id = 0;
+    for (size_t i = 0; i < markerConfig.size(); i ++)
     {
-      f.markers[j].id = markers[j]["id"].as<int>();
-      f.markers[j].pose.x = markers[j]["x"].as<double>();
-      f.markers[j].pose.y = markers[j]["y"].as<double>();
-      f.markers[j].pose.theta = markers[j]["theta"].as<double>();
+      Furniture f;
+
+      // load the ID and type
+      f.id = id;
+      id ++;
+      f.type = markerConfig[i]["type"].as<string>();
+
+      // load marker information
+      YAML::Node markers = markerConfig[i]["markers"];
+      f.markers.resize(markers.size());
+      for (size_t j = 0; j < markers.size(); j ++)
+      {
+        f.markers[j].id = markers[j]["id"].as<int>();
+        f.markers[j].fid = f.id;
+        f.markers[j].pose.x = markers[j]["x"].as<double>();
+        f.markers[j].pose.y = markers[j]["y"].as<double>();
+        f.markers[j].pose.theta = markers[j]["theta"].as<double>();
+        if (f.markers[j].id >= markerList.size())
+          markerList.resize(f.markers[j].id + 1);
+        markerList[f.markers[j].id] = f.markers[j];
+      }
+
+      // store the furniture piece
+      furnitureList.push_back(f);
     }
 
-    // store the furniture piece
-    furnitureList.push_back(f);
-  }
-/*
-#else
-  ifstream fin(file.c_str());
-  YAML::Parser parser(fin);
-  YAML::Node config;
-  parser.GetNextDocument(config);
-  for (size_t i = 0; i < config.size(); i++)
+    ROS_INFO("Read marker configurations for %lu pieces of furniture.", furnitureList.size());
+
+    ROS_INFO("Uninitialized Marker Test: %d, %d", markerList[0].id, markerList[0].fid);
+
+    // parse the furniture footprints configuration file
+    YAML::Node furnitureConfig = YAML::LoadFile(furnitureConfigFile);
+    for (size_t i = 0; i < furnitureConfig.size(); i ++)
+    {
+      FurnitureTransforms ft;
+      ft.name = furnitureConfig[i]["name"].as<string>();
+      if (furnitureConfig[i]["localization_footprint"])
+      {
+        YAML::Node polygons = furnitureConfig[i]["localization_footprint"];
+        ft.localizationFootprint.resize(polygons.size());
+        for (size_t j = 0; j < polygons.size(); j ++)
+        {
+          YAML::Node vertices = polygons[j]["polygon"];
+          ft.localizationFootprint[j].points.resize(vertices.size());
+          for (size_t k = 0; k < vertices.size(); k ++)
+          {
+            ft.localizationFootprint[j].points[k].x = vertices[k][0].as<float>();
+            ft.localizationFootprint[j].points[k].y = vertices[k][1].as<float>();
+            ft.localizationFootprint[j].points[k].z = 0.0;
+          }
+        }
+      }
+      if (furnitureConfig[i]["navigation_footprint"])
+      {
+        YAML::Node polygons = furnitureConfig[i]["navigation_footprint"];
+        ft.navigationFootprint.resize(polygons.size());
+        for (size_t j = 0; j < polygons.size(); j ++)
+        {
+          YAML::Node vertices = polygons[j]["polygon"];
+          ft.navigationFootprint[j].points.resize(vertices.size());
+          for (size_t k = 0; k < vertices.size(); k ++)
+          {
+            ft.navigationFootprint[j].points[k].x = vertices[k][0].as<float>();
+            ft.navigationFootprint[j].points[k].y = vertices[k][1].as<float>();
+            ft.navigationFootprint[j].points[k].z = 0.0;
+          }
+        }
+      }
+      footprintTransforms.push_back(ft);
+    }
+
+    ROS_INFO("Read furniture footprints for:");
+    for (unsigned int i = 0; i < footprintTransforms.size(); i ++)
+    {
+      ROS_INFO("%s", footprintTransforms[i].name.c_str());
+    }
+}
+
+void FurnitureTracker::markerCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr& msg)
+{
+  //update furniture poses based on new marker information
+  for (unsigned int i = 0; i < msg->markers.size(); i ++)
   {
-    int id;
-    config[i]["position"] >> id;
-    string name;
-    config[i]["position"] >> name;
+    //ignore if an unused marker is seen
+    if (msg->markers[i].id >= markerList.size())
+      continue;
+    //uninitialized marker check
+    if (markerList[msg->markers[i].id].id == 0)
+      continue;
 
-    geometry_msgs::Pose pose;
-    const YAML::Node &position = config[i]["position"];
-    position[0] >> pose.position.x;
-    position[1] >> pose.position.y;
-    position[2] >> pose.position.z;
-    const YAML::Node &orientation = config[i]["orientation"];
-    orientation[0] >> pose.orientation.x;
-    orientation[1] >> pose.orientation.y;
-    orientation[2] >> pose.orientation.z;
-    orientation[3] >> pose.orientation.w;
+    Marker marker = markerList[msg->markers[i].id];
+    unsigned int furnitureID = marker.fid;
+    geometry_msgs::PoseStamped transformedPose;
+    geometry_msgs::PoseStamped markerPose;
+    markerPose = msg->markers[i].pose;
+    markerPose.header.frame_id = msg->markers[i].header.frame_id;
+    tfListener.transformPose("/map", markerPose, transformedPose);
+    geometry_msgs::Pose2D furniturePose;
+    float x = (float)transformedPose.pose.position.x;
+    float y = (float)transformedPose.pose.position.y;
+    float theta = (float)tf::getYaw(transformedPose.pose.orientation);
+    float xt = -(float)marker.pose.x;
+    float yt = -(float)marker.pose.y;
+    float thetat = -(float)marker.pose.theta;
+    furniturePose.x = x + xt*cos(theta + thetat) - yt*sin(theta + thetat);
+    furniturePose.y = y + yt*cos(theta + thetat) + xt*sin(theta + thetat);
+    furniturePose.theta = theta + thetat;
 
-    locations_.push_back(location(id, name, pose));
+    if (furnitureID >= furniturePoses.size())
+      furniturePoses.resize(furnitureID + 1);
+    furniturePoses[furnitureID] = furniturePose;
   }
-#endif
-*/
+}
 
+void FurnitureTracker::publishFurniturePoses()
+{
+  carl_navigation::Obstacles obstacles;
+  bool updatedFurniturePose = false;
   for (unsigned int i = 0; i < furnitureList.size(); i ++)
   {
-    ROS_INFO("Furniture piece id: %d", furnitureList[i].id);
-    ROS_INFO("\tType: %s", furnitureList[i].type.c_str());
-    ROS_INFO("\tMarkers:");
-    for (unsigned int j = 0; j < furnitureList[i].markers.size(); j ++)
+    int index = furnitureList[i].id;
+    string type = furnitureList[i].type;
+    //check if a marker has been received for the listed piece of furniture
+    if (index < furniturePoses.size())
     {
-      ROS_INFO("\t\t%d : (%f, %f, %f)", furnitureList[i].markers[j].id, furnitureList[i].markers[j].pose.x, furnitureList[i].markers[j].pose.y, furnitureList[i].markers[j].pose.theta);
+      //check if a pose has been calculated for the listed piece of furniture
+      if (updated(furniturePoses[index]))
+      {
+        //check if a pose has ever been published for this piece of furniture
+        if (updated(lastPublishedPoses[index]))
+        {
+          //publish pose if it has changed significantly
+          if (sqrt(pow(lastPublishedPoses[index].x - furniturePoses[index].x, 2) + pow(lastPublishedPoses[index].y - furniturePoses[index].y, 2)) > POSITION_THRESHOLD
+                || fabs(lastPublishedPoses[index].theta - furniturePoses[index].theta) > ANGULAR_THRESHOLD)
+          {
+            //DEBUG
+            if (sqrt(pow(lastPublishedPoses[index].x - furniturePoses[index].x, 2) + pow(lastPublishedPoses[index].y - furniturePoses[index].y, 2)) > POSITION_THRESHOLD)
+              ROS_INFO("Updated %s (id: %d) because of positional change", type.c_str(), index);
+            else if (fabs(lastPublishedPoses[index].theta - furniturePoses[index].theta) > ANGULAR_THRESHOLD)
+              ROS_INFO("Updated %s (id: %d) because of angular change", type.c_str(), index);
+
+            updateMessages(index, type, &obstacles);
+            updatedFurniturePose = true;
+            lastPublishedPoses[index] = furniturePoses[index];
+          }
+        }
+        else
+        {
+          //DEBUG
+          ROS_INFO("Initial publish for %s (id: %d)", type.c_str(), index);
+
+          //initial pose publish
+          updateMessages(index, type, &obstacles);
+          updatedFurniturePose = true;
+          lastPublishedPoses[index] = furniturePoses[index];
+        }
+      }
     }
   }
+
+  if (updatedFurniturePose)
+  {
+    furnitureLayerPub.publish(obstacles);
+  }
+}
+
+bool FurnitureTracker::getAllPoses(carl_navigation::GetAllObstacles::Request &req, carl_navigation::GetAllObstacles::Response &res)
+{
+  carl_navigation::Obstacles obstacles;
+  for (unsigned int i = 0; i < lastPublishedPoses.size(); i ++)
+  {
+    if (updated(lastPublishedPoses[i]))
+    {
+      int index = furnitureList[i].id;
+      string type = furnitureList[i].type;
+      FurnitureTransforms footprints;
+      bool footprintsSet = false;
+      for (unsigned int j = 0; j < footprintTransforms.size(); j ++)
+      {
+        if (footprintTransforms[j].name.compare(type) == 0)
+        {
+          footprints = footprintTransforms[j];
+          footprintsSet = true;
+          break;
+        }
+      }
+      if (!footprintsSet)
+      {
+        ROS_INFO("Could not find footprint information for furniture of type %s.", type.c_str());
+      }
+      else
+      {
+        fillFootprintInformation(index, footprints.localizationFootprint, &obstacles, true);
+        fillFootprintInformation(index, footprints.navigationFootprint, &obstacles, false);
+      }
+    }
+  }
+  res.navigationObstacles = obstacles.navigationObstacles;
+  res.localizationObstacles = obstacles.localizationObstacles;
+
+  return true;
+}
+
+void FurnitureTracker::updateMessages(int index, std::string type, carl_navigation::Obstacles *obstacles)
+{
+  //get footprints
+  FurnitureTransforms footprints;
+  bool footprintsSet = false;
+  for (unsigned int j = 0; j < footprintTransforms.size(); j ++)
+  {
+    if (footprintTransforms[j].name.compare(type) == 0)
+    {
+      footprints = footprintTransforms[j];
+      footprintsSet = true;
+      break;
+    }
+  }
+  if (!footprintsSet)
+  {
+    ROS_INFO("Could not find footprint information for furniture of type %s.", type.c_str());
+    return;
+  }
+
+  //fill footprint polygons
+  fillFootprintInformation(index, footprints.localizationFootprint, obstacles, true);
+  fillFootprintInformation(index, footprints.navigationFootprint, obstacles, false);
+}
+
+void FurnitureTracker::fillFootprintInformation(int index, vector<geometry_msgs::Polygon> footprints, carl_navigation::Obstacles *obstacles, bool isLocalization)
+{
+  if (!footprints.empty())
+  {
+    carl_navigation::Obstacle obstacle;
+    obstacle.polygons.clear();
+    for (unsigned int j = 0; j < footprints.size(); j ++)
+    {
+      geometry_msgs::Polygon polygon;
+      for (unsigned int k = 0; k < footprints[j].points.size(); k ++)
+      {
+        geometry_msgs::Point32 point;
+        point.x = (float)(furniturePoses[index].x + footprints[j].points[k].x * cos(furniturePoses[index].theta)
+            - footprints[j].points[k].y * sin(furniturePoses[index].theta));
+        point.y = (float)(furniturePoses[index].y + footprints[j].points[k].x * sin(furniturePoses[index].theta)
+            + footprints[j].points[k].y * cos(furniturePoses[index].theta));
+        polygon.points.push_back(point);
+      }
+      obstacle.polygons.push_back(polygon);
+    }
+    obstacle.id = index;
+    if (isLocalization)
+      obstacles->localizationObstacles.push_back(obstacle);
+    else
+      obstacles->navigationObstacles.push_back(obstacle);
+  }
+}
+
+bool FurnitureTracker::updated(geometry_msgs::Pose2D pose)
+{
+  return !(pose.x == 0 && pose.y == 0 && pose.theta == 0);
 }
 
 int main(int argc, char **argv)
@@ -95,5 +322,11 @@ int main(int argc, char **argv)
 
   FurnitureTracker ft;
 
-  ros::spin();
+  ros::Rate loop_rate(10);
+  while (ros::ok())
+  {
+    ft.publishFurniturePoses();
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
 }

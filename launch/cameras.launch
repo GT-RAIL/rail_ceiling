@@ -24,6 +24,8 @@
   <arg name="contrast" default="32" />
   <arg name="saturation" default="62" />
   <arg name="sharpness" default="150" />
+  <arg name="auto_white_balance" default="false" />
+  <arg name="white_balance" default="3500" />
 
   <!-- Assumes 5 Cameras -->
   <node pkg="usb_cam" name="$(arg node_name_prefix)0" type="usb_cam_node" output="screen">
@@ -45,8 +47,9 @@
     <param name="contrast" value="$(arg contrast)" />
     <param name="saturation" value="$(arg saturation)" />
     <param name="sharpness" value="$(arg sharpness)" />
+    <param name="auto_white_balance" value="$(arg auto_white_balance)" />
+    <param name="white_balance" value="$(arg white_balance)" />
   </node>
-  <!--
   <node pkg="usb_cam" name="$(arg node_name_prefix)1" type="usb_cam_node" output="screen">
     <param name="video_device" value="$(arg video_device_prefix)1" />
     <param name="image_width" value="$(arg image_width)" />
@@ -64,6 +67,8 @@
     <param name="contrast" value="$(arg contrast)" />
     <param name="saturation" value="$(arg saturation)" />
     <param name="sharpness" value="$(arg sharpness)" />
+    <param name="auto_white_balance" value="$(arg auto_white_balance)" />
+    <param name="white_balance" value="$(arg white_balance)" />
   </node>
   <node pkg="usb_cam" name="$(arg node_name_prefix)2" type="usb_cam_node" output="screen">
     <param name="video_device" value="$(arg video_device_prefix)2" />
@@ -82,6 +87,8 @@
     <param name="contrast" value="$(arg contrast)" />
     <param name="saturation" value="$(arg saturation)" />
     <param name="sharpness" value="$(arg sharpness)" />
+    <param name="auto_white_balance" value="$(arg auto_white_balance)" />
+    <param name="white_balance" value="$(arg white_balance)" />
   </node>
   <node pkg="usb_cam" name="$(arg node_name_prefix)3" type="usb_cam_node" output="screen">
     <param name="video_device" value="$(arg video_device_prefix)3" />
@@ -100,6 +107,8 @@
     <param name="contrast" value="$(arg contrast)" />
     <param name="saturation" value="$(arg saturation)" />
     <param name="sharpness" value="$(arg sharpness)" />
+    <param name="auto_white_balance" value="$(arg auto_white_balance)" />
+    <param name="white_balance" value="$(arg white_balance)" />
   </node>
   <node pkg="usb_cam" name="$(arg node_name_prefix)4" type="usb_cam_node" output="screen">
     <param name="video_device" value="$(arg video_device_prefix)4" />
@@ -118,6 +127,7 @@
     <param name="contrast" value="$(arg contrast)" />
     <param name="saturation" value="$(arg saturation)" />
     <param name="sharpness" value="$(arg sharpness)" />
+    <param name="auto_white_balance" value="$(arg auto_white_balance)" />
+    <param name="white_balance" value="$(arg white_balance)" />
   </node>
-  -->
 </launch>

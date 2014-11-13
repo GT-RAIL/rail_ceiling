@@ -19,7 +19,7 @@
   <arg name="io_method" default="mmap" />
   <arg name="camera_info_url_prefix" default="file://$(find rail_ceiling)/config/camera_info/ceiling_cam_" />
   <arg name="camera_name_prefix" default="$(arg camera_frame_id_prefix)" />
-  <arg name="framerate" default="5" />
+  <!--<arg name="framerate" default="5" />-->
   <arg name="autofocus" default="true" />
   <arg name="autoexposure" default="false" />
   <arg name="exposure" default="75" />
@@ -36,8 +36,8 @@
   <arg name="output_frame_prefix" default="$(arg cam_image_topic_prefix)" />
 
   <!-- Camera0 -->
-  <arg name="ceiling_cam_0_pos_x" default="4.0" />
-  <arg name="ceiling_cam_0_pos_y" default="0.5" />
+  <arg name="ceiling_cam_0_pos_x" default="3.57" />
+  <arg name="ceiling_cam_0_pos_y" default="1.15" />
   <arg name="ceiling_cam_0_pos_z" default="0.0" />
   <arg name="ceiling_cam_0_rot_x" default="0.0" />
   <arg name="ceiling_cam_0_rot_y" default="0.0" />
@@ -45,8 +45,8 @@
   <arg name="ceiling_cam_0_rot_w" default="1.0" />
 
   <!-- Camera1 -->
-  <arg name="ceiling_cam_1_pos_x" default="3" />
-  <arg name="ceiling_cam_1_pos_y" default="1" />
+  <arg name="ceiling_cam_1_pos_x" default="3.35" />
+  <arg name="ceiling_cam_1_pos_y" default="2.62" />
   <arg name="ceiling_cam_1_pos_z" default="0.0" />
   <arg name="ceiling_cam_1_rot_x" default="0.0" />
   <arg name="ceiling_cam_1_rot_y" default="0.0" />
@@ -54,8 +54,8 @@
   <arg name="ceiling_cam_1_rot_w" default="1.0" />
 
   <!-- Camera2 -->
-  <arg name="ceiling_cam_2_pos_x" default="4.3" />
-  <arg name="ceiling_cam_2_pos_y" default="2" />
+  <arg name="ceiling_cam_2_pos_x" default="4.45" />
+  <arg name="ceiling_cam_2_pos_y" default="3.36" />
   <arg name="ceiling_cam_2_pos_z" default="0.0" />
   <arg name="ceiling_cam_2_rot_x" default="0.0" />
   <arg name="ceiling_cam_2_rot_y" default="0.0" />
@@ -63,8 +63,8 @@
   <arg name="ceiling_cam_2_rot_w" default="1.0" />
 
   <!-- Camera3 -->
-  <arg name="ceiling_cam_3_pos_x" default="2.8" />
-  <arg name="ceiling_cam_3_pos_y" default="2.3" />
+  <arg name="ceiling_cam_3_pos_x" default="3.38" />
+  <arg name="ceiling_cam_3_pos_y" default="3.8" />
   <arg name="ceiling_cam_3_pos_z" default="0.0" />
   <arg name="ceiling_cam_3_rot_x" default="0.0" />
   <arg name="ceiling_cam_3_rot_y" default="0.0" />
@@ -72,8 +72,8 @@
   <arg name="ceiling_cam_3_rot_w" default="1.0" />
 
   <!-- Camera4 -->
-  <arg name="ceiling_cam_4_pos_x" default="4.2" />
-  <arg name="ceiling_cam_4_pos_y" default="3" />
+  <arg name="ceiling_cam_4_pos_x" default="3.97" />
+  <arg name="ceiling_cam_4_pos_y" default="5.52" />
   <arg name="ceiling_cam_4_pos_z" default="0.0" />
   <arg name="ceiling_cam_4_rot_x" default="0.0" />
   <arg name="ceiling_cam_4_rot_y" default="0.0" />
@@ -91,7 +91,7 @@
     <arg name="camera_info_url_prefix" value="$(arg camera_info_url_prefix)" />
     <arg name="camera_frame_id_prefix" value="$(arg camera_frame_id_prefix)" />
     <arg name="camera_name_prefix" value="$(arg camera_name_prefix)" />
-    <arg name="framerate" value="$(arg framerate)" />
+    <!-- <arg name="framerate" value="$(arg framerate)" /> -->
     <arg name="autofocus" value="$(arg autofocus)" />
     <arg name="autoexposure" value="$(arg autoexposure)" />
     <arg name="exposure" value="$(arg exposure)" />

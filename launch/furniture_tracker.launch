@@ -1,0 +1,12 @@
+<!--
+   Author: David Kent, Worcester Polytechnic Institute
+  Version: November 12, 2014
+-->
+
+<launch>
+  <!-- launch ar marker tracking for ceiling camera array -->
+  <include file="$(find rail_ceiling)/launch/ar_trackers.launch" />
+
+  <!-- launch furniture tracking node -->
+  <node pkg="rail_ceiling" name="furniture_tracker" type="furniture_tracker" output="screen" />
+</launch>

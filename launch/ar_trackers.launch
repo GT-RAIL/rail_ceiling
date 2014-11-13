@@ -1,12 +1,12 @@
 <!--
    Author: Russell Toris, Worcester Polytechnic Institute
-  Version: August 25, 2014
+  Version: August 21, 2014
 -->
 
 <launch>
   <!-- AR Parameters -->
-  <arg name="marker_size" default="10.0" /> <!-- generated with "-s 7.5" -->
-  <arg name="bundle_files" default="$(find rail_ceiling)/bundles/kitchen_chair.xml $(find rail_ceiling)/bundles/kitchen_chair.xml" />
+  <arg name="marker_size" default="8.0" />
+  <arg name="bundle_files" default="$(find rail_ceiling)/bundles/coffee_table.xml" />
   <arg name="max_new_marker_error" default="0.08" />
   <arg name="max_track_error" default="0.2" />
   <arg name="node_name_prefix" default="ceiling_cam_tracker_" />
@@ -17,7 +17,7 @@
   <arg name="output_frame_prefix" default="$(arg cam_image_topic_prefix)" />
 
   <!-- Assumes 5 Cameras -->
-  <node pkg="ar_track_alvar" name="$(arg node_name_prefix)0" type="findMarkerBundlesNoKinect" output="screen"
+  <node pkg="ar_track_alvar" name="$(arg node_name_prefix)0" type="individualMarkersNoKinect" output="screen"
      args="$(arg marker_size)
            $(arg max_new_marker_error)
            $(arg max_track_error)
@@ -28,7 +28,7 @@
     <remap from="visualization_marker" to="$(arg node_name_prefix)0/visualization_marker" />
     <remap from="ar_pose_marker" to="$(arg node_name_prefix)0/ar_pose_marker" />
   </node>
-  <node pkg="ar_track_alvar" name="$(arg node_name_prefix)1" type="findMarkerBundlesNoKinect" output="screen"
+  <node pkg="ar_track_alvar" name="$(arg node_name_prefix)1" type="individualMarkersNoKinect" output="screen"
      args="$(arg marker_size)
            $(arg max_new_marker_error)
            $(arg max_track_error)
@@ -39,7 +39,7 @@
     <remap from="visualization_marker" to="$(arg node_name_prefix)1/visualization_marker" />
     <remap from="ar_pose_marker" to="$(arg node_name_prefix)1/ar_pose_marker" />
   </node>
-  <node pkg="ar_track_alvar" name="$(arg node_name_prefix)2" type="findMarkerBundlesNoKinect" output="screen"
+  <node pkg="ar_track_alvar" name="$(arg node_name_prefix)2" type="individualMarkersNoKinect" output="screen"
      args="$(arg marker_size)
            $(arg max_new_marker_error)
            $(arg max_track_error)
@@ -50,7 +50,7 @@
     <remap from="visualization_marker" to="$(arg node_name_prefix)2/visualization_marker" />
     <remap from="ar_pose_marker" to="$(arg node_name_prefix)2/ar_pose_marker" />
   </node>
-  <node pkg="ar_track_alvar" name="$(arg node_name_prefix)3" type="findMarkerBundlesNoKinect" output="screen"
+  <node pkg="ar_track_alvar" name="$(arg node_name_prefix)3" type="individualMarkersNoKinect" output="screen"
      args="$(arg marker_size)
            $(arg max_new_marker_error)
            $(arg max_track_error)
@@ -61,7 +61,7 @@
     <remap from="visualization_marker" to="$(arg node_name_prefix)3/visualization_marker" />
     <remap from="ar_pose_marker" to="$(arg node_name_prefix)3/ar_pose_marker" />
   </node>
-  <node pkg="ar_track_alvar" name="$(arg node_name_prefix)4" type="findMarkerBundlesNoKinect" output="screen"
+  <node pkg="ar_track_alvar" name="$(arg node_name_prefix)4" type="individualMarkersNoKinect" output="screen"
      args="$(arg marker_size)
            $(arg max_new_marker_error)
            $(arg max_track_error)

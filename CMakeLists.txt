@@ -4,7 +4,7 @@ project(rail_ceiling)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp roslib geometry_msgs ar_track_alvar_msgs tf)
+find_package(catkin REQUIRED COMPONENTS roscpp ar_track_alvar_msgs roslib geometry_msgs ar_track_alvar_msgs tf)
 
 ###################################################
 ## Declare things to be passed to other projects ##
