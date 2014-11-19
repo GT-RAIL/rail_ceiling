@@ -70,6 +70,7 @@ private:
 
   tf::TransformListener tfListener;
 
+  bool readInitialPoses;
   std::vector<Marker> markerList;
   std::vector<Furniture> furnitureList;
   std::vector<FurnitureTransforms> footprintTransforms;

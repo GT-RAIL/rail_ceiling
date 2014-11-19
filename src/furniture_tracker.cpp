@@ -19,6 +19,7 @@ FurnitureTracker::FurnitureTracker()
   // get number of marker topics (i.e. number of overhead cameras)
   int numMarkerTopics;
   private_nh.param("num_marker_topics", numMarkerTopics, 5);
+  private_nh.param("read_initial_poses", readInitialPoses, false);
 
   // get config files
   stringstream ss;
@@ -31,7 +32,6 @@ FurnitureTracker::FurnitureTracker()
   private_nh.param("furniture_footprints_config", furnitureConfigFile, ss.str());
 
   readConfigFiles(markerConfigFile, furnitureConfigFile);
-  furniturePoses.resize(furnitureList.size());
   lastPublishedPoses.resize(furnitureList.size());
 
   furnitureLayerPub = n.advertise<carl_navigation::Obstacles>("/move_base/global_costmap/furniture/update_furniture_layer", 1);
@@ -51,86 +51,100 @@ FurnitureTracker::FurnitureTracker()
 void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string furnitureConfigFile)
 {
   // parse the marker configuration file
-    YAML::Node markerConfig = YAML::LoadFile(markerConfigFile);
-    unsigned int id = 0;
-    for (size_t i = 0; i < markerConfig.size(); i ++)
+  YAML::Node markerConfig = YAML::LoadFile(markerConfigFile);
+  unsigned int id = 0;
+  for (size_t i = 0; i < markerConfig.size(); i ++)
+  {
+    Furniture f;
+
+    // load the ID and type
+    f.id = id;
+    id ++;
+    f.type = markerConfig[i]["type"].as<string>();
+
+    //optionally load
+    if (readInitialPoses && markerConfig[i]["initial_pose"])
     {
-      Furniture f;
+      geometry_msgs::Pose2D initialPose;
+      initialPose.x = markerConfig[i]["initial_pose"][0].as<double>();
+      initialPose.y = markerConfig[i]["initial_pose"][1].as<double>();
+      initialPose.theta = markerConfig[i]["initial_pose"][2].as<double>();
+      furniturePoses.push_back(initialPose);
+      ROS_INFO("Read initial position for furniture piece %lu", i);
+    }
+    else
+    {
+      furniturePoses.resize(furniturePoses.size() + 1);
+    }
+    ROS_INFO("furniturePoses size: %lu", furniturePoses.size());
 
-      // load the ID and type
-      f.id = id;
-      id ++;
-      f.type = markerConfig[i]["type"].as<string>();
-
-      // load marker information
-      YAML::Node markers = markerConfig[i]["markers"];
-      f.markers.resize(markers.size());
-      for (size_t j = 0; j < markers.size(); j ++)
-      {
-        f.markers[j].id = markers[j]["id"].as<int>();
-        f.markers[j].fid = f.id;
-        f.markers[j].pose.x = markers[j]["x"].as<double>();
-        f.markers[j].pose.y = markers[j]["y"].as<double>();
-        f.markers[j].pose.theta = markers[j]["theta"].as<double>();
-        if (f.markers[j].id >= markerList.size())
-          markerList.resize(f.markers[j].id + 1);
-        markerList[f.markers[j].id] = f.markers[j];
-      }
-
-      // store the furniture piece
-      furnitureList.push_back(f);
+    // load marker information
+    YAML::Node markers = markerConfig[i]["markers"];
+    f.markers.resize(markers.size());
+    for (size_t j = 0; j < markers.size(); j ++)
+    {
+      f.markers[j].id = markers[j]["id"].as<int>();
+      f.markers[j].fid = f.id;
+      f.markers[j].pose.x = markers[j]["x"].as<double>();
+      f.markers[j].pose.y = markers[j]["y"].as<double>();
+      f.markers[j].pose.theta = markers[j]["theta"].as<double>();
+      if (f.markers[j].id >= markerList.size())
+        markerList.resize(f.markers[j].id + 1);
+      markerList[f.markers[j].id] = f.markers[j];
     }
 
-    ROS_INFO("Read marker configurations for %lu pieces of furniture.", furnitureList.size());
+    // store the furniture piece
+    furnitureList.push_back(f);
+  }
 
-    ROS_INFO("Uninitialized Marker Test: %d, %d", markerList[0].id, markerList[0].fid);
+  ROS_INFO("Read marker configurations for %lu pieces of furniture.", furnitureList.size());
 
-    // parse the furniture footprints configuration file
-    YAML::Node furnitureConfig = YAML::LoadFile(furnitureConfigFile);
-    for (size_t i = 0; i < furnitureConfig.size(); i ++)
+  // parse the furniture footprints configuration file
+  YAML::Node furnitureConfig = YAML::LoadFile(furnitureConfigFile);
+  for (size_t i = 0; i < furnitureConfig.size(); i ++)
+  {
+    FurnitureTransforms ft;
+    ft.name = furnitureConfig[i]["name"].as<string>();
+    if (furnitureConfig[i]["localization_footprint"])
     {
-      FurnitureTransforms ft;
-      ft.name = furnitureConfig[i]["name"].as<string>();
-      if (furnitureConfig[i]["localization_footprint"])
+      YAML::Node polygons = furnitureConfig[i]["localization_footprint"];
+      ft.localizationFootprint.resize(polygons.size());
+      for (size_t j = 0; j < polygons.size(); j ++)
       {
-        YAML::Node polygons = furnitureConfig[i]["localization_footprint"];
-        ft.localizationFootprint.resize(polygons.size());
-        for (size_t j = 0; j < polygons.size(); j ++)
+        YAML::Node vertices = polygons[j]["polygon"];
+        ft.localizationFootprint[j].points.resize(vertices.size());
+        for (size_t k = 0; k < vertices.size(); k ++)
         {
-          YAML::Node vertices = polygons[j]["polygon"];
-          ft.localizationFootprint[j].points.resize(vertices.size());
-          for (size_t k = 0; k < vertices.size(); k ++)
-          {
-            ft.localizationFootprint[j].points[k].x = vertices[k][0].as<float>();
-            ft.localizationFootprint[j].points[k].y = vertices[k][1].as<float>();
-            ft.localizationFootprint[j].points[k].z = 0.0;
-          }
+          ft.localizationFootprint[j].points[k].x = vertices[k][0].as<float>();
+          ft.localizationFootprint[j].points[k].y = vertices[k][1].as<float>();
+          ft.localizationFootprint[j].points[k].z = 0.0;
         }
       }
-      if (furnitureConfig[i]["navigation_footprint"])
+    }
+    if (furnitureConfig[i]["navigation_footprint"])
+    {
+      YAML::Node polygons = furnitureConfig[i]["navigation_footprint"];
+      ft.navigationFootprint.resize(polygons.size());
+      for (size_t j = 0; j < polygons.size(); j ++)
       {
-        YAML::Node polygons = furnitureConfig[i]["navigation_footprint"];
-        ft.navigationFootprint.resize(polygons.size());
-        for (size_t j = 0; j < polygons.size(); j ++)
+        YAML::Node vertices = polygons[j]["polygon"];
+        ft.navigationFootprint[j].points.resize(vertices.size());
+        for (size_t k = 0; k < vertices.size(); k ++)
         {
-          YAML::Node vertices = polygons[j]["polygon"];
-          ft.navigationFootprint[j].points.resize(vertices.size());
-          for (size_t k = 0; k < vertices.size(); k ++)
-          {
-            ft.navigationFootprint[j].points[k].x = vertices[k][0].as<float>();
-            ft.navigationFootprint[j].points[k].y = vertices[k][1].as<float>();
-            ft.navigationFootprint[j].points[k].z = 0.0;
-          }
+          ft.navigationFootprint[j].points[k].x = vertices[k][0].as<float>();
+          ft.navigationFootprint[j].points[k].y = vertices[k][1].as<float>();
+          ft.navigationFootprint[j].points[k].z = 0.0;
         }
       }
-      footprintTransforms.push_back(ft);
     }
+    footprintTransforms.push_back(ft);
+  }
 
-    ROS_INFO("Read furniture footprints for:");
-    for (unsigned int i = 0; i < footprintTransforms.size(); i ++)
-    {
-      ROS_INFO("%s", footprintTransforms[i].name.c_str());
-    }
+  ROS_INFO("Read furniture footprints for:");
+  for (unsigned int i = 0; i < footprintTransforms.size(); i ++)
+  {
+    ROS_INFO("%s", footprintTransforms[i].name.c_str());
+  }
 }
 
 void FurnitureTracker::markerCallback(const ar_track_alvar_msgs::AlvarMarkers::ConstPtr& msg)
@@ -224,9 +238,9 @@ void FurnitureTracker::publishFurniturePoses()
 bool FurnitureTracker::getAllPoses(carl_navigation::GetAllObstacles::Request &req, carl_navigation::GetAllObstacles::Response &res)
 {
   carl_navigation::Obstacles obstacles;
-  for (unsigned int i = 0; i < lastPublishedPoses.size(); i ++)
+  for (unsigned int i = 0; i < furniturePoses.size(); i ++)
   {
-    if (updated(lastPublishedPoses[i]))
+    if (updated(furniturePoses[i]))
     {
       int index = furnitureList[i].id;
       string type = furnitureList[i].type;

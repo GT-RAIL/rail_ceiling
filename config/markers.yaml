@@ -1,4 +1,5 @@
 - type: coffee_table
+  initial_pose: [3.345, 2.99, 1.571]
   markers:
     - id: 1
       x: -0.57
@@ -9,6 +10,7 @@
       y: -0.2125
       theta: 0.0
 - type: kitchen_table
+  initial_pose: [3.877, 5.704, 1.571]
   markers:
     - id: 3
       x: -0.41
@@ -19,6 +21,7 @@
       y: -0.4025
       theta: 0.0
 - type: kitchen_chair
+  initial_pose: [3.345, 5.775, -1.571]
   markers:
     - id: 5
       x: -0.1525
@@ -29,6 +32,7 @@
       y: -0.10
       theta: 0.0
 - type: large_chair
+  initial_pose: [3.643, 1.1, 0.0]
   markers:
     - id: 7
       x: -0.195
@@ -39,6 +43,7 @@
       y: -0.1825
       theta: 0.0
 - type: large_chair
+  initial_pose: [2.62, 1.1, 0.0]
   markers:
     - id: 9
       x: -0.195
@@ -49,6 +54,7 @@
       y: -0.1825
       theta: 0.0
 - type: sofa
+  initial_pose: [4.497, 2.94, 1.521]
   markers:
     - id: 12
       x: -0.35

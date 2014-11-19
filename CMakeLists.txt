@@ -32,16 +32,22 @@ link_directories(${YAML_CPP_LIBRARY_DIRS})
 
 ## Declare a cpp executable
 add_executable(calibration src/calibration.cpp)
+add_executable(calibration_from_carl src/calibration_from_carl.cpp)
 add_executable(furniture_tracker src/furniture_tracker.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(calibration
   ${catkin_LIBRARIES}
 )
+target_link_libraries(calibration_from_carl
+  ${catkin_LIBRARIES}
+)
 target_link_libraries(furniture_tracker
   ${catkin_LIBRARIES}
   yaml-cpp
 )
+
+add_dependencies(furniture_tracker carl_navigation_gencpp)
 
 #############
 ## Install ##
