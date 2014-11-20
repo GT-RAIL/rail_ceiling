@@ -74,7 +74,7 @@ add_dependencies(furniture_tracker ${PROJECT_NAME}_gencpp)
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS calibration
+install(TARGETS calibration calibration_from_carl furniture_tracker
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
