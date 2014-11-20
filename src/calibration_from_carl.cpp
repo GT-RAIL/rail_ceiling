@@ -42,6 +42,7 @@ void CalibrationFromCarl::startCalibrationCallback(const std_msgs::Int16::ConstP
 {
   //enable calibration for the specified camera and clear out any previous samples
   calibrationEnabled[msg->data] = true;
+  calibrated[msg->data] = false;
   transformSamples[msg->data].clear();
   calibrationComplete = false;
 }
@@ -57,7 +58,6 @@ void CalibrationFromCarl::markerCallback(const ar_track_alvar_msgs::AlvarMarkers
       //integer denoting the camera number
       size_t pos = msg->markers[i].header.frame_id.find("cam_");
       int cameraid = atoi((msg->markers[i].header.frame_id.substr(pos + 4)).c_str());
-      ROS_INFO("camera id check: %d", cameraid);
       if (calibrationEnabled[cameraid])
       {
         geometry_msgs::PoseStamped sample = msg->markers[i].pose;
@@ -78,6 +78,7 @@ void CalibrationFromCarl::markerCallback(const ar_track_alvar_msgs::AlvarMarkers
         transformSamples[cameraid].push_back(finalTransform);
         if (transformSamples[cameraid].size() >= REQUIRED_SAMPLES)
         {
+          ROS_INFO("Finished calibration for camera %d", cameraid);
           calibrationEnabled[cameraid] = false;
         }
       }
@@ -122,6 +123,7 @@ void CalibrationFromCarl::publishTransforms()
         avgTransform.setRotation(avgQuat.normalize());
 
         finalTransforms[i] = avgTransform;
+        calibrated[i] = true;
       }
 
       br.sendTransform(finalTransforms[i]);
@@ -132,7 +134,7 @@ void CalibrationFromCarl::publishTransforms()
     }
   }
 
-  if (finished)
+  if (finished && !calibrationComplete)
   {
     //write calibration file
     ROS_INFO("Writing calibration...");

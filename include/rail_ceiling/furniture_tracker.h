@@ -13,10 +13,10 @@
 
 #include <ros/ros.h>
 #include <ar_track_alvar_msgs/AlvarMarkers.h>
-#include <carl_navigation/GetAllObstacles.h>
-#include <carl_navigation/Obstacles.h>
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/Pose2D.h>
+#include <rail_ceiling/GetAllObstacles.h>
+#include <rail_ceiling/Obstacles.h>
 #include <ros/package.h>
 #include <tf/transform_listener.h>
 #include <yaml-cpp/yaml.h>
@@ -101,7 +101,7 @@ private:
   * @param req service request denoting whether the request is for localization or navigation obstacle information
   * @param res service response including footprint information
   */
-  bool getAllPoses(carl_navigation::GetAllObstacles::Request &req, carl_navigation::GetAllObstacles::Response &res);
+  bool getAllPoses(rail_ceiling::GetAllObstacles::Request &req, rail_ceiling::GetAllObstacles::Response &res);
 
   /**
   * \brief update obstacle message data
@@ -110,7 +110,7 @@ private:
   * @param type furniture type
   * @param obstacles message for obstacle information to be used for localization and navigation
   */
-  void updateMessages(int index, std::string type, carl_navigation::Obstacles *obstacles);
+  void updateMessages(int index, std::string type, rail_ceiling::Obstacles *obstacles);
 
   /**
   * \brief Calculate footprint polygons and fill them into an obstacles message
@@ -120,7 +120,7 @@ private:
   * @param obstacles obstacles message in which to store the calculated footprints
   * @param isLocalization true if this update is for localization footprints, false if it is for navigation footprints
   */
-  void fillFootprintInformation(int index, std::vector<geometry_msgs::Polygon> footprints, carl_navigation::Obstacles *obstacles, bool isLocalization);
+  void fillFootprintInformation(int index, std::vector<geometry_msgs::Polygon> footprints, rail_ceiling::Obstacles *obstacles, bool isLocalization);
 
   /**
   * \brief determine whether a pose has been updated after its initialization

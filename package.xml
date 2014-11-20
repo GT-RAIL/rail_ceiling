@@ -17,7 +17,6 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>ar_track_alvar_msgs</build_depend>
-  <build_depend>carl_navigation</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>roslib</build_depend>
@@ -26,7 +25,6 @@
 
   <run_depend>ar_track_alvar</run_depend>
   <run_depend>ar_track_alvar_msgs</run_depend>
-  <run_depend>carl_navigation</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>image_view</run_depend>
   <run_depend>robot_state_publisher</run_depend>

@@ -34,7 +34,7 @@ FurnitureTracker::FurnitureTracker()
   readConfigFiles(markerConfigFile, furnitureConfigFile);
   lastPublishedPoses.resize(furnitureList.size());
 
-  furnitureLayerPub = n.advertise<carl_navigation::Obstacles>("/move_base/global_costmap/furniture/update_furniture_layer", 1);
+  furnitureLayerPub = n.advertise<rail_ceiling::Obstacles>("furniture_layer/update_obstacles", 1);
 
   // subscribe to marker topics
   markerSubscribers.resize(numMarkerTopics);
@@ -185,7 +185,7 @@ void FurnitureTracker::markerCallback(const ar_track_alvar_msgs::AlvarMarkers::C
 
 void FurnitureTracker::publishFurniturePoses()
 {
-  carl_navigation::Obstacles obstacles;
+  rail_ceiling::Obstacles obstacles;
   bool updatedFurniturePose = false;
   for (unsigned int i = 0; i < furnitureList.size(); i ++)
   {
@@ -206,9 +206,9 @@ void FurnitureTracker::publishFurniturePoses()
           {
             //DEBUG
             if (sqrt(pow(lastPublishedPoses[index].x - furniturePoses[index].x, 2) + pow(lastPublishedPoses[index].y - furniturePoses[index].y, 2)) > POSITION_THRESHOLD)
-              ROS_INFO("Updated %s (id: %d) because of positional change", type.c_str(), index);
+              ROS_INFO("Updated %s (id: %d) because of positional change.", type.c_str(), index);
             else if (fabs(lastPublishedPoses[index].theta - furniturePoses[index].theta) > ANGULAR_THRESHOLD)
-              ROS_INFO("Updated %s (id: %d) because of angular change", type.c_str(), index);
+              ROS_INFO("Updated %s (id: %d) because of angular change.", type.c_str(), index);
 
             updateMessages(index, type, &obstacles);
             updatedFurniturePose = true;
@@ -218,7 +218,7 @@ void FurnitureTracker::publishFurniturePoses()
         else
         {
           //DEBUG
-          ROS_INFO("Initial publish for %s (id: %d)", type.c_str(), index);
+          ROS_INFO("Initial publish for %s (id: %d).", type.c_str(), index);
 
           //initial pose publish
           updateMessages(index, type, &obstacles);
@@ -235,9 +235,9 @@ void FurnitureTracker::publishFurniturePoses()
   }
 }
 
-bool FurnitureTracker::getAllPoses(carl_navigation::GetAllObstacles::Request &req, carl_navigation::GetAllObstacles::Response &res)
+bool FurnitureTracker::getAllPoses(rail_ceiling::GetAllObstacles::Request &req, rail_ceiling::GetAllObstacles::Response &res)
 {
-  carl_navigation::Obstacles obstacles;
+  rail_ceiling::Obstacles obstacles;
   for (unsigned int i = 0; i < furniturePoses.size(); i ++)
   {
     if (updated(furniturePoses[i]))
@@ -272,7 +272,7 @@ bool FurnitureTracker::getAllPoses(carl_navigation::GetAllObstacles::Request &re
   return true;
 }
 
-void FurnitureTracker::updateMessages(int index, std::string type, carl_navigation::Obstacles *obstacles)
+void FurnitureTracker::updateMessages(int index, std::string type, rail_ceiling::Obstacles *obstacles)
 {
   //get footprints
   FurnitureTransforms footprints;
@@ -297,11 +297,11 @@ void FurnitureTracker::updateMessages(int index, std::string type, carl_navigati
   fillFootprintInformation(index, footprints.navigationFootprint, obstacles, false);
 }
 
-void FurnitureTracker::fillFootprintInformation(int index, vector<geometry_msgs::Polygon> footprints, carl_navigation::Obstacles *obstacles, bool isLocalization)
+void FurnitureTracker::fillFootprintInformation(int index, vector<geometry_msgs::Polygon> footprints, rail_ceiling::Obstacles *obstacles, bool isLocalization)
 {
   if (!footprints.empty())
   {
-    carl_navigation::Obstacle obstacle;
+    rail_ceiling::Obstacle obstacle;
     obstacle.polygons.clear();
     for (unsigned int j = 0; j < footprints.size(); j ++)
     {
