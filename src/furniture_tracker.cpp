@@ -76,7 +76,6 @@ void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string
     {
       furniturePoses.resize(furniturePoses.size() + 1);
     }
-    ROS_INFO("furniturePoses size: %lu", furniturePoses.size());
 
     // load marker information
     YAML::Node markers = markerConfig[i]["markers"];
