@@ -45,7 +45,7 @@ FurnitureTracker::FurnitureTracker()
     markerSubscribers[i] = n.subscribe(topicStream.str(), 1, &FurnitureTracker::markerCallback, this);
   }
 
-  allPosesServer = n.advertiseService("furniture_tracker/getAllPoses", &FurnitureTracker::getAllPoses, this);
+  allPosesServer = n.advertiseService("furniture_tracker/get_all_poses", &FurnitureTracker::getAllPoses, this);
 }
 
 void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string furnitureConfigFile)
