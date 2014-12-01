@@ -103,24 +103,34 @@ void CalibrationFromCarl::publishTransforms()
         avgTransform.frame_id_ = transformSamples[i][0].frame_id_;
         avgTransform.child_frame_id_ = transformSamples[i][0].child_frame_id_;
         avgTransform.stamp_ = ros::Time::now();
-        float x = 0.0, y = 0.0, z = 0.0, roll = 0.0, pitch = 0.0, yaw = 0.0;
+        float x = 0.0, y = 0.0, z = 0.0;
+        //float qx = 0.0, qy = 0.0, qz = 0.0, qw = 0.0;
+        tf::Quaternion avgQuat;
         for (unsigned int j = 0; j < transformSamples[i].size(); j++)
         {
-          tf::Vector3 tempVec = transformSamples[i][j].getOrigin();
-          x += tempVec.x();
-          y += tempVec.y();
-          z += tempVec.z();
-          double tempRoll, tempPitch, tempYaw;
-          tf::Matrix3x3(transformSamples[i][j].getRotation()).getEulerYPR(tempYaw, tempPitch, tempRoll);
-          roll += (float)tempRoll;
-          pitch += (float)tempPitch;
-          yaw += (float)tempYaw;
+          x += transformSamples[i][j].getOrigin().x();
+          y += transformSamples[i][j].getOrigin().y();
+          z += transformSamples[i][j].getOrigin().z();
+          if (j == 0)
+          {
+            avgQuat = transformSamples[i][j].getRotation();
+          }
+          else
+          {
+            avgQuat.slerp(transformSamples[i][j].getRotation(), 1 - (1/(j + 1)));
+          }
+          /*
+          qx += transformSamples[i][j].getRotation().getX();
+          qy += transformSamples[i][j].getRotation().getY();
+          qz += transformSamples[i][j].getRotation().getZ();
+          qw += transformSamples[i][j].getRotation().getW();
+          */
         }
+
         int numSamples = transformSamples[i].size();
         avgTransform.setOrigin(tf::Vector3(x/numSamples, y/numSamples, z/numSamples));
-        tf::Quaternion avgQuat;
-        avgQuat.setEuler(yaw/numSamples, pitch/numSamples, roll/numSamples);
-        avgTransform.setRotation(avgQuat.normalize());
+        //avgTransform.setRotation(tf::Quaternion(qx/numSamples, qy/numSamples, qz/numSamples, qw/numSamples).normalize());
+        avgTransform.setRotation(avgQuat);
 
         finalTransforms[i] = avgTransform;
         calibrated[i] = true;
