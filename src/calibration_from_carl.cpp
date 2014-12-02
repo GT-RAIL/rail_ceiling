@@ -117,7 +117,7 @@ void CalibrationFromCarl::publishTransforms()
           }
           else
           {
-            avgQuat.slerp(transformSamples[i][j].getRotation(), 1 - (1/(j + 1)));
+            avgQuat.slerp(transformSamples[i][j].getRotation(), 1.0/((float)(j + 1)));
           }
           /*
           qx += transformSamples[i][j].getRotation().getX();
