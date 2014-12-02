@@ -2,6 +2,23 @@
 Changelog for package rail_ceiling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.2 (2014-12-02)
+------------------
+* Linear interpolation-based method to average quaternions for camera calibration samples
+* topic name update
+* removed some debugging statements
+* CMakeLists install
+* Furniture position adjustment
+* Organization/Documentation
+* Initial positions of furniture can be included in the markers.yaml file, which can be optionally read in when launching the furniture_tracker node
+* Added missing dependency
+* Documentation and cleanup
+* New implementation of furniture tracking for both localization and path planning
+* Merge branch 'develop' of https://github.com/WPI-RAIL/rail_ceiling into develop
+* Started implementing new furniture tracker with YAML config files
+* Update .travis.yml
+* Contributors: David Kent, Russell Toris
+
 0.0.1 (2014-08-27)
 ------------------
 * ceiling launch file added
