@@ -28,6 +28,9 @@ install:
 
 script:
   - source /opt/ros/hydro/setup.bash
+  - catkin_make
+  - catkin_make install
+  - rm -rf build/ devel/ install/
   - sudo apt-get purge yaml-cpp
   - mkdir yaml
   - cd yaml/
