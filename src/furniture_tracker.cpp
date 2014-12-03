@@ -113,14 +113,21 @@ void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string
     markerConfig[i]["type"] >> f.type;
 
     //optionally load
-    if (readInitialPoses && (const YAML::Node *poseNode = markerConfig[i].FindValue("initial_pose")))
+    if (readInitialPoses)
     {
-      geometry_msgs::Pose2D initialPose;
-      markerConfig[i]["initial_pose"][0] >> initialPose.x;
-      markerConfig[i]["initial_pose"][1] >> initialPose.y;
-      markerConfig[i]["initial_pose"][2] >> initialPose.theta;
-      furniturePoses.push_back(initialPose);
-      ROS_INFO("Read initial position for furniture piece %lu", i);
+      if (const YAML::Node *poseNode = markerConfig[i].FindValue("initial_pose"))
+      {
+        geometry_msgs::Pose2D initialPose;
+        markerConfig[i]["initial_pose"][0] >> initialPose.x;
+        markerConfig[i]["initial_pose"][1] >> initialPose.y;
+        markerConfig[i]["initial_pose"][2] >> initialPose.theta;
+        furniturePoses.push_back(initialPose);
+        ROS_INFO("Read initial position for furniture piece %lu", i);
+      }
+      else
+      {
+        furniturePoses.resize(furniturePoses.size() + 1);
+      }
     }
     else
     {
