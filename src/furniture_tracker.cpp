@@ -113,7 +113,7 @@ void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string
     markerConfig[i]["type"] >> f.type;
 
     //optionally load
-    if (readInitialPoses && const YAML::Node *poseNode = markerConfig[i].FindValue("initial_pose"))
+    if (readInitialPoses && (const YAML::Node *poseNode = markerConfig[i].FindValue("initial_pose")))
     {
       geometry_msgs::Pose2D initialPose;
       markerConfig[i]["initial_pose"][0] >> initialPose.x;
@@ -128,7 +128,7 @@ void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string
     }
 
     // load marker information
-    const YAML::Node markers = markerConfig[i]["markers"];
+    const YAML::Node &markers = markerConfig[i]["markers"];
     f.markers.resize(markers.size());
     for (size_t j = 0; j < markers.size(); j ++)
     {
@@ -201,11 +201,11 @@ void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string
     furnitureConfig[i]["name"] >> ft.name;
     if (const YAML::Node *lfNode = furnitureConfig[i].FindValue("localization_footprint"))
     {
-      YAML::Node polygons = furnitureConfig[i]["localization_footprint"];
+      const YAML::Node &polygons = furnitureConfig[i]["localization_footprint"];
       ft.localizationFootprint.resize(polygons.size());
       for (size_t j = 0; j < polygons.size(); j ++)
       {
-        YAML::Node vertices = polygons[j]["polygon"];
+        const YAML::Node &vertices = polygons[j]["polygon"];
         ft.localizationFootprint[j].points.resize(vertices.size());
         for (size_t k = 0; k < vertices.size(); k ++)
         {
@@ -217,11 +217,11 @@ void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string
     }
     if (const YAML::Node *nfNode = furnitureConfig[i].FindValue("navigation_footprint"))
     {
-      YAML::Node polygons = furnitureConfig[i]["navigation_footprint"];
+      const YAML::Node &polygons = furnitureConfig[i]["navigation_footprint"];
       ft.navigationFootprint.resize(polygons.size());
       for (size_t j = 0; j < polygons.size(); j ++)
       {
-        YAML::Node vertices = polygons[j]["polygon"];
+        const YAML::Node &vertices = polygons[j]["polygon"];
         ft.navigationFootprint[j].points.resize(vertices.size());
         for (size_t k = 0; k < vertices.size(); k ++)
         {
