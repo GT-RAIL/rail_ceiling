@@ -5,6 +5,7 @@ project(rail_ceiling)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS ar_track_alvar_msgs geometry_msgs roscpp roslib tf)
+find_package(PkgConfig)
 
 #######################################
 ## Declare ROS messages and services ##
@@ -40,7 +41,10 @@ catkin_package()
 ###########
 
 ## Check for what version of YAML we have
-add_definitions(-DYAMLCPP_GT_0_5_0)
+pkg_check_modules(YAML_CPP yaml-cpp)
+if(${YAML_CPP_VERSION} VERSION_GREATER 0.5)
+  add_definitions(-DYAMLCPP_GT_0_5_0)
+endif()
 
 ## Specify additional locations of header files
 include_directories(
@@ -107,9 +111,4 @@ install(DIRECTORY urdf/
 ## Copy marker files
 install(DIRECTORY markers/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/markers
-)
-
-## Copy bundle files
-install(DIRECTORY bundles/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/bundles
 )

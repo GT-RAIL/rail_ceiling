@@ -8,6 +8,7 @@
  * \date October 30, 2014
  */
 #include <rail_ceiling/furniture_tracker.h>
+#include <fstream>
 
 using namespace std;
 
@@ -51,6 +52,7 @@ FurnitureTracker::FurnitureTracker()
 void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string furnitureConfigFile)
 {
   // parse the marker configuration file
+#ifdef YAMLCPP_GT_0_5_0
   YAML::Node markerConfig = YAML::LoadFile(markerConfigFile);
   unsigned int id = 0;
   for (size_t i = 0; i < markerConfig.size(); i ++)
@@ -95,9 +97,59 @@ void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string
     // store the furniture piece
     furnitureList.push_back(f);
   }
+#else
+  ifstream fin(markerConfigFile.c_str());
+  YAML::Parser markerParser(fin);
+  YAML::Node markerConfig;
+  markerParser.GetNextDocument(markerConfig);
+  unsigned int id = 0;
+  for (size_t i = 0; i < markerConfig.size(); i ++)
+  {
+    Furniture f;
+
+    // load the ID and type
+    f.id = id;
+    id ++;
+    markerConfig[i]["type"] >> f.type;
+
+    //optionally load
+    if (readInitialPoses && const YAML::Node *poseNode = markerConfig[i].FindValue("initial_pose"))
+    {
+      geometry_msgs::Pose2D initialPose;
+      markerConfig[i]["initial_pose"][0] >> initialPose.x;
+      markerConfig[i]["initial_pose"][1] >> initialPose.y;
+      markerConfig[i]["initial_pose"][2] >> initialPose.theta;
+      furniturePoses.push_back(initialPose);
+      ROS_INFO("Read initial position for furniture piece %lu", i);
+    }
+    else
+    {
+      furniturePoses.resize(furniturePoses.size() + 1);
+    }
+
+    // load marker information
+    const YAML::Node markers = markerConfig[i]["markers"];
+    f.markers.resize(markers.size());
+    for (size_t j = 0; j < markers.size(); j ++)
+    {
+      markers[j]["id"] >> f.markers[j].id;
+      f.markers[j].fid = f.id;
+      markers[j]["x"] >> f.markers[j].pose.x;
+      markers[j]["y"] >> f.markers[j].pose.y;
+      markers[j]["theta"] >> f.markers[j].pose.theta;
+      if (f.markers[j].id >= markerList.size())
+        markerList.resize(f.markers[j].id + 1);
+      markerList[f.markers[j].id] = f.markers[j];
+    }
+
+    // store the furniture piece
+    furnitureList.push_back(f);
+  }
+#endif
 
   ROS_INFO("Read marker configurations for %lu pieces of furniture.", furnitureList.size());
 
+#ifdef YAMLCPP_GT_0_5_0
   // parse the furniture footprints configuration file
   YAML::Node furnitureConfig = YAML::LoadFile(furnitureConfigFile);
   for (size_t i = 0; i < furnitureConfig.size(); i ++)
@@ -138,6 +190,50 @@ void FurnitureTracker::readConfigFiles(std::string markerConfigFile, std::string
     }
     footprintTransforms.push_back(ft);
   }
+#else
+  ifstream fin2(furnitureConfigFile.c_str());
+  YAML::Parser furnitureParser(fin2);
+  YAML::Node furnitureConfig;
+  furnitureParser.GetNextDocument(furnitureConfig);
+  for (size_t i = 0; i < furnitureConfig.size(); i ++)
+  {
+    FurnitureTransforms ft;
+    furnitureConfig[i]["name"] >> ft.name;
+    if (const YAML::Node *lfNode = furnitureConfig[i].FindValue("localization_footprint"))
+    {
+      YAML::Node polygons = furnitureConfig[i]["localization_footprint"];
+      ft.localizationFootprint.resize(polygons.size());
+      for (size_t j = 0; j < polygons.size(); j ++)
+      {
+        YAML::Node vertices = polygons[j]["polygon"];
+        ft.localizationFootprint[j].points.resize(vertices.size());
+        for (size_t k = 0; k < vertices.size(); k ++)
+        {
+          vertices[k][0] >> ft.localizationFootprint[j].points[k].x;
+          vertices[k][1] >> ft.localizationFootprint[j].points[k].y;
+          ft.localizationFootprint[j].points[k].z = 0.0;
+        }
+      }
+    }
+    if (const YAML::Node *nfNode = furnitureConfig[i].FindValue("navigation_footprint"))
+    {
+      YAML::Node polygons = furnitureConfig[i]["navigation_footprint"];
+      ft.navigationFootprint.resize(polygons.size());
+      for (size_t j = 0; j < polygons.size(); j ++)
+      {
+        YAML::Node vertices = polygons[j]["polygon"];
+        ft.navigationFootprint[j].points.resize(vertices.size());
+        for (size_t k = 0; k < vertices.size(); k ++)
+        {
+          vertices[k][0] >> ft.navigationFootprint[j].points[k].x;
+          vertices[k][1] >> ft.navigationFootprint[j].points[k].y;
+          ft.navigationFootprint[j].points[k].z = 0.0;
+        }
+      }
+    }
+    footprintTransforms.push_back(ft);
+  }
+#endif
 
   ROS_INFO("Read furniture footprints for:");
   for (unsigned int i = 0; i < footprintTransforms.size(); i ++)
