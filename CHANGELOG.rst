@@ -2,6 +2,17 @@
 Changelog for package rail_ceiling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.3 (2014-12-04)
+------------------
+* old YAML syntax fix 2
+* syntax fix for old YAML versions
+* Merge branch 'develop' of github.com:WPI-RAIL/rail_ceiling into develop
+* Added support for previous YAML versions, removed unused bundles
+* Update .travis.yml
+* Merge branch 'develop' of github.com:WPI-RAIL/rail_ceiling into develop
+* corrected the ratio for the slerp averaging; it was originally backwards
+* Contributors: David Kent, Russell Toris
+
 0.0.2 (2014-12-02)
 ------------------
 * Linear interpolation-based method to average quaternions for camera calibration samples
