@@ -1,0 +1,12 @@
+<!--
+   Author: David Kent, Worcester Polytechnic Institute
+  Version: December 11, 2014
+-->
+
+<launch>
+  <!-- transform for the calibration marker -->
+  <node pkg="tf" type="static_transform_publisher" name="calibration_link_broadcaster" args="-0.225 0 0 0 0 0 top_plate_link calibration_link 100" />
+
+  <!-- calibration node -->
+  <node pkg="rail_ceiling" type="calibration_from_carl" name="calibration_from_carl"  output="screen"/>
+</launch>
