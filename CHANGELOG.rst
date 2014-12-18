@@ -2,6 +2,15 @@
 Changelog for package rail_ceiling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.0.4 (2014-12-18)
+------------------
+* adds missing dep
+* Merge branch 'develop' of github.com:WPI-RAIL/rail_ceiling into develop
+* Updated launch for calibration from carl
+* Update .travis.yml
+* Update .travis.yml
+* Contributors: David Kent, Russell Toris
+
 0.0.3 (2014-12-04)
 ------------------
 * old YAML syntax fix 2
