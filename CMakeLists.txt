@@ -72,6 +72,8 @@ target_link_libraries(furniture_tracker
 )
 
 add_dependencies(furniture_tracker ${PROJECT_NAME}_gencpp)
+add_dependencies(calibration ar_track_alvar_msgs_gencpp)
+add_dependencies(calibration_from_carl ar_track_alvar_msgs_gencpp)
 
 #############
 ## Install ##
