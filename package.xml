@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rail_ceiling</name>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
   <description>Overhead Camera System for Tracking AR Tags</description>
   
   <maintainer email="rctoris@wpi.edu">Russell Toris</maintainer>
