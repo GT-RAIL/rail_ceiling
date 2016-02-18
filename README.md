@@ -1,4 +1,4 @@
-rail_ceiling [![Build Status](https://api.travis-ci.org/WPI-RAIL/rail_ceiling.png)](https://travis-ci.org/WPI-RAIL/rail_ceiling)
+rail_ceiling [![Build Status](https://api.travis-ci.org/GT-RAIL/rail_ceiling.png)](https://travis-ci.org/GT-RAIL/rail_ceiling)
 ============
 
 #### Overhead Camera System for Tracking AR Tags
