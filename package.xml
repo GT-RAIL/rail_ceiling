@@ -5,14 +5,15 @@
   <description>Overhead Camera System for Tracking AR Tags</description>
   
   <maintainer email="rctoris@wpi.edu">Russell Toris</maintainer>
+  <maintainer email="dekent@gatech.edu">David Kent</maintainer>
   <author email="rctoris@wpi.edu">Russell Toris</author>
-  <author email="davidkent@wpi.edu">David Kent</author>
+  <author email="dekent@gatech.edu">David Kent</author>
 
   <license>BSD</license>
 
   <url type="website">http://ros.org/wiki/rail_ceiling</url>
-  <url type="bugtracker">https://github.com/WPI-RAIL/rail_ceiling/issues</url>
-  <url type="repository">https://github.com/WPI-RAIL/rail_ceiling</url>
+  <url type="bugtracker">https://github.com/GT-RAIL/rail_ceiling/issues</url>
+  <url type="repository">https://github.com/GT-RAIL/rail_ceiling</url>
  
   <buildtool_depend>catkin</buildtool_depend>
 
