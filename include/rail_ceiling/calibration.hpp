@@ -6,7 +6,7 @@
  * are then printed to the terminal for use in a URDF. It is assumed the marker tags are published in the same frame as
  * the camera.
  *
- * \author Russell Toris, WPI - rctoris@wpi.edu
+ * \author Russell Toris, WPI - russell.toris@gmail.com
  * \date August 22, 2014
  */
 
